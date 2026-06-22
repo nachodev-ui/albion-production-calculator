@@ -1,0 +1,180 @@
+import { create } from 'zustand'
+import type { BaseItemId } from '@core/domain/entities/Item'
+import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
+import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import type { NodePath } from '@core/usecases/calculateCraftCost'
+import { DEFAULT_RETURN_RATE_CONFIG } from '@core/usecases/calculateCraftCost'
+import {
+  applyPresetProductionConfig,
+  loadCraftPresetStorage,
+} from './craftPresetStorage'
+import {
+  loadManualPrices,
+  saveManualPrices,
+} from './manualPriceStorage'
+import type { ManualPricesByRoot } from './manualPriceStorage'
+
+/**
+ * Estado interactivo del árbol de cálculo para UN ítem raíz a la vez.
+ *
+ * Los precios manuales se mantienen por `rootKey` (ítem raíz +
+ * encantamiento) y por path dentro de la receta. El caché completo se
+ * guarda en localStorage, mientras que `manualPrices` representa solo
+ * los precios de la receta actualmente abierta.
+ *
+ * IMPORTANTE: los Map/Set siempre se clonan antes de asignarlos para que
+ * Zustand y React detecten correctamente el cambio de referencia.
+ */
+interface CraftTreeState {
+  readonly rootKey: string | null
+  readonly expandedPaths: ReadonlySet<NodePath>
+  readonly manualPrices: ReadonlyMap<NodePath, number>
+  readonly manualPricesByRoot: ManualPricesByRoot
+  readonly productionConfig: NodeReturnRateConfig
+  readonly isPremium: boolean
+
+  /** Cambia de receta y restaura los precios guardados para esa raíz. */
+  resetForItem: (
+    itemId: BaseItemId,
+    enchantment: EnchantmentLevel,
+    expandRoot: boolean,
+  ) => void
+  toggleExpanded: (path: NodePath) => void
+  setManualPrice: (path: NodePath, unitPrice: number) => void
+  clearManualPrice: (path: NodePath) => void
+  clearCurrentManualPrices: () => void
+  clearAllManualPrices: () => void
+  setProductionConfig: (config: NodeReturnRateConfig) => void
+  setIsPremium: (isPremium: boolean) => void
+}
+
+function buildRootKey(itemId: BaseItemId, enchantment: EnchantmentLevel): string {
+  return `${itemId}@${enchantment}`
+}
+
+function persistAndSetPriceCache(
+  set: (
+    partial:
+      | Partial<CraftTreeState>
+      | ((state: CraftTreeState) => Partial<CraftTreeState>),
+  ) => void,
+  pricesByRoot: Map<string, ReadonlyMap<NodePath, number>>,
+  manualPrices: ReadonlyMap<NodePath, number>,
+): void {
+  saveManualPrices(pricesByRoot)
+  set({
+    manualPricesByRoot: pricesByRoot,
+    manualPrices,
+  })
+}
+
+const initialManualPricesByRoot = loadManualPrices()
+const initialPresetStorage = loadCraftPresetStorage()
+const initialDefaultPreset = initialPresetStorage.presets.find(
+  (preset) => preset.id === initialPresetStorage.defaultPresetId,
+)
+const initialProductionConfig = initialDefaultPreset
+  ? applyPresetProductionConfig(
+      DEFAULT_RETURN_RATE_CONFIG,
+      initialDefaultPreset.productionConfig,
+    )
+  : DEFAULT_RETURN_RATE_CONFIG
+const initialIsPremium = initialDefaultPreset?.isPremium ?? true
+
+export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
+  rootKey: null,
+  expandedPaths: new Set(),
+  manualPrices: new Map(),
+  manualPricesByRoot: initialManualPricesByRoot,
+  productionConfig: initialProductionConfig,
+  isPremium: initialIsPremium,
+
+  resetForItem: (itemId, enchantment, expandRoot) => {
+    const key = buildRootKey(itemId, enchantment)
+    if (get().rootKey === key) return
+
+    const savedPrices = get().manualPricesByRoot.get(key)
+
+    set({
+      rootKey: key,
+      expandedPaths: expandRoot ? new Set(['root']) : new Set(),
+      manualPrices: savedPrices ? new Map(savedPrices) : new Map(),
+    })
+  },
+
+  toggleExpanded: (path) => {
+    const next = new Set(get().expandedPaths)
+
+    if (next.has(path)) {
+      next.delete(path)
+    } else {
+      next.add(path)
+    }
+
+    set({ expandedPaths: next })
+  },
+
+  setManualPrice: (path, unitPrice) => {
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) return
+
+    const currentPrices = new Map(get().manualPrices)
+    currentPrices.set(path, unitPrice)
+
+    const rootKey = get().rootKey
+
+    if (!rootKey) {
+      set({ manualPrices: currentPrices })
+      return
+    }
+
+    const pricesByRoot = new Map(get().manualPricesByRoot)
+    pricesByRoot.set(rootKey, currentPrices)
+
+    persistAndSetPriceCache(set, pricesByRoot, currentPrices)
+  },
+
+  clearManualPrice: (path) => {
+    const currentPrices = new Map(get().manualPrices)
+    currentPrices.delete(path)
+
+    const rootKey = get().rootKey
+
+    if (!rootKey) {
+      set({ manualPrices: currentPrices })
+      return
+    }
+
+    const pricesByRoot = new Map(get().manualPricesByRoot)
+
+    if (currentPrices.size === 0) {
+      pricesByRoot.delete(rootKey)
+    } else {
+      pricesByRoot.set(rootKey, currentPrices)
+    }
+
+    persistAndSetPriceCache(set, pricesByRoot, currentPrices)
+  },
+
+  clearCurrentManualPrices: () => {
+    const rootKey = get().rootKey
+    const pricesByRoot = new Map(get().manualPricesByRoot)
+
+    if (rootKey) {
+      pricesByRoot.delete(rootKey)
+    }
+
+    persistAndSetPriceCache(set, pricesByRoot, new Map())
+  },
+
+  clearAllManualPrices: () => {
+    persistAndSetPriceCache(set, new Map(), new Map())
+  },
+
+  setProductionConfig: (config) => {
+    set({ productionConfig: config })
+  },
+
+  setIsPremium: (isPremium) => {
+    set({ isPremium })
+  },
+}))
