@@ -23,14 +23,10 @@ export type CraftingStation =
  * Un ingrediente dentro de una receta: referencia a OTRO ítem base
  * (por su id) y la cantidad necesaria por unidad crafteada.
  *
- * `enchantment` indica en qué nivel se necesita ESE ingrediente
- * particular: para recetas de nivel 0 siempre es 0, pero para
- * recetas de nivel N≥1, los ingredientes normalmente también piden
- * su versión @N (ej. craftear una espada .2 pide Lingotes .2).
- *
- * No incluye el `Item` completo para evitar referencias circulares
- * en el grafo de recetas — la resolución la hace el repositorio,
- * no la entidad.
+ * `enchantment` pertenece al ingrediente, no al objeto producido.
+ * Esto es importante en recetas como el equipo real: la armadura base
+ * conserva el encantamiento elegido, mientras que el Sello Real siempre
+ * se usa en nivel 0.
  */
 export interface RecipeIngredient {
   readonly itemId: BaseItemId
@@ -39,12 +35,24 @@ export interface RecipeIngredient {
 }
 
 /**
- * Recursos de "Upgrade" (Runa/Alma/Reliquia) requeridos para encantar
- * un ítem YA CRAFTEADO de un nivel al siguiente, como camino
- * alternativo a craftear desde cero con materiales pre-encantados.
+ * Una forma concreta de fabricar el mismo ítem y nivel.
  *
- * Solo existe para llevar de nivel N-1 a N (no hay upgrade hacia
- * Pristine/nivel 4 vía este sistema, se craftea directo).
+ * La mayoría de los objetos tiene una sola opción. Algunos, como las
+ * armaduras reales, aceptan cualquiera de las tres primeras piezas de su
+ * rama y por eso exponen varias opciones equivalentes.
+ */
+export interface RecipeOption {
+  readonly ingredients: readonly RecipeIngredient[]
+  readonly outputQuantity: number
+  /** Plata cobrada por la estación al craftear. */
+  readonly silverFee: number
+  /** Foco consumido, solo informativo. */
+  readonly craftingFocus: number
+}
+
+/**
+ * Recursos de "Upgrade" (Runa/Alma/Reliquia) requeridos para encantar
+ * un ítem YA CRAFTEADO de un nivel al siguiente.
  */
 export interface UpgradeRequirement {
   readonly itemId: BaseItemId
@@ -54,42 +62,60 @@ export interface UpgradeRequirement {
 /**
  * Receta de crafteo de un ítem PARA UN NIVEL DE ENCANTAMIENTO DADO.
  *
- * `outputQuantity` existe porque algunas recetas (notablemente comida
- * y algunos recursos) producen más de 1 unidad por crafteo.
+ * Los campos principales representan la opción predeterminada y se
+ * mantienen para compatibilidad con el dataset existente. `alternatives`
+ * contiene las opciones adicionales, si las hay.
  */
-export interface RecipeTier {
+export interface RecipeTier extends RecipeOption {
   readonly enchantment: EnchantmentLevel
   readonly station: CraftingStation
-  readonly ingredients: readonly RecipeIngredient[]
-  readonly outputQuantity: number
-  /** Plata cobrada por la estación al craftear (no el costo de materiales). */
-  readonly silverFee: number
-  /** Foco de crafteo consumido, si se usa Foco (informativo, no afecta el costo en plata). */
-  readonly craftingFocus: number
+  readonly alternatives?: readonly RecipeOption[]
   /**
    * Camino alternativo: encantar un ítem de nivel `enchantment - 1`
-   * ya crafteado, usando Runas/Almas/Reliquias, en vez de craftear
-   * desde cero con materiales pre-encantados.
-   * `null` para la receta base (nivel 0) y para nivel 4 (Pristine,
-   * que no tiene camino de upgrade).
+   * ya crafteado, usando Runas/Almas/Reliquias.
    */
   readonly upgradeFrom: UpgradeRequirement | null
 }
 
-/**
- * Receta completa de un ítem craftable: un `RecipeTier` por cada
- * nivel de encantamiento que el ítem admite. SIEMPRE incluye el
- * nivel 0; los niveles 1+ son opcionales según si el ítem es
- * encantable.
- */
+/** Receta completa de un ítem craftable. */
 export interface Recipe {
   readonly tiers: readonly RecipeTier[]
 }
 
-/**
- * Busca la receta de un nivel de encantamiento específico dentro
- * de una `Recipe`, o `null` si ese nivel no existe para este ítem.
- */
-export function getRecipeTier(recipe: Recipe, enchantment: EnchantmentLevel): RecipeTier | null {
+/** Busca la receta de un nivel de encantamiento específico. */
+export function getRecipeTier(
+  recipe: Recipe,
+  enchantment: EnchantmentLevel,
+): RecipeTier | null {
   return recipe.tiers.find((tier) => tier.enchantment === enchantment) ?? null
+}
+
+/** Devuelve la opción principal seguida de sus alternativas. */
+export function getRecipeOptions(tier: RecipeTier): readonly RecipeOption[] {
+  const primary: RecipeOption = {
+    ingredients: tier.ingredients,
+    outputQuantity: tier.outputQuantity,
+    silverFee: tier.silverFee,
+    craftingFocus: tier.craftingFocus,
+  }
+
+  return [primary, ...(tier.alternatives ?? [])]
+}
+
+/**
+ * Obtiene una opción segura. Un índice inválido vuelve a la primera
+ * receta para impedir que datos persistidos antiguos rompan el cálculo.
+ */
+export function getRecipeOption(
+  tier: RecipeTier,
+  optionIndex: number,
+): RecipeOption {
+  const options = getRecipeOptions(tier)
+  const fallback = options[0]
+
+  if (!fallback) {
+    throw new Error('RecipeTier must contain a primary recipe option')
+  }
+
+  return options[optionIndex] ?? fallback
 }

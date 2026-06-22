@@ -6,6 +6,7 @@ import type {
   CraftingStation,
   Recipe,
   RecipeIngredient,
+  RecipeOption,
   RecipeTier,
   UpgradeRequirement,
 } from '@core/domain/entities/Recipe'
@@ -27,13 +28,17 @@ interface RawUpgradeRequirement {
   readonly quantity: number
 }
 
-interface RawRecipeTier {
-  readonly enchantment: number
-  readonly station: string
+interface RawRecipeOption {
   readonly ingredients: readonly RawRecipeIngredient[]
   readonly outputQuantity: number
   readonly silverFee: number
   readonly craftingFocus: number
+}
+
+interface RawRecipeTier extends RawRecipeOption {
+  readonly enchantment: number
+  readonly station: string
+  readonly alternatives?: readonly RawRecipeOption[]
   readonly upgradeFrom: RawUpgradeRequirement | null
 }
 
@@ -63,14 +68,21 @@ function mapUpgradeFrom(raw: RawUpgradeRequirement | null): UpgradeRequirement |
   return { itemId: asBaseItemId(raw.itemId), quantity: raw.quantity }
 }
 
-function mapTier(raw: RawRecipeTier): RecipeTier {
+function mapOption(raw: RawRecipeOption): RecipeOption {
   return {
-    enchantment: raw.enchantment as EnchantmentLevel,
-    station: raw.station as CraftingStation,
     ingredients: raw.ingredients.map(mapIngredient),
     outputQuantity: raw.outputQuantity,
     silverFee: raw.silverFee,
     craftingFocus: raw.craftingFocus,
+  }
+}
+
+function mapTier(raw: RawRecipeTier): RecipeTier {
+  return {
+    enchantment: raw.enchantment as EnchantmentLevel,
+    station: raw.station as CraftingStation,
+    ...mapOption(raw),
+    alternatives: raw.alternatives?.map(mapOption),
     upgradeFrom: mapUpgradeFrom(raw.upgradeFrom),
   }
 }

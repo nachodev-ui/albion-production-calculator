@@ -3,7 +3,11 @@
   import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
   import { isVanityPlaceholder } from '@core/domain/entities/Item'
   import type { Item } from '@core/domain/entities/Item'
-  import { getRecipeTier } from '@core/domain/entities/Recipe'
+  import {
+    getRecipeOption,
+    getRecipeOptions,
+    getRecipeTier,
+  } from '@core/domain/entities/Recipe'
   import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
   import {
     getRecipeResolutionStatus,
@@ -22,6 +26,7 @@
   import { ReturnRateSavingsCard } from '../ReturnRateSavingsCard'
   import { ReturnedMaterialsCard } from '../ReturnedMaterialsCard'
   import { ProductionConfigCard } from './ProductionConfigCard'
+  import { RecipeOptionSelector } from './RecipeOptionSelector'
   import { RecipeTree } from './RecipeTree'
 
   interface ItemRecipeCardProps {
@@ -48,11 +53,29 @@
 
     const isVanity = isVanityPlaceholder(item)
     const tier = item.recipe ? getRecipeTier(item.recipe, enchantment) : null
+    const selectedRootOptionIndex = useCraftTreeStore(
+      (state) => state.selectedRecipeOptions.get('root') ?? 0,
+    )
+    const setRecipeOption = useCraftTreeStore(
+      (state) => state.setRecipeOption,
+    )
+    const recipeOptions = tier ? getRecipeOptions(tier) : []
+    const normalizedRootOptionIndex =
+      selectedRootOptionIndex >= 0 &&
+      selectedRootOptionIndex < recipeOptions.length
+        ? selectedRootOptionIndex
+        : 0
+    const selectedRecipeOption = tier
+      ? getRecipeOption(tier, normalizedRootOptionIndex)
+      : null
 
     const resolvedIngredients = useMemo(() => {
-      if (!tier) return []
-      return resolveRecipeTierIngredients(tier.ingredients, repository)
-    }, [tier, repository])
+      if (!selectedRecipeOption) return []
+      return resolveRecipeTierIngredients(
+        selectedRecipeOption.ingredients,
+        repository,
+      )
+    }, [selectedRecipeOption, repository])
 
     const status: RecipeResolutionStatus =
       isVanity || resolvedIngredients.length === 0
@@ -177,6 +200,17 @@
                   Ingresa el precio unitario de los recursos y componentes necesarios.
                 </p>
               </div>
+
+              {tier && (
+                <RecipeOptionSelector
+                  tier={tier}
+                  selectedIndex={normalizedRootOptionIndex}
+                  repository={repository}
+                  onChange={(optionIndex) =>
+                    setRecipeOption('root', optionIndex)
+                  }
+                />
+              )}
 
               <ManualPricePersistenceBar />
 

@@ -6,6 +6,7 @@ import {
   calculateCraftCost,
   childPath,
   createEmptyTreeConfig,
+  recipeChildPath,
   DEFAULT_RETURN_RATE_CONFIG,
 } from '../calculateCraftCost'
 import type { CraftTreeConfig } from '../calculateCraftCost'
@@ -423,5 +424,169 @@ describe('calculateCraftCost', () => {
     const result10 = calculateCraftCost(asBaseItemId('ORE'), 0, 10, repo, config)
 
     expect(result10.grandTotal).toBe(result1.grandTotal * 10)
+  })
+})
+
+
+function buildRoyalRecipeRepository(): ItemRepository {
+  const items = new Map<BaseItemId, Item>()
+
+  function add(item: Item): void {
+    items.set(item.id, item)
+  }
+
+  const SOLDIER_ARMOR = asBaseItemId('T4_ARMOR_PLATE_SET1')
+  const KNIGHT_ARMOR = asBaseItemId('T4_ARMOR_PLATE_SET2')
+  const GUARDIAN_ARMOR = asBaseItemId('T4_ARMOR_PLATE_SET3')
+  const ROYAL_SIGIL = asBaseItemId('QUESTITEM_TOKEN_ROYAL_T4')
+  const ROYAL_ARMOR = asBaseItemId('T4_ARMOR_PLATE_ROYAL')
+
+  for (const [id, name] of [
+    [SOLDIER_ARMOR, 'Soldier Armor'],
+    [KNIGHT_ARMOR, 'Knight Armor'],
+    [GUARDIAN_ARMOR, 'Guardian Armor'],
+  ] as const) {
+    add({
+      id,
+      name,
+      tier: 4,
+      category: 'armor',
+      maxEnchantment: 4,
+      recipe: null,
+    })
+  }
+
+  add({
+    id: ROYAL_SIGIL,
+    name: 'Royal Sigil',
+    tier: 4,
+    category: 'other',
+    maxEnchantment: 0,
+    recipe: null,
+  })
+
+  add({
+    id: ROYAL_ARMOR,
+    name: 'Royal Armor',
+    tier: 4,
+    category: 'armor',
+    maxEnchantment: 4,
+    recipe: {
+      tiers: [
+        {
+          enchantment: 2,
+          station: 'warrior_forge',
+          ingredients: [
+            { itemId: SOLDIER_ARMOR, enchantment: 2, quantity: 1 },
+            { itemId: ROYAL_SIGIL, enchantment: 0, quantity: 4 },
+          ],
+          outputQuantity: 1,
+          silverFee: 0,
+          craftingFocus: 0,
+          alternatives: [
+            {
+              ingredients: [
+                { itemId: KNIGHT_ARMOR, enchantment: 2, quantity: 1 },
+                { itemId: ROYAL_SIGIL, enchantment: 0, quantity: 4 },
+              ],
+              outputQuantity: 1,
+              silverFee: 0,
+              craftingFocus: 0,
+            },
+            {
+              ingredients: [
+                { itemId: GUARDIAN_ARMOR, enchantment: 2, quantity: 1 },
+                { itemId: ROYAL_SIGIL, enchantment: 0, quantity: 4 },
+              ],
+              outputQuantity: 1,
+              silverFee: 0,
+              craftingFocus: 0,
+            },
+          ],
+          upgradeFrom: null,
+        },
+      ],
+    },
+  })
+
+  return {
+    getById: (id) => items.get(id) ?? null,
+    getAll: () => Array.from(items.values()),
+    searchByName: () => [],
+  }
+}
+
+describe('recetas alternativas de equipo real', () => {
+  const royalRepo = buildRoyalRecipeRepository()
+  const royalArmor = asBaseItemId('T4_ARMOR_PLATE_ROYAL')
+
+  it('usa por defecto la primera pieza de la rama y mantiene el sello en .0', () => {
+    const config: CraftTreeConfig = {
+      ...createEmptyTreeConfig(),
+      expandedPaths: new Set(['root']),
+    }
+
+    const result = calculateCraftCost(royalArmor, 2, 1, royalRepo, config)
+
+    expect(result.root.recipeOptionIndex).toBe(0)
+    expect(result.root.children[0]?.itemId).toBe(
+      asBaseItemId('T4_ARMOR_PLATE_SET1'),
+    )
+    expect(result.root.children[0]?.enchantment).toBe(2)
+    expect(result.root.children[1]?.itemId).toBe(
+      asBaseItemId('QUESTITEM_TOKEN_ROYAL_T4'),
+    )
+    expect(result.root.children[1]?.enchantment).toBe(0)
+    expect(result.root.children[1]?.quantity).toBe(4)
+  })
+
+  it('permite elegir cualquiera de las tres piezas sin mezclar sus precios', () => {
+    const optionIndex = 2
+    const basePath = recipeChildPath('root', optionIndex, 0)
+    const sigilPath = recipeChildPath('root', optionIndex, 1)
+    const config: CraftTreeConfig = {
+      ...createEmptyTreeConfig(),
+      expandedPaths: new Set(['root']),
+      selectedRecipeOptions: new Map([['root', optionIndex]]),
+      manualPrices: new Map([
+        [basePath, 100_000],
+        [sigilPath, 20_000],
+      ]),
+    }
+
+    const result = calculateCraftCost(royalArmor, 2, 1, royalRepo, config)
+
+    expect(result.root.recipeOptionIndex).toBe(2)
+    expect(result.root.children[0]?.itemId).toBe(
+      asBaseItemId('T4_ARMOR_PLATE_SET3'),
+    )
+    expect(result.grandTotal).toBe(180_000)
+    expect(result.isComplete).toBe(true)
+  })
+
+  it('no aplica RRR ni a la pieza base ni a los Sellos Reales', () => {
+    const rrrConfig = {
+      cityId: 'martlock',
+      hasSpecialtyBonus: true,
+      specialtyKind: 'crafting' as const,
+      useFocus: true,
+      hasDailyBonus: false,
+      dailyBonusAmount: 0.1 as const,
+      isIsland: false,
+    }
+    const config: CraftTreeConfig = {
+      expandedPaths: new Set(['root']),
+      manualPrices: new Map([
+        [childPath('root', 0), 100_000],
+        [childPath('root', 1), 20_000],
+      ]),
+      productionConfig: rrrConfig,
+    }
+
+    const result = calculateCraftCost(royalArmor, 2, 1, royalRepo, config)
+
+    expect(result.grandTotal).toBe(180_000)
+    expect(result.totalSilverSavedByReturnRate).toBe(0)
+    expect(result.returnedMaterials).toHaveLength(0)
   })
 })

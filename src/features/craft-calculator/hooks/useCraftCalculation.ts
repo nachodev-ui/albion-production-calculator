@@ -27,9 +27,26 @@ export function useCraftCalculation(
   const expandedPaths = useCraftTreeStore((s) => s.expandedPaths)
   const manualPrices = useCraftTreeStore((s) => s.manualPrices)
   const productionConfig = useCraftTreeStore((s) => s.productionConfig)
+  const selectedRecipeOptions = useCraftTreeStore(
+    (s) => s.selectedRecipeOptions,
+  )
 
   return useMemo(() => {
-    const config: CraftTreeConfig = { expandedPaths, manualPrices, productionConfig }
+    const config: CraftTreeConfig = {
+      expandedPaths,
+      manualPrices,
+      productionConfig,
+      selectedRecipeOptions,
+    }
     return calculateCraftCost(itemId, enchantment, quantity, repository, config)
-  }, [itemId, enchantment, quantity, repository, expandedPaths, manualPrices, productionConfig])
+  }, [
+    itemId,
+    enchantment,
+    quantity,
+    repository,
+    expandedPaths,
+    manualPrices,
+    productionConfig,
+    selectedRecipeOptions,
+  ])
 }
