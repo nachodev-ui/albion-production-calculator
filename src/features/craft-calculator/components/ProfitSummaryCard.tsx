@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { InfoHint } from '@shared/components/InfoHint'
+import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
 import { PROFIT_SUMMARY_INFO } from '../content/craftInfoDescriptions'
 import { calculateProfitBreakdown } from '../utils/profitCalculations'
 import type { MarketRequestStatus } from '@features/market-data/types/MarketPrice'
@@ -14,6 +15,7 @@ interface ProfitSummaryCardProps {
   readonly automaticUnitSellPrice: number | null
   readonly isManualSellPrice: boolean
   readonly automaticPriceLabel: string
+  readonly automaticPriceUpdatedAt: string | null
   readonly marketStatus: MarketRequestStatus
   readonly onUnitSellPriceChange: (price: number | null) => void
   readonly onUseAutomaticSellPrice: () => void
@@ -43,6 +45,7 @@ export function ProfitSummaryCard({
   automaticUnitSellPrice,
   isManualSellPrice,
   automaticPriceLabel,
+  automaticPriceUpdatedAt,
   marketStatus,
   onUnitSellPriceChange,
   onUseAutomaticSellPrice,
@@ -287,6 +290,23 @@ export function ProfitSummaryCard({
                   </span>
                 )}
               </div>
+
+              {(marketStatus !== 'loading' ||
+                automaticUnitSellPrice !== null) && (
+                <div className="mt-2">
+                  <MarketPriceFreshnessStatus
+                    updatedAt={
+                      automaticUnitSellPrice !== null
+                        ? automaticPriceUpdatedAt
+                        : null
+                    }
+                    isActive={
+                      automaticUnitSellPrice !== null &&
+                      !isManualSellPrice
+                    }
+                  />
+                </div>
+              )}
             </div>
 
             <label className="flex cursor-pointer items-center justify-between gap-4">
