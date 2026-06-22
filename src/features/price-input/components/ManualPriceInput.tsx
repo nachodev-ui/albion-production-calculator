@@ -1,11 +1,17 @@
 import { useState } from 'react'
 
 function formatSilver(amount: number): string {
-  return new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 }).format(amount)
+  return new Intl.NumberFormat('es-CL', {
+    maximumFractionDigits: 1,
+  }).format(amount)
 }
 
 interface ManualPriceInputProps {
+  /** Override manual. `undefined` significa que puede usarse AODP. */
   readonly value: number | undefined
+  readonly automaticValue?: number
+  readonly automaticLabel?: string
+  readonly isAutomaticLoading?: boolean
   readonly quantity: number
   readonly onChange: (unitPrice: number) => void
   readonly onClear: () => void
@@ -13,36 +19,47 @@ interface ManualPriceInputProps {
 }
 
 /**
- * Input de precio UNITARIO (por una sola unidad del ítem) para una
- * hoja del árbol de cálculo. El total de esa rama es `precio × quantity`,
- * calculado y mostrado como subtotal debajo del input.
+ * Input de precio unitario con prioridad manual:
  *
- * La ausencia de una clave en el store significa "precio pendiente".
- * Un valor 0 ingresado explícitamente sí es válido, por ejemplo cuando
- * el usuario ya posee ese material y desea tratarlo como costo cero.
+ * 1. Si existe un valor manual, se usa ese precio.
+ * 2. Si se limpia el override, vuelve al precio automático disponible.
+ * 3. Si ninguna fuente tiene precio, la hoja queda pendiente.
  */
 export function ManualPriceInput({
   value,
+  automaticValue,
+  automaticLabel = 'AODP',
+  isAutomaticLoading = false,
   quantity,
   onChange,
   onClear,
-  placeholder = 'Ingresar precio',
+  placeholder = '0',
 }: ManualPriceInputProps) {
-  const [text, setText] = useState(value !== undefined ? String(value) : '')
+  const committedValue = value ?? automaticValue
+  const [text, setText] = useState(
+    committedValue !== undefined ? String(committedValue) : '',
+  )
+
+  const isManualOverride = value !== undefined
+  const hasAutomaticValue = automaticValue !== undefined
 
   function commit() {
     const trimmed = text.trim()
 
     if (trimmed === '') {
       onClear()
+      setText(
+        automaticValue !== undefined ? String(automaticValue) : '',
+      )
       return
     }
 
     const parsed = Number(trimmed.replace(',', '.'))
 
     if (!Number.isFinite(parsed) || parsed < 0) {
-      setText('')
-      onClear()
+      setText(
+        committedValue !== undefined ? String(committedValue) : '',
+      )
       return
     }
 
@@ -52,9 +69,10 @@ export function ManualPriceInput({
 
   const parsedPreview = Number(text.replace(',', '.'))
   const hasText = text.trim() !== ''
-  const hasValidPreview = hasText && Number.isFinite(parsedPreview) && parsedPreview >= 0
+  const hasValidPreview =
+    hasText && Number.isFinite(parsedPreview) && parsedPreview >= 0
   const hasInvalidPreview = hasText && !hasValidPreview
-  const isMissing = value === undefined && !hasText
+  const isMissing = committedValue === undefined && !hasText
   const subtotal = hasValidPreview ? parsedPreview * quantity : 0
 
   return (
@@ -77,7 +95,11 @@ export function ManualPriceInput({
 
             if (event.key === 'Escape') {
               event.preventDefault()
-              setText(value !== undefined ? String(value) : '')
+              setText(
+                committedValue !== undefined
+                  ? String(committedValue)
+                  : '',
+              )
             }
           }}
           onClick={(event) => event.stopPropagation()}
@@ -92,39 +114,58 @@ export function ManualPriceInput({
         />
       </div>
 
-
-      <div className="min-h-4">
-        {isMissing ? (
-          <p className="text-right text-[11px] text-accent">
-            Precio requerido
-          </p>
-        ) : hasInvalidPreview ? (
-          <p className="text-right text-[11px] text-negative">
-            Ingresa un valor válido
-          </p>
-        ) : quantity > 1 ? (
-          <p className="text-right text-[11px] tabular text-text-faint">
-            {hasValidPreview ? (
-              <>
-                ×{quantity} ={' '}
-                <span className="text-text-muted">
-                  {formatSilver(subtotal)}
-                </span>
-              </>
+      <div className="flex min-h-4 items-center justify-between gap-2 text-[11px]">
+        <div className="min-w-0">
+          {isManualOverride ? (
+            hasAutomaticValue ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onClear()
+                }}
+                className="truncate text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
+              >
+                Usar precio AODP
+              </button>
             ) : (
-              <>×{quantity} unidades</>
-            )}
-          </p>
-        ) : (
-          <p
-            aria-hidden="true"
-            className="invisible text-right text-[11px]"
-          >
-            Espacio reservado
-          </p>
-        )}
-      </div>
+              <span className="text-text-faint">Precio manual</span>
+            )
+          ) : hasAutomaticValue ? (
+            <span
+              className="block max-w-32 truncate text-positive"
+              title={automaticLabel}
+            >
+              {automaticLabel}
+            </span>
+          ) : isAutomaticLoading ? (
+            <span className="text-text-faint">Consultando AODP…</span>
+          ) : (
+            <span aria-hidden="true" className="invisible">
+              Sin fuente
+            </span>
+          )}
+        </div>
 
+        <div className="shrink-0 text-right">
+          {hasInvalidPreview ? (
+            <span className="text-negative">Valor inválido</span>
+          ) : isMissing ? (
+            <span className="text-accent">Precio requerido</span>
+          ) : quantity > 1 ? (
+            <span className="tabular text-text-faint">
+              ×{quantity} ={' '}
+              <span className="text-text-muted">
+                {formatSilver(subtotal)}
+              </span>
+            </span>
+          ) : (
+            <span aria-hidden="true" className="invisible">
+              Espacio reservado
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

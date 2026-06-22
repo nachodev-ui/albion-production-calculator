@@ -1,17 +1,17 @@
 # Albion Production Calculator
 
-Calculadora local de producción para Albion Online. Permite analizar crafteo, retorno de recursos, costos, impuestos, punto de equilibrio y rentabilidad usando precios ingresados manualmente por el usuario.
+Calculadora de producción para Albion Online. Permite analizar crafteo, retorno de recursos, costos, impuestos, punto de equilibrio y rentabilidad usando precios automáticos de Albion Online Data Project con override manual.
 
 La interfaz está preparada para incorporar un módulo de refinamiento y cuenta con navegación por ramas de crafteo, presets persistentes y exportación de resultados.
 
 ## Comandos
 
 ```bash
-npm install
-npm run dev
-npm run build
-npm run lint
-npm test
+pnpm install
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
 ```
 
 ## Compartir cálculos
@@ -33,3 +33,10 @@ encantamientos.
 La configuración incluye tarifas distintas para usuarios y asociados, cálculo
 de nutrición desde Item Value, costo de foco según especialización y bono de
 calidad informativo. Consulta `TARIFAS_ESTACION_Y_FOCO.md`.
+
+## Precios de mercado
+
+La calculadora consulta precios actuales de AODP según servidor, ciudad y
+estrategia de compra o venta. Los valores manuales siempre tienen prioridad y
+los snapshots automáticos se almacenan en una caché local. Consulta
+`PRECIOS_AODP.md`.
