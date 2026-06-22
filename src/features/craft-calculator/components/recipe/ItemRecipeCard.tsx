@@ -28,6 +28,8 @@
   import { ProductionConfigCard } from './ProductionConfigCard'
   import { RecipeOptionSelector } from './RecipeOptionSelector'
   import { RecipeTree } from './RecipeTree'
+  import { useRecipeOptionComparison } from '../../hooks/useRecipeOptionComparison'
+  import { RecipeOptionProfitComparisonCard } from './RecipeOptionProfitComparisonCard'
 
   interface ItemRecipeCardProps {
     readonly item: Item
@@ -115,6 +117,14 @@
       quantity,
       repository,
     )
+
+    const recipeOptionComparisons = useRecipeOptionComparison({
+      itemId: item.id,
+      enchantment,
+      quantity,
+      unitSellPrice,
+      repository,
+    })
 
     return (
       <div className="rounded-xl border border-border bg-surface p-5">
@@ -261,6 +271,19 @@
               unitSellPrice={unitSellPrice}
               onUnitSellPriceChange={setUnitSellPrice}
             />
+
+            {tier && (
+              <RecipeOptionProfitComparisonCard
+                tier={tier}
+                comparisons={recipeOptionComparisons}
+                selectedOptionIndex={normalizedRootOptionIndex}
+                unitSellPrice={unitSellPrice}
+                repository={repository}
+                onSelect={(optionIndex) =>
+                  setRecipeOption('root', optionIndex)
+                }
+              />
+            )}
 
             <CalculationSummaryActions
               item={item}
