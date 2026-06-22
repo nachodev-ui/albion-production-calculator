@@ -4,7 +4,7 @@ import { getRecipeTier } from '@core/domain/entities/Recipe'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import type { CraftCostNode } from '@core/domain/entities/CraftCostNode'
 import type { NodePath } from '@core/usecases/calculateCraftCost'
-import { childPath } from '@core/usecases/calculateCraftCost'
+import { recipeChildPath } from '@core/usecases/calculateCraftCost'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import { ManualPriceInput } from '@features/price-input/components/ManualPriceInput'
 import { useCraftTreeStore } from '../../store/craftTreeStore'
@@ -186,7 +186,11 @@ function RecipeTreeNode({
 
                   <RecipeTreeNode
                     node={child}
-                    path={childPath(path, index)}
+                    path={recipeChildPath(
+                      path,
+                      node.recipeOptionIndex ?? 0,
+                      index,
+                    )}
                     item={childItem}
                     repository={repository}
                     depth={depth + 1}
@@ -237,7 +241,11 @@ export function RecipeTree({
           <RecipeTreeNode
             key={`${child.itemId}-${index}`}
             node={child}
-            path={childPath('root', index)}
+            path={recipeChildPath(
+              'root',
+              rootNode.recipeOptionIndex ?? 0,
+              index,
+            )}
             item={childItem}
             repository={repository}
             depth={1}

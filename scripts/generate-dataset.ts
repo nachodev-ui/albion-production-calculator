@@ -93,13 +93,17 @@ interface OutputUpgradeRequirement {
   quantity: number
 }
 
-interface OutputRecipeTier {
-  enchantment: number
-  station: string
+interface OutputRecipeOption {
   ingredients: OutputIngredient[]
   outputQuantity: number
   silverFee: number
   craftingFocus: number
+}
+
+interface OutputRecipeTier extends OutputRecipeOption {
+  enchantment: number
+  station: string
+  alternatives?: OutputRecipeOption[]
   upgradeFrom: OutputUpgradeRequirement | null
 }
 
@@ -181,7 +185,15 @@ function resolveItemName(id: string, localizationMap: Map<string, string>): stri
  * Heurística para detectar recursos de "evento"/facción que no deben
  * formar parte de la receta estándar (ej. T1_FACTION_MOUNTAIN_TOKEN_1).
  */
+const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/
+
+function isRoyalSigil(uniqueName: string): boolean {
+  return ROYAL_SIGIL_PATTERN.test(uniqueName)
+}
+
 function isEventOrFactionResource(uniqueName: string): boolean {
+  if (isRoyalSigil(uniqueName)) return false
+
   return (
     uniqueName.includes('FACTION_') ||
     uniqueName.includes('TOKEN') ||
@@ -299,6 +311,34 @@ function parseIngredients(req: RawCraftingRequirements): OutputIngredient[] {
     }))
 }
 
+function parseRecipeOption(req: RawCraftingRequirements): OutputRecipeOption {
+  return {
+    ingredients: parseIngredients(req),
+    outputQuantity: req['@_amountcrafted'] ? Number(req['@_amountcrafted']) : 1,
+    silverFee: req['@_silver'] ? Number(req['@_silver']) : 0,
+    craftingFocus: req['@_craftingfocus'] ? Number(req['@_craftingfocus']) : 0,
+  }
+}
+
+function buildRecipeTier(
+  enchantment: number,
+  station: string,
+  requirements: readonly RawCraftingRequirements[],
+  upgradeFrom: OutputUpgradeRequirement | null,
+): OutputRecipeTier | null {
+  const options = requirements.map(parseRecipeOption)
+  const primary = options[0]
+  if (!primary) return null
+
+  return {
+    enchantment,
+    station,
+    ...primary,
+    alternatives: options.length > 1 ? options.slice(1) : undefined,
+    upgradeFrom,
+  }
+}
+
 function parseUpgradeFrom(upgradeReq: RawUpgradeRequirements | undefined): OutputUpgradeRequirement | null {
   if (!upgradeReq) return null
   const resources = toArray(upgradeReq.upgraderesource)
@@ -330,50 +370,46 @@ function parseItemNode(
     const tier = node['@_tier'] ? Number(node['@_tier']) : 0
     const shopCategory = node['@_shopcategory']
     const shopSubcategory1 = node['@_shopsubcategory1']
-    const category = mapCategory(tagName, shopCategory, shopSubcategory1)
+    const category = isRoyalSigil(id)
+      ? 'other'
+      : mapCategory(tagName, shopCategory, shopSubcategory1)
     if (category === null) return null // Fuera de alcance: gathering, vanity, etc.
   
     const station = inferStation(shopSubcategory1)
 
-  const baseCraftingReqs = toArray(node.craftingrequirements)
-  const baseReq = baseCraftingReqs[0] // Decisión confirmada: siempre la primera (estándar)
-
   const tiers: OutputRecipeTier[] = []
+  const baseTier = buildRecipeTier(
+    0,
+    station,
+    toArray(node.craftingrequirements),
+    null,
+  )
 
-  if (baseReq) {
-    tiers.push({
-      enchantment: 0,
-      station,
-      ingredients: parseIngredients(baseReq),
-      outputQuantity: baseReq['@_amountcrafted'] ? Number(baseReq['@_amountcrafted']) : 1,
-      silverFee: baseReq['@_silver'] ? Number(baseReq['@_silver']) : 0,
-      craftingFocus: baseReq['@_craftingfocus'] ? Number(baseReq['@_craftingfocus']) : 0,
-      upgradeFrom: null,
-    })
-  }
+  if (baseTier) tiers.push(baseTier)
 
   const enchantmentNodes = toArray(node.enchantments?.enchantment)
   for (const ench of enchantmentNodes) {
-    const enchLevel = Number(ench['@_enchantmentlevel'])
-    const enchReqs = toArray(ench.craftingrequirements)
-    const enchReq = enchReqs[0]
-    if (!enchReq) continue
-
-    tiers.push({
-      enchantment: enchLevel,
+    const enchantmentTier = buildRecipeTier(
+      Number(ench['@_enchantmentlevel']),
       station,
-      ingredients: parseIngredients(enchReq),
-      outputQuantity: enchReq['@_amountcrafted'] ? Number(enchReq['@_amountcrafted']) : 1,
-      silverFee: enchReq['@_silver'] ? Number(enchReq['@_silver']) : 0,
-      craftingFocus: enchReq['@_craftingfocus'] ? Number(enchReq['@_craftingfocus']) : 0,
-      upgradeFrom: parseUpgradeFrom(ench.upgraderequirements),
-    })
+      toArray(ench.craftingrequirements),
+      parseUpgradeFrom(ench.upgraderequirements),
+    )
+
+    if (enchantmentTier) tiers.push(enchantmentTier)
   }
 
   // Ítems sin ninguna receta (recursos crudos farmeables, ej. T4_ORE) son
   // válidos igual: quedan con recipe: null, pero SÍ se incluyen en el
   // dataset porque son ingredientes de otras recetas.
-  const recipe = tiers.length > 0 ? { tiers } : null
+  // Los Sellos Reales se tratan como componentes comprables dentro de
+  // esta calculadora. Aunque el juego permita transmutarlos, mantenerlos
+  // como hoja evita mezclar ese sistema con el costo de equipo real.
+  const recipe = isRoyalSigil(id)
+    ? null
+    : tiers.length > 0
+      ? { tiers }
+      : null
   const maxEnchantment = tiers.length > 0 ? Math.max(...tiers.map((t) => t.enchantment)) : 0
 
   return {

@@ -21,3 +21,9 @@ El resumen puede copiarse, descargarse como `.txt` o abrirse en una vista A4 par
 ## Navegación por ramas
 
 Armas, Armaduras, Offhands y Accesorios se agrupan por líneas de crafteo y familias T4–T8. Los detalles del agrupamiento y sus validaciones están en `NAVEGACION_RAMAS_CATALOGO.md`.
+
+## Equipo real
+
+Las piezas reales incluyen sus tres variantes de receta. Consulta
+`RECETAS_EQUIPO_REAL.md` para las reglas de piezas base, Sellos Reales y
+encantamientos.
