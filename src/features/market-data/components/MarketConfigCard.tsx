@@ -2,6 +2,7 @@ import type {
   AlbionServer,
   MarketCityId,
   MarketConfig,
+  MarketFreshnessSummary,
   MarketRequestStatus,
   PurchaseStrategy,
   SaleStrategy,
@@ -19,6 +20,7 @@ interface MarketConfigCardProps {
   readonly error: string | null
   readonly hasCachedPrice: boolean
   readonly priceCount: number
+  readonly freshnessSummary: MarketFreshnessSummary
   readonly onChange: (patch: Partial<MarketConfig>) => void
   readonly onRefresh: () => void
   readonly onClearCache: () => void
@@ -49,7 +51,7 @@ function getStatusPresentation(
 
   if (status === 'success') {
     return {
-      label: 'Precios actualizados',
+      label: 'Consulta completada',
       className: 'border-positive bg-positive-muted text-positive',
     }
   }
@@ -66,6 +68,7 @@ export function MarketConfigCard({
   error,
   hasCachedPrice,
   priceCount,
+  freshnessSummary,
   onChange,
   onRefresh,
   onClearCache,
@@ -214,6 +217,12 @@ export function MarketConfigCard({
                 ? `${priceCount} precios automáticos disponibles`
                 : 'Todavía no hay precios disponibles'}
             </p>
+            <p className="mt-1 text-[10px] leading-relaxed text-text-faint">
+              {freshnessSummary.recent} recientes ·{' '}
+              {freshnessSummary.acceptable} aceptables ·{' '}
+              {freshnessSummary.stale} antiguos ·{' '}
+              {freshnessSummary.missing} sin datos
+            </p>
           </div>
 
           <button
@@ -235,10 +244,20 @@ export function MarketConfigCard({
         </p>
       )}
 
+      {freshnessSummary.stale > 0 && (
+        <p className="mt-3 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs leading-relaxed text-negative">
+          Hay {freshnessSummary.stale}{' '}
+          {freshnessSummary.stale === 1 ? 'precio automático antiguo' : 'precios automáticos antiguos'}.
+          Las hojas sin override manual seguirán utilizándolos, así que revisa
+          la fecha mostrada junto a cada precio antes de decidir.
+        </p>
+      )}
+
       <p className="mt-3 text-[11px] leading-relaxed text-text-faint">
         La calidad consultada en esta primera versión es Normal. AODP depende
-        de datos aportados por jugadores, por lo que siempre puedes reemplazar
-        cualquier valor con un precio manual.
+        de datos aportados por jugadores. Cada precio muestra su antigüedad y
+        fecha exacta; siempre puedes reemplazar cualquier valor con un precio
+        manual.
       </p>
     </section>
   )

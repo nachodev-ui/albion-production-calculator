@@ -305,6 +305,7 @@ export function ItemRecipeCard({
               market.automaticPurchasePrices.size +
               (market.automaticSalePrice !== null ? 1 : 0)
             }
+            freshnessSummary={market.freshnessSummary}
             onChange={market.setConfig}
             onRefresh={() => {
               void market.refresh()
@@ -347,6 +348,7 @@ export function ItemRecipeCard({
                 rootNode={calculation.root}
                 repository={repository}
                 automaticPrices={market.automaticPurchasePrices}
+                automaticPriceDetails={market.automaticPurchasePriceDetails}
                 automaticPriceLabel={`AODP · ${market.purchasePriceLabel}`}
                 marketStatus={market.status}
               />
@@ -405,6 +407,9 @@ export function ItemRecipeCard({
             automaticUnitSellPrice={market.automaticSalePrice}
             isManualSellPrice={hasManualSellPrice}
             automaticPriceLabel={market.salePriceLabel}
+            automaticPriceUpdatedAt={
+              market.automaticSalePriceDetail.updatedAt
+            }
             marketStatus={market.status}
             onUnitSellPriceChange={(price) =>
               setManualSellPrice(rootMarketKey, price)
