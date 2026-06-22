@@ -7,6 +7,8 @@ import type { NodePath } from '@core/usecases/calculateCraftCost'
 import { recipeChildPath } from '@core/usecases/calculateCraftCost'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import { ManualPriceInput } from '@features/price-input/components/ManualPriceInput'
+import type { MarketRequestStatus } from '@features/market-data/types/MarketPrice'
+import { buildItemPriceKey } from '@features/market-data/types/MarketPrice'
 import { useCraftTreeStore } from '../../store/craftTreeStore'
 import { getEnchantmentColor } from '../enchantmentColors'
 
@@ -22,6 +24,9 @@ interface RecipeTreeNodeProps {
   readonly item: Item | null
   readonly repository: ItemRepository
   readonly depth: number
+  readonly automaticPrices: ReadonlyMap<string, number>
+  readonly automaticPriceLabel: string
+  readonly marketStatus: MarketRequestStatus
 }
 
 /**
@@ -40,6 +45,9 @@ function RecipeTreeNode({
   item,
   repository,
   depth,
+  automaticPrices,
+  automaticPriceLabel,
+  marketStatus,
 }: RecipeTreeNodeProps) {
   const isExpanded = useCraftTreeStore((state) =>
     state.expandedPaths.has(path),
@@ -63,6 +71,10 @@ function RecipeTreeNode({
     (state) => state.manualPrices.get(path),
   )
 
+  const automaticPrice = automaticPrices.get(
+    buildItemPriceKey(node.itemId, node.enchantment),
+  )
+
   const tier = item?.recipe
     ? getRecipeTier(item.recipe, node.enchantment)
     : null
@@ -70,7 +82,10 @@ function RecipeTreeNode({
   const isExpandable = tier !== null
   const enchantmentColor = getEnchantmentColor(node.enchantment)
   const displayName = item?.name ?? (node.itemId as unknown as string)
-  const hasMissingPrice = !isExpanded && manualPrice === undefined
+  const hasMissingPrice =
+    !isExpanded &&
+    manualPrice === undefined &&
+    automaticPrice === undefined
 
   return (
     <div className="flex flex-col items-center">
@@ -154,8 +169,11 @@ function RecipeTreeNode({
             </span>
           ) : (
             <ManualPriceInput
-              key={`${rootKey ?? 'uninitialized'}:${path}:${manualPrice ?? 'missing'}`}
+              key={`${rootKey ?? 'uninitialized'}:${path}:${manualPrice ?? 'manual-missing'}:${automaticPrice ?? 'automatic-missing'}`}
               value={manualPrice}
+              automaticValue={automaticPrice}
+              automaticLabel={automaticPriceLabel}
+              isAutomaticLoading={marketStatus === 'loading'}
               quantity={node.quantity}
               onChange={(unitPrice) =>
                 setManualPrice(path, unitPrice)
@@ -194,6 +212,9 @@ function RecipeTreeNode({
                     item={childItem}
                     repository={repository}
                     depth={depth + 1}
+                    automaticPrices={automaticPrices}
+                    automaticPriceLabel={automaticPriceLabel}
+                    marketStatus={marketStatus}
                   />
                 </div>
               )
@@ -208,6 +229,9 @@ function RecipeTreeNode({
 interface RecipeTreeProps {
   readonly rootNode: CraftCostNode
   readonly repository: ItemRepository
+  readonly automaticPrices: ReadonlyMap<string, number>
+  readonly automaticPriceLabel: string
+  readonly marketStatus: MarketRequestStatus
 }
 
 /**
@@ -220,6 +244,9 @@ interface RecipeTreeProps {
 export function RecipeTree({
   rootNode,
   repository,
+  automaticPrices,
+  automaticPriceLabel,
+  marketStatus,
 }: RecipeTreeProps) {
   if (rootNode.children.length === 0) {
     return (
@@ -249,6 +276,9 @@ export function RecipeTree({
             item={childItem}
             repository={repository}
             depth={1}
+            automaticPrices={automaticPrices}
+            automaticPriceLabel={automaticPriceLabel}
+            marketStatus={marketStatus}
           />
         )
       })}

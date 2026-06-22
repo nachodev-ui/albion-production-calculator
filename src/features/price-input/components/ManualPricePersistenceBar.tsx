@@ -52,21 +52,21 @@ export function ManualPricePersistenceBar() {
           />
 
           <p className="text-sm font-medium text-text">
-            Guardado local automático
+            Overrides manuales guardados
           </p>
 
           <InfoHint
             label="Guardado local de precios"
-            text="Cada precio se guarda en este navegador al salir del campo o presionar Enter. Al volver a abrir la misma receta y encantamiento, los valores se restauran automáticamente. No se envían a ningún servidor."
+            text="Los precios editados manualmente se guardan en este navegador y tienen prioridad sobre AODP. Al borrarlos, la calculadora vuelve a usar el precio automático disponible. No se envían a ningún servidor."
             align="left"
           />
         </div>
 
         <p className="mt-1 text-xs text-text-faint">
           {currentPriceCount === 0
-            ? 'Esta receta todavía no tiene precios guardados.'
+            ? 'Esta receta todavía no tiene overrides manuales.'
             : `${currentPriceCount} ${
-                currentPriceCount === 1 ? 'precio guardado' : 'precios guardados'
+                currentPriceCount === 1 ? 'override manual' : 'overrides manuales'
               } para esta receta.`}
           {totalSavedPriceCount > currentPriceCount && (
             <>

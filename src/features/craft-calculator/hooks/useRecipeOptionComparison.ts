@@ -11,6 +11,7 @@ interface UseRecipeOptionComparisonParams {
   readonly quantity: number
   readonly unitSellPrice: number | null
   readonly repository: ItemRepository
+  readonly automaticPrices: ReadonlyMap<string, number>
 }
 
 export function useRecipeOptionComparison({
@@ -19,6 +20,7 @@ export function useRecipeOptionComparison({
   quantity,
   unitSellPrice,
   repository,
+  automaticPrices,
 }: UseRecipeOptionComparisonParams) {
   const expandedPaths = useCraftTreeStore(
     (state) => state.expandedPaths,
@@ -64,6 +66,7 @@ export function useRecipeOptionComparison({
         config: {
           expandedPaths,
           manualPrices,
+          automaticPrices,
           productionConfig,
           selectedRecipeOptions,
           stationFeeConfig,
@@ -80,6 +83,7 @@ export function useRecipeOptionComparison({
       repository,
       expandedPaths,
       manualPrices,
+      automaticPrices,
       productionConfig,
       stationFeeConfig,
       craftingSpecializationConfig,

@@ -69,6 +69,8 @@ export interface CraftCostNode {
   readonly totalCost: number
   readonly unitCost: number
   readonly isManualPrice: boolean
+  /** Fuente efectiva del precio cuando el nodo funciona como hoja. */
+  readonly priceSource: 'manual' | 'automatic' | null
   /** Indica si este nodo y todas sus hojas tienen un precio confirmado. */
   readonly hasValidPrice: boolean
   readonly returnRate: MaterialReturnBreakdown | null

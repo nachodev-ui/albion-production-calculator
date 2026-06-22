@@ -23,6 +23,7 @@ export function useCraftCalculation(
   enchantment: EnchantmentLevel,
   quantity: number,
   repository: ItemRepository,
+  automaticPrices: ReadonlyMap<string, number> = new Map(),
 ) {
   const expandedPaths = useCraftTreeStore((s) => s.expandedPaths)
   const manualPrices = useCraftTreeStore((s) => s.manualPrices)
@@ -40,6 +41,7 @@ export function useCraftCalculation(
     const config: CraftTreeConfig = {
       expandedPaths,
       manualPrices,
+      automaticPrices,
       productionConfig,
       selectedRecipeOptions,
       stationFeeConfig,
@@ -54,6 +56,7 @@ export function useCraftCalculation(
     repository,
     expandedPaths,
     manualPrices,
+    automaticPrices,
     productionConfig,
     stationFeeConfig,
     craftingSpecializationConfig,
