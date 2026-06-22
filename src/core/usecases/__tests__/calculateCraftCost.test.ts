@@ -3,6 +3,7 @@ import { asBaseItemId } from '../../domain/entities/Item'
 import type { BaseItemId, Item, ItemCategory } from '../../domain/entities/Item'
 import type { ItemRepository } from '../../domain/repositories/ItemRepository'
 import {
+  buildItemPriceKey,
   calculateCraftCost,
   childPath,
   createEmptyTreeConfig,
@@ -203,6 +204,42 @@ describe('calculateCraftCost', () => {
     expect(result.isComplete).toBe(true)
     expect(result.missingPriceCount).toBe(0)
     expect(result.grandTotal).toBe(300)
+  })
+
+
+  it('usa el precio automático cuando no existe override manual', () => {
+    const sword = asBaseItemId('SWORD')
+    const config: CraftTreeConfig = {
+      ...createEmptyTreeConfig(),
+      automaticPrices: new Map([
+        [buildItemPriceKey(sword, 0), 80],
+      ]),
+    }
+
+    const result = calculateCraftCost(sword, 0, 3, repo, config)
+
+    expect(result.root.unitCost).toBe(80)
+    expect(result.root.priceSource).toBe('automatic')
+    expect(result.root.hasValidPrice).toBe(true)
+    expect(result.grandTotal).toBe(240)
+    expect(result.isComplete).toBe(true)
+  })
+
+  it('el precio manual tiene prioridad sobre el precio automático', () => {
+    const sword = asBaseItemId('SWORD')
+    const config: CraftTreeConfig = {
+      ...createEmptyTreeConfig(),
+      manualPrices: new Map([['root', 100]]),
+      automaticPrices: new Map([
+        [buildItemPriceKey(sword, 0), 80],
+      ]),
+    }
+
+    const result = calculateCraftCost(sword, 0, 2, repo, config)
+
+    expect(result.root.unitCost).toBe(100)
+    expect(result.root.priceSource).toBe('manual')
+    expect(result.grandTotal).toBe(200)
   })
 
 

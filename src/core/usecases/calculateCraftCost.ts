@@ -26,6 +26,13 @@ import { resolveRecipeIngredient } from './resolveRecipeIngredient'
 
 export type NodePath = string
 
+export function buildItemPriceKey(
+  itemId: BaseItemId,
+  enchantment: EnchantmentLevel,
+): string {
+  return `${itemId}@${enchantment}`
+}
+
 export function childPath(parent: NodePath, index: number): NodePath {
   return `${parent}-${index}`
 }
@@ -57,6 +64,11 @@ export const DEFAULT_RETURN_RATE_CONFIG: NodeReturnRateConfig = {
 export interface CraftTreeConfig {
   readonly expandedPaths: ReadonlySet<NodePath>
   readonly manualPrices: ReadonlyMap<NodePath, number>
+  /**
+   * Precios automáticos compartidos por identidad de ítem. Los precios
+   * manuales por path siempre tienen prioridad sobre este mapa.
+   */
+  readonly automaticPrices?: ReadonlyMap<string, number>
   readonly productionConfig: NodeReturnRateConfig
   readonly selectedRecipeOptions?: ReadonlyMap<NodePath, number>
   readonly stationFeeConfig?: StationFeeConfig
@@ -69,6 +81,7 @@ export function createEmptyTreeConfig(): CraftTreeConfig {
   return {
     expandedPaths: new Set(),
     manualPrices: new Map(),
+    automaticPrices: new Map(),
     productionConfig: DEFAULT_RETURN_RATE_CONFIG,
     selectedRecipeOptions: new Map(),
     stationFeeConfig: DEFAULT_STATION_FEE_CONFIG,
@@ -128,19 +141,38 @@ function buildLeaf(
   path: NodePath,
   config: CraftTreeConfig,
 ): BuiltNode {
-  // La presencia de la clave importa: un precio 0 ingresado por el usuario
-  // es válido y no debe confundirse con un precio todavía pendiente.
-  const hasValidPrice = config.manualPrices.has(path)
-  const manualUnitPrice = config.manualPrices.get(path) ?? 0
+  // La presencia de la clave importa: un precio manual 0 es válido.
+  // Cuando no existe override manual, se usa el precio automático del
+  // mercado para la misma identidad de ítem y encantamiento.
+  const hasManualPrice = config.manualPrices.has(path)
+  const manualUnitPrice = config.manualPrices.get(path)
+  const automaticUnitPrice = config.automaticPrices?.get(
+    buildItemPriceKey(itemId, enchantment),
+  )
+  const hasAutomaticPrice =
+    automaticUnitPrice !== undefined &&
+    Number.isFinite(automaticUnitPrice) &&
+    automaticUnitPrice >= 0
+  const hasValidPrice = hasManualPrice || hasAutomaticPrice
+  const unitPrice = hasManualPrice
+    ? manualUnitPrice ?? 0
+    : hasAutomaticPrice
+      ? automaticUnitPrice
+      : 0
 
   return {
     node: {
       itemId,
       enchantment,
       quantity,
-      totalCost: manualUnitPrice * quantity,
-      unitCost: manualUnitPrice,
+      totalCost: unitPrice * quantity,
+      unitCost: unitPrice,
       isManualPrice: true,
+      priceSource: hasManualPrice
+        ? 'manual'
+        : hasAutomaticPrice
+          ? 'automatic'
+          : null,
       hasValidPrice,
       returnRate: null,
       recipeOptionIndex: null,
@@ -265,6 +297,7 @@ function buildNode(
       totalCost: unitCost * quantity,
       unitCost,
       isManualPrice: false,
+      priceSource: null,
       hasValidPrice: missingPriceOccurrences.length === 0,
       returnRate: returnBreakdown,
       recipeOptionIndex,

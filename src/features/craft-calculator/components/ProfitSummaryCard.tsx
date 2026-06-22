@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { InfoHint } from '@shared/components/InfoHint'
 import { PROFIT_SUMMARY_INFO } from '../content/craftInfoDescriptions'
 import { calculateProfitBreakdown } from '../utils/profitCalculations'
+import type { MarketRequestStatus } from '@features/market-data/types/MarketPrice'
 
 interface ProfitSummaryCardProps {
   readonly totalCost: number
@@ -9,7 +11,12 @@ interface ProfitSummaryCardProps {
   readonly isPremium: boolean
   readonly onPremiumChange: (isPremium: boolean) => void
   readonly unitSellPrice: number | null
+  readonly automaticUnitSellPrice: number | null
+  readonly isManualSellPrice: boolean
+  readonly automaticPriceLabel: string
+  readonly marketStatus: MarketRequestStatus
   readonly onUnitSellPriceChange: (price: number | null) => void
+  readonly onUseAutomaticSellPrice: () => void
 }
 
 function formatSilver(amount: number): string {
@@ -33,8 +40,17 @@ export function ProfitSummaryCard({
   isPremium,
   onPremiumChange,
   unitSellPrice,
+  automaticUnitSellPrice,
+  isManualSellPrice,
+  automaticPriceLabel,
+  marketStatus,
   onUnitSellPriceChange,
+  onUseAutomaticSellPrice,
 }: ProfitSummaryCardProps) {
+  const [sellPriceText, setSellPriceText] = useState(
+    unitSellPrice !== null ? String(unitSellPrice) : '',
+  )
+
   const normalizedUnitSellPrice = unitSellPrice ?? 0
   const hasSellPrice = normalizedUnitSellPrice > 0
   const canShowEconomicResult = hasSellPrice && isCalculationComplete
@@ -84,22 +100,30 @@ export function ProfitSummaryCard({
       ? 'text-negative'
       : 'text-positive'
 
-  function handleSellPriceChange(rawValue: string) {
-    if (rawValue === '') {
+  function commitSellPrice() {
+    const trimmed = sellPriceText.trim()
+
+    if (trimmed === '') {
       onUnitSellPriceChange(null)
       return
     }
 
-    const next = Number(rawValue)
+    const next = Number(trimmed.replace(',', '.'))
 
-    if (!Number.isFinite(next)) return
+    if (!Number.isFinite(next) || next < 0) {
+      setSellPriceText(unitSellPrice !== null ? String(unitSellPrice) : '')
+      return
+    }
 
-    onUnitSellPriceChange(Math.max(0, Math.floor(next)))
+    const normalized = Math.floor(next)
+    setSellPriceText(String(normalized))
+    onUnitSellPriceChange(normalized)
   }
 
   function applyTargetPrice(unitPrice: number) {
     if (!isCalculationComplete || unitPrice <= 0) return
 
+    setSellPriceText(String(unitPrice))
     onUnitSellPriceChange(unitPrice)
   }
 
@@ -195,35 +219,74 @@ export function ProfitSummaryCard({
           </h4>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <label
-                  htmlFor="unit-sell-price"
-                  className="text-sm text-text-muted"
-                >
-                  Precio de venta unitario
-                </label>
+            <div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <label
+                    htmlFor="unit-sell-price"
+                    className="text-sm text-text-muted"
+                  >
+                    Precio de venta unitario
+                  </label>
 
-                <InfoHint
-                  label="Precio de venta unitario"
-                  text={PROFIT_SUMMARY_INFO.unitSellPrice}
-                  align="left"
+                  <InfoHint
+                    label="Precio de venta unitario"
+                    text={PROFIT_SUMMARY_INFO.unitSellPrice}
+                    align="left"
+                  />
+                </div>
+
+                <input
+                  id="unit-sell-price"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={sellPriceText}
+                  onChange={(event) => setSellPriceText(event.target.value)}
+                  onBlur={commitSellPrice}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.currentTarget.blur()
+                    }
+
+                    if (event.key === 'Escape') {
+                      event.preventDefault()
+                      setSellPriceText(
+                        unitSellPrice !== null
+                          ? String(unitSellPrice)
+                          : '',
+                      )
+                    }
+                  }}
+                  className="w-32 shrink-0 rounded-md border border-border bg-surface-raised px-3 py-2 text-right text-sm tabular text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
                 />
               </div>
 
-              <input
-                id="unit-sell-price"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                placeholder="0"
-                value={unitSellPrice ?? ''}
-                onChange={(event) =>
-                  handleSellPriceChange(event.target.value)
-                }
-                className="w-32 shrink-0 rounded-md border border-border bg-surface-raised px-3 py-2 text-right text-sm tabular text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-              />
+              <div className="mt-1 flex min-h-4 justify-end text-[11px]">
+                {isManualSellPrice ? (
+                  automaticUnitSellPrice !== null ? (
+                    <button
+                      type="button"
+                      onClick={onUseAutomaticSellPrice}
+                      className="text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
+                    >
+                      Usar precio AODP ({formatSilver(automaticUnitSellPrice)})
+                    </button>
+                  ) : (
+                    <span className="text-text-faint">Precio manual</span>
+                  )
+                ) : automaticUnitSellPrice !== null ? (
+                  <span className="text-positive">
+                    AODP · {automaticPriceLabel}
+                  </span>
+                ) : marketStatus === 'loading' ? (
+                  <span className="text-text-faint">Consultando AODP…</span>
+                ) : (
+                  <span className="text-text-faint">
+                    Sin precio automático disponible
+                  </span>
+                )}
+              </div>
             </div>
 
             <label className="flex cursor-pointer items-center justify-between gap-4">
