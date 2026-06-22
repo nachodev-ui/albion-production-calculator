@@ -7,7 +7,10 @@ import type { NodePath } from '@core/usecases/calculateCraftCost'
 import { recipeChildPath } from '@core/usecases/calculateCraftCost'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import { ManualPriceInput } from '@features/price-input/components/ManualPriceInput'
-import type { MarketRequestStatus } from '@features/market-data/types/MarketPrice'
+import type {
+  AutomaticMarketPriceDetail,
+  MarketRequestStatus,
+} from '@features/market-data/types/MarketPrice'
 import { buildItemPriceKey } from '@features/market-data/types/MarketPrice'
 import { useCraftTreeStore } from '../../store/craftTreeStore'
 import { getEnchantmentColor } from '../enchantmentColors'
@@ -25,6 +28,7 @@ interface RecipeTreeNodeProps {
   readonly repository: ItemRepository
   readonly depth: number
   readonly automaticPrices: ReadonlyMap<string, number>
+  readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
   readonly automaticPriceLabel: string
   readonly marketStatus: MarketRequestStatus
 }
@@ -46,6 +50,7 @@ function RecipeTreeNode({
   repository,
   depth,
   automaticPrices,
+  automaticPriceDetails,
   automaticPriceLabel,
   marketStatus,
 }: RecipeTreeNodeProps) {
@@ -71,9 +76,12 @@ function RecipeTreeNode({
     (state) => state.manualPrices.get(path),
   )
 
-  const automaticPrice = automaticPrices.get(
-    buildItemPriceKey(node.itemId, node.enchantment),
+  const itemPriceKey = buildItemPriceKey(
+    node.itemId,
+    node.enchantment,
   )
+  const automaticPrice = automaticPrices.get(itemPriceKey)
+  const automaticPriceDetail = automaticPriceDetails.get(itemPriceKey)
 
   const tier = item?.recipe
     ? getRecipeTier(item.recipe, node.enchantment)
@@ -90,7 +98,7 @@ function RecipeTreeNode({
   return (
     <div className="flex flex-col items-center">
       <div
-        className={`flex min-h-[148px] w-[320px] max-w-full flex-col rounded-xl border bg-surface-raised p-3 transition-colors ${
+        className={`flex min-h-[204px] w-[320px] max-w-full flex-col rounded-xl border bg-surface-raised p-3 transition-colors ${
           isExpandable ? 'hover:border-border-strong' : ''
         }`}
         data-missing-price={hasMissingPrice ? 'true' : undefined}
@@ -161,7 +169,7 @@ function RecipeTreeNode({
           )}
         </button>
 
-        <div className="mt-auto min-h-[68px] border-t border-border pt-2">
+        <div className="mt-auto min-h-[124px] border-t border-border pt-2">
           {isExpanded ? (
             <span className="text-sm tabular text-text">
               {formatSilver(node.totalCost)}
@@ -173,6 +181,7 @@ function RecipeTreeNode({
               value={manualPrice}
               automaticValue={automaticPrice}
               automaticLabel={automaticPriceLabel}
+              automaticUpdatedAt={automaticPriceDetail?.updatedAt ?? null}
               isAutomaticLoading={marketStatus === 'loading'}
               quantity={node.quantity}
               onChange={(unitPrice) =>
@@ -213,6 +222,7 @@ function RecipeTreeNode({
                     repository={repository}
                     depth={depth + 1}
                     automaticPrices={automaticPrices}
+                    automaticPriceDetails={automaticPriceDetails}
                     automaticPriceLabel={automaticPriceLabel}
                     marketStatus={marketStatus}
                   />
@@ -230,6 +240,7 @@ interface RecipeTreeProps {
   readonly rootNode: CraftCostNode
   readonly repository: ItemRepository
   readonly automaticPrices: ReadonlyMap<string, number>
+  readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
   readonly automaticPriceLabel: string
   readonly marketStatus: MarketRequestStatus
 }
@@ -245,6 +256,7 @@ export function RecipeTree({
   rootNode,
   repository,
   automaticPrices,
+  automaticPriceDetails,
   automaticPriceLabel,
   marketStatus,
 }: RecipeTreeProps) {
@@ -277,6 +289,7 @@ export function RecipeTree({
             repository={repository}
             depth={1}
             automaticPrices={automaticPrices}
+            automaticPriceDetails={automaticPriceDetails}
             automaticPriceLabel={automaticPriceLabel}
             marketStatus={marketStatus}
           />

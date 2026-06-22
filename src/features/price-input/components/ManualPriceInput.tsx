@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
 
 function formatSilver(amount: number): string {
   return new Intl.NumberFormat('es-CL', {
@@ -11,6 +12,7 @@ interface ManualPriceInputProps {
   readonly value: number | undefined
   readonly automaticValue?: number
   readonly automaticLabel?: string
+  readonly automaticUpdatedAt?: string | null
   readonly isAutomaticLoading?: boolean
   readonly quantity: number
   readonly onChange: (unitPrice: number) => void
@@ -29,6 +31,7 @@ export function ManualPriceInput({
   value,
   automaticValue,
   automaticLabel = 'AODP',
+  automaticUpdatedAt = null,
   isAutomaticLoading = false,
   quantity,
   onChange,
@@ -141,9 +144,7 @@ export function ManualPriceInput({
           ) : isAutomaticLoading ? (
             <span className="text-text-faint">Consultando AODP…</span>
           ) : (
-            <span aria-hidden="true" className="invisible">
-              Sin fuente
-            </span>
+            <span className="text-text-faint">Sin precio AODP</span>
           )}
         </div>
 
@@ -166,6 +167,14 @@ export function ManualPriceInput({
           )}
         </div>
       </div>
+
+      {(!isAutomaticLoading || hasAutomaticValue) && (
+        <MarketPriceFreshnessStatus
+          updatedAt={hasAutomaticValue ? automaticUpdatedAt : null}
+          isActive={hasAutomaticValue && !isManualOverride}
+          compact
+        />
+      )}
     </div>
   )
 }

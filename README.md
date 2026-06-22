@@ -38,5 +38,5 @@ calidad informativo. Consulta `TARIFAS_ESTACION_Y_FOCO.md`.
 
 La calculadora consulta precios actuales de AODP según servidor, ciudad y
 estrategia de compra o venta. Los valores manuales siempre tienen prioridad y
-los snapshots automáticos se almacenan en una caché local. Consulta
-`PRECIOS_AODP.md`.
+los snapshots automáticos se almacenan en una caché local. Cada precio muestra
+su fecha exacta, antigüedad y nivel de confianza. Consulta `PRECIOS_AODP.md`.
