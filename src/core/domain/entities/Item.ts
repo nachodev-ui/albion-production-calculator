@@ -45,6 +45,8 @@ export interface Item {
   readonly category: ItemCategory
   /** Nivel máximo de encantamiento que admite este ítem (0 si no admite). */
   readonly maxEnchantment: EnchantmentLevel
+  /** Valor interno usado por Albion para nutrición y tarifas de estación. */
+  readonly itemValue?: number | null
   /**
    * Receta para craftear este ítem, si es craftable.
    * `null` si el ítem solo se obtiene farmeando/comprando (ej. Mineral, Fibra).

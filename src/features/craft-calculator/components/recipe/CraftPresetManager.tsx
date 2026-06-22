@@ -1,5 +1,13 @@
 import { useMemo, useState } from 'react'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import {
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  DEFAULT_STATION_FEE_CONFIG,
+} from '@core/domain/entities/ProductionEconomy'
+import type {
+  CraftingSpecializationConfig,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 import { InfoHint } from '@shared/components/InfoHint'
 import { useCraftPresetStore } from '../../store/craftPresetStore'
 import {
@@ -10,8 +18,14 @@ import {
 interface CraftPresetManagerProps {
   readonly config: NodeReturnRateConfig
   readonly isPremium: boolean
+  readonly stationFeeConfig: StationFeeConfig
+  readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly onConfigChange: (config: NodeReturnRateConfig) => void
   readonly onPremiumChange: (isPremium: boolean) => void
+  readonly onStationFeeConfigChange: (config: StationFeeConfig) => void
+  readonly onCraftingSpecializationConfigChange: (
+    config: CraftingSpecializationConfig,
+  ) => void
 }
 
 type EditorMode = 'create' | 'rename' | null
@@ -19,8 +33,12 @@ type EditorMode = 'create' | 'rename' | null
 export function CraftPresetManager({
   config,
   isPremium,
+  stationFeeConfig,
+  craftingSpecializationConfig,
   onConfigChange,
   onPremiumChange,
+  onStationFeeConfigChange,
+  onCraftingSpecializationConfigChange,
 }: CraftPresetManagerProps) {
   const presets = useCraftPresetStore((state) => state.presets)
   const defaultPresetId = useCraftPresetStore(
@@ -53,7 +71,13 @@ export function CraftPresetManager({
   )
 
   const isActivePresetModified = activePreset
-    ? !doesPresetMatchCurrentConfig(activePreset, config, isPremium)
+    ? !doesPresetMatchCurrentConfig(
+        activePreset,
+        config,
+        isPremium,
+        stationFeeConfig,
+        craftingSpecializationConfig,
+      )
     : false
 
   const isActivePresetDefault =
@@ -71,6 +95,13 @@ export function CraftPresetManager({
       applyPresetProductionConfig(config, preset.productionConfig),
     )
     onPremiumChange(preset.isPremium)
+    onStationFeeConfigChange(
+      preset.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG,
+    )
+    onCraftingSpecializationConfigChange(
+      preset.craftingSpecializationConfig ??
+        DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+    )
     setActivePreset(preset.id)
     setEditorMode(null)
     setFormError(null)
@@ -125,6 +156,8 @@ export function CraftPresetManager({
         normalizedName,
         config,
         isPremium,
+        stationFeeConfig,
+        craftingSpecializationConfig,
       )
 
       if (!createdId) {
@@ -141,7 +174,13 @@ export function CraftPresetManager({
   function handleUpdatePreset() {
     if (!activePreset) return
 
-    updatePreset(activePreset.id, config, isPremium)
+    updatePreset(
+      activePreset.id,
+      config,
+      isPremium,
+      stationFeeConfig,
+      craftingSpecializationConfig,
+    )
     setDeleteConfirmationId(null)
   }
 
@@ -176,7 +215,7 @@ export function CraftPresetManager({
 
           <InfoHint
             label="Preset de producción y venta"
-            text="Guarda ciudad, bono de especialidad, foco, bono diario y Premium para reutilizar la misma configuración con un clic. Los precios, la cantidad y el objeto no se guardan aquí."
+            text="Guarda ciudad, retorno, tarifas de estación, eficiencia de foco, bono de calidad y Premium. El Item Value, los precios, la cantidad y el objeto no se guardan."
             align="left"
           />
         </div>

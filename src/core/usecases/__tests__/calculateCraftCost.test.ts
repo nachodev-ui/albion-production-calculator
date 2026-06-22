@@ -93,6 +93,7 @@ function buildTestRepository(): ItemRepository {
     tier: 4,
     category: 'weapon' as ItemCategory,
     maxEnchantment: 0,
+    itemValue: 8_000,
     recipe: {
       tiers: [
         {
@@ -104,7 +105,7 @@ function buildTestRepository(): ItemRepository {
           ],
           outputQuantity: 1,
           silverFee: 50,
-          craftingFocus: 0,
+          craftingFocus: 1_000,
           upgradeFrom: null,
         },
       ],
@@ -589,4 +590,40 @@ describe('recetas alternativas de equipo real', () => {
     expect(result.totalSilverSavedByReturnRate).toBe(0)
     expect(result.returnedMaterials).toHaveLength(0)
   })
+  it('suma la tarifa de uso por nutrición y calcula el foco efectivo', () => {
+    const config: CraftTreeConfig = {
+      expandedPaths: new Set(['root']),
+      manualPrices: new Map([
+        [childPath('root', 0), 20],
+        [childPath('root', 1), 5],
+      ]),
+      productionConfig: {
+        ...DEFAULT_RETURN_RATE_CONFIG,
+        useFocus: true,
+      },
+      stationFeeConfig: {
+        accessType: 'user',
+        userFeePer100Nutrition: 450,
+        associateFeePer100Nutrition: 250,
+      },
+      craftingSpecializationConfig: {
+        focusCostEfficiency: 10_000,
+        availableFocus: 10_000,
+        qualityIncrease: 6.05,
+      },
+    }
+
+    const result = calculateCraftCost(asBaseItemId('SWORD'), 0, 10, repo, config)
+
+    expect(result.stationFeeBreakdown.nutritionPerCraft).toBe(900)
+    expect(result.stationUsageFee).toBe(40_500)
+    expect(result.grandTotal).toBeCloseTo(
+      result.root.totalCost + 40_500,
+      10,
+    )
+    expect(result.focusCostBreakdown.effectiveFocusPerCraft).toBe(500)
+    expect(result.focusCostBreakdown.totalFocusRequired).toBe(5_000)
+    expect(result.focusCostBreakdown.maxItemsWithAvailableFocus).toBe(20)
+  })
+
 })

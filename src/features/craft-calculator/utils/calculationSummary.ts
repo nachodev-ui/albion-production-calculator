@@ -30,6 +30,22 @@ export interface CalculationSummaryInput {
   readonly dailyBonusAmount: number
   readonly returnRate: number
 
+  readonly stationName: string
+  readonly stationAccessLabel: string
+  readonly itemValue: number
+  readonly nutritionPerCraft: number
+  readonly nutritionTotal: number
+  readonly appliedFeePer100Nutrition: number
+  readonly stationUsageFee: number
+
+  readonly focusCostEfficiency: number
+  readonly availableFocus: number
+  readonly qualityIncrease: number
+  readonly baseFocusPerCraft: number
+  readonly effectiveFocusPerCraft: number
+  readonly totalFocusRequired: number
+  readonly maxItemsWithAvailableFocus: number
+
   readonly totalCost: number
   readonly silverSaved: number
   readonly stationFees: number
@@ -161,6 +177,24 @@ export function buildCalculationSummary(
         : 'No'
     }`,
     `- RRR resultante: ${formatPercentage(input.returnRate)}`,
+    '',
+    'PUESTO Y NUTRICIÓN',
+    `- Puesto: ${input.stationName}`,
+    `- Acceso: ${input.stationAccessLabel}`,
+    `- Item Value: ${formatQuantity(input.itemValue)}`,
+    `- Nutrición por tirada: ${formatQuantity(input.nutritionPerCraft)}`,
+    `- Nutrición total: ${formatQuantity(input.nutritionTotal)}`,
+    `- Tarifa aplicada / 100 nutrición: ${formatSilver(input.appliedFeePer100Nutrition)}`,
+    `- Costo de uso del puesto: ${formatSilver(input.stationUsageFee)}`,
+    '',
+    'ESPECIALIZACIÓN Y FOCO',
+    `- Focus Cost Efficiency: ${formatQuantity(input.focusCostEfficiency)}`,
+    `- Foco disponible: ${formatQuantity(input.availableFocus)}`,
+    `- Increase in Quality: ${formatQuantity(input.qualityIncrease)}`,
+    `- Foco base por tirada: ${formatQuantity(input.baseFocusPerCraft)}`,
+    `- Foco efectivo por tirada: ${formatQuantity(input.effectiveFocusPerCraft)}`,
+    `- Foco para este lote: ${input.useFocus ? formatQuantity(input.totalFocusRequired) : 'Foco desactivado'}`,
+    `- Objetos posibles con el foco indicado: ${formatQuantity(input.maxItemsWithAvailableFocus)}`,
     '',
     'COSTOS',
     `- Costo bruto${input.isComplete ? '' : ' parcial'}: ${formatSilver(grossCost)}`,

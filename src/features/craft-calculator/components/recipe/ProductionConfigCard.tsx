@@ -1,20 +1,51 @@
 import { CITIES } from '@core/domain/entities'
 import type { CityId, NodeReturnRateConfig } from '@core/domain/entities'
 import { calculateReturnRate } from '@core/domain/entities'
+import type { CraftingStation } from '@core/domain/entities/Recipe'
+import type {
+  CraftingSpecializationConfig,
+  FocusCostBreakdown,
+  StationFeeBreakdown,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 import { CraftPresetManager } from './CraftPresetManager'
+import { CraftingSpecializationPanel } from './CraftingSpecializationPanel'
+import { StationFeeConfigPanel } from './StationFeeConfigPanel'
 
 interface ProductionConfigCardProps {
   readonly config: NodeReturnRateConfig
   readonly isPremium: boolean
+  readonly station: CraftingStation
+  readonly stationFeeConfig: StationFeeConfig
+  readonly craftingSpecializationConfig: CraftingSpecializationConfig
+  readonly detectedItemValue: number | null
+  readonly itemValueOverride: number | null
+  readonly stationFeeBreakdown: StationFeeBreakdown
+  readonly focusCostBreakdown: FocusCostBreakdown
   readonly onChange: (config: NodeReturnRateConfig) => void
   readonly onPremiumChange: (isPremium: boolean) => void
+  readonly onStationFeeConfigChange: (config: StationFeeConfig) => void
+  readonly onCraftingSpecializationConfigChange: (
+    config: CraftingSpecializationConfig,
+  ) => void
+  readonly onItemValueOverrideChange: (value: number | null) => void
 }
 
 export function ProductionConfigCard({
   config,
   isPremium,
+  station,
+  stationFeeConfig,
+  craftingSpecializationConfig,
+  detectedItemValue,
+  itemValueOverride,
+  stationFeeBreakdown,
+  focusCostBreakdown,
   onChange,
   onPremiumChange,
+  onStationFeeConfigChange,
+  onCraftingSpecializationConfigChange,
+  onItemValueOverrideChange,
 }: ProductionConfigCardProps) {
   const rrr = calculateReturnRate(config)
 
@@ -28,9 +59,7 @@ export function ProductionConfigCard({
     update({
       cityId,
       isIsland,
-      hasSpecialtyBonus: isIsland
-        ? false
-        : config.hasSpecialtyBonus,
+      hasSpecialtyBonus: isIsland ? false : config.hasSpecialtyBonus,
     })
   }
 
@@ -42,23 +71,26 @@ export function ProductionConfigCard({
         </h3>
 
         <p className="mt-1 text-xs text-text-faint">
-          Ajusta los modificadores globales utilizados para calcular el
-          retorno de recursos.
+          Ajusta retorno, tarifa del puesto y bonos pasivos de especialización.
         </p>
       </div>
 
       <CraftPresetManager
         config={config}
         isPremium={isPremium}
+        stationFeeConfig={stationFeeConfig}
+        craftingSpecializationConfig={craftingSpecializationConfig}
         onConfigChange={onChange}
         onPremiumChange={onPremiumChange}
+        onStationFeeConfigChange={onStationFeeConfigChange}
+        onCraftingSpecializationConfigChange={
+          onCraftingSpecializationConfigChange
+        }
       />
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-raised p-3">
-          <label className="text-sm text-text-muted">
-            Ciudad
-          </label>
+          <label className="text-sm text-text-muted">Ciudad</label>
 
           <select
             value={config.cityId}
@@ -96,24 +128,18 @@ export function ProductionConfigCard({
         </label>
 
         <label className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
-          <span className="text-sm text-text-muted">
-            Usar foco
-          </span>
+          <span className="text-sm text-text-muted">Usar foco</span>
 
           <input
             type="checkbox"
             checked={config.useFocus}
-            onChange={(event) =>
-              update({ useFocus: event.target.checked })
-            }
+            onChange={(event) => update({ useFocus: event.target.checked })}
             className="accent-accent"
           />
         </label>
 
         <label className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
-          <span className="text-sm text-text-muted">
-            Bono diario
-          </span>
+          <span className="text-sm text-text-muted">Bono diario</span>
 
           <input
             type="checkbox"
@@ -162,6 +188,22 @@ export function ProductionConfigCard({
           </span>
         </div>
       </div>
+
+      <StationFeeConfigPanel
+        station={station}
+        config={stationFeeConfig}
+        detectedItemValue={detectedItemValue}
+        itemValueOverride={itemValueOverride}
+        breakdown={stationFeeBreakdown}
+        onChange={onStationFeeConfigChange}
+        onItemValueOverrideChange={onItemValueOverrideChange}
+      />
+
+      <CraftingSpecializationPanel
+        config={craftingSpecializationConfig}
+        breakdown={focusCostBreakdown}
+        onChange={onCraftingSpecializationConfigChange}
+      />
     </section>
   )
 }

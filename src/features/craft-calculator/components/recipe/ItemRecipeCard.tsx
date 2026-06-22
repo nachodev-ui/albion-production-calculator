@@ -88,6 +88,18 @@
     const resetForItem = useCraftTreeStore((state) => state.resetForItem)
     const productionConfig = useCraftTreeStore((state) => state.productionConfig)
     const setProductionConfig = useCraftTreeStore((state) => state.setProductionConfig)
+    const stationFeeConfig = useCraftTreeStore((state) => state.stationFeeConfig)
+    const setStationFeeConfig = useCraftTreeStore((state) => state.setStationFeeConfig)
+    const craftingSpecializationConfig = useCraftTreeStore(
+      (state) => state.craftingSpecializationConfig,
+    )
+    const setCraftingSpecializationConfig = useCraftTreeStore(
+      (state) => state.setCraftingSpecializationConfig,
+    )
+    const itemValueOverride = useCraftTreeStore((state) => state.itemValueOverride)
+    const setItemValueOverride = useCraftTreeStore(
+      (state) => state.setItemValueOverride,
+    )
     const isPremium = useCraftTreeStore((state) => state.isPremium)
     const setIsPremium = useCraftTreeStore((state) => state.setIsPremium)
 
@@ -191,15 +203,27 @@
             <ProductionConfigCard
               config={productionConfig}
               isPremium={isPremium}
+              station={tier?.station ?? 'unknown'}
+              stationFeeConfig={stationFeeConfig}
+              craftingSpecializationConfig={craftingSpecializationConfig}
+              detectedItemValue={item.itemValue ?? null}
+              itemValueOverride={itemValueOverride}
+              stationFeeBreakdown={calculation.stationFeeBreakdown}
+              focusCostBreakdown={calculation.focusCostBreakdown}
               onChange={setProductionConfig}
               onPremiumChange={setIsPremium}
+              onStationFeeConfigChange={setStationFeeConfig}
+              onCraftingSpecializationConfigChange={
+                setCraftingSpecializationConfig
+              }
+              onItemValueOverrideChange={setItemValueOverride}
             />
 
             <CraftQuantityInput
               value={quantity}
               onChange={setQuantity}
             />
-                                        
+
             <section className="mt-4 rounded-xl border border-border bg-surface-raised p-4">
               <div className="mb-4">
                 <h3 className="text-sm font-semibold text-text">
@@ -232,9 +256,16 @@
               </div>
 
               {calculation.totalStationFees > 0 && (
-                <p className="mt-4 border-t border-border pt-3 text-center text-xs tabular text-text-faint">
-                  Incluye {formatSilver(calculation.totalStationFees)} de tarifas de estación
-                </p>
+                <div className="mt-4 space-y-1 border-t border-border pt-3 text-center text-xs tabular text-text-faint">
+                  <p>
+                    Tarifas totales de estación: {formatSilver(calculation.totalStationFees)} plata
+                  </p>
+                  {calculation.stationUsageFee > 0 && (
+                    <p>
+                      Uso del puesto por nutrición: {formatSilver(calculation.stationUsageFee)} plata
+                    </p>
+                  )}
+                </div>
               )}
 
               {status === 'partial' && (
@@ -255,6 +286,7 @@
               totalCost={calculation.grandTotal}
               silverSaved={calculation.totalSilverSavedByReturnRate}
               quantity={quantity}
+              stationUsageFee={calculation.stationUsageFee}
             />
 
             <ReturnedMaterialsCard
@@ -291,6 +323,8 @@
               quantity={quantity}
               calculation={calculation}
               productionConfig={productionConfig}
+              stationFeeConfig={stationFeeConfig}
+              craftingSpecializationConfig={craftingSpecializationConfig}
               isPremium={isPremium}
               unitSellPrice={unitSellPrice}
               repository={repository}

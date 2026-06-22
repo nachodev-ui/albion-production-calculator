@@ -1,5 +1,9 @@
 import { create } from 'zustand'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import type {
+  CraftingSpecializationConfig,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 import {
   createCraftPresetId,
   loadCraftPresetStorage,
@@ -17,11 +21,15 @@ interface CraftPresetState {
     name: string,
     config: NodeReturnRateConfig,
     isPremium: boolean,
+    stationFeeConfig: StationFeeConfig,
+    craftingSpecializationConfig: CraftingSpecializationConfig,
   ) => string | null
   updatePreset: (
     presetId: string,
     config: NodeReturnRateConfig,
     isPremium: boolean,
+    stationFeeConfig: StationFeeConfig,
+    craftingSpecializationConfig: CraftingSpecializationConfig,
   ) => void
   renamePreset: (presetId: string, name: string) => void
   deletePreset: (presetId: string) => void
@@ -43,7 +51,13 @@ export const useCraftPresetStore = create<CraftPresetState>((set, get) => ({
   defaultPresetId: initialStorage.defaultPresetId,
   activePresetId: initialStorage.defaultPresetId,
 
-  createPreset: (name, config, isPremium) => {
+  createPreset: (
+    name,
+    config,
+    isPremium,
+    stationFeeConfig,
+    craftingSpecializationConfig,
+  ) => {
     const normalizedName = name.trim()
 
     if (normalizedName.length === 0) return null
@@ -62,6 +76,8 @@ export const useCraftPresetStore = create<CraftPresetState>((set, get) => ({
       id,
       name: normalizedName,
       productionConfig: toPresetProductionConfig(config),
+      stationFeeConfig,
+      craftingSpecializationConfig,
       isPremium,
     }
 
@@ -74,12 +90,20 @@ export const useCraftPresetStore = create<CraftPresetState>((set, get) => ({
     return id
   },
 
-  updatePreset: (presetId, config, isPremium) => {
+  updatePreset: (
+    presetId,
+    config,
+    isPremium,
+    stationFeeConfig,
+    craftingSpecializationConfig,
+  ) => {
     const presets = get().presets.map((preset) =>
       preset.id === presetId
         ? {
             ...preset,
             productionConfig: toPresetProductionConfig(config),
+            stationFeeConfig,
+            craftingSpecializationConfig,
             isPremium,
           }
         : preset,
@@ -105,9 +129,7 @@ export const useCraftPresetStore = create<CraftPresetState>((set, get) => ({
     if (duplicate) return
 
     const presets = get().presets.map((preset) =>
-      preset.id === presetId
-        ? { ...preset, name: normalizedName }
-        : preset,
+      preset.id === presetId ? { ...preset, name: normalizedName } : preset,
     )
 
     persist(presets, get().defaultPresetId)
@@ -117,13 +139,9 @@ export const useCraftPresetStore = create<CraftPresetState>((set, get) => ({
   deletePreset: (presetId) => {
     const presets = get().presets.filter((preset) => preset.id !== presetId)
     const defaultPresetId =
-      get().defaultPresetId === presetId
-        ? null
-        : get().defaultPresetId
+      get().defaultPresetId === presetId ? null : get().defaultPresetId
     const activePresetId =
-      get().activePresetId === presetId
-        ? null
-        : get().activePresetId
+      get().activePresetId === presetId ? null : get().activePresetId
 
     persist(presets, defaultPresetId)
     set({ presets, defaultPresetId, activePresetId })
