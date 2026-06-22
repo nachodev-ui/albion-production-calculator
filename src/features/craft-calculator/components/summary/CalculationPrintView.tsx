@@ -189,6 +189,65 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
         </section>
       </div>
 
+      <div className="print-two-columns">
+        <section className="print-card print-avoid-break">
+          <h2>Puesto y nutrición</h2>
+          <SummaryRow label="Puesto" value={summary.stationName} />
+          <SummaryRow label="Acceso" value={summary.stationAccessLabel} />
+          <SummaryRow label="Item Value" value={formatQuantity(summary.itemValue)} />
+          <SummaryRow
+            label="Nutrición por tirada"
+            value={formatQuantity(summary.nutritionPerCraft)}
+          />
+          <SummaryRow
+            label="Nutrición total"
+            value={formatQuantity(summary.nutritionTotal)}
+          />
+          <SummaryRow
+            label="Tarifa / 100 nutrición"
+            value={formatSilver(summary.appliedFeePer100Nutrition)}
+          />
+          <SummaryRow
+            label="Costo de uso del puesto"
+            value={formatSilver(summary.stationUsageFee)}
+            emphasis
+          />
+        </section>
+
+        <section className="print-card print-avoid-break">
+          <h2>Especialización y foco</h2>
+          <SummaryRow
+            label="Focus Cost Efficiency"
+            value={formatQuantity(summary.focusCostEfficiency)}
+          />
+          <SummaryRow
+            label="Foco disponible"
+            value={formatQuantity(summary.availableFocus)}
+          />
+          <SummaryRow
+            label="Increase in Quality"
+            value={formatQuantity(summary.qualityIncrease)}
+          />
+          <SummaryRow
+            label="Foco base por tirada"
+            value={formatQuantity(summary.baseFocusPerCraft)}
+          />
+          <SummaryRow
+            label="Foco efectivo por tirada"
+            value={formatQuantity(summary.effectiveFocusPerCraft)}
+          />
+          <SummaryRow
+            label="Foco para este lote"
+            value={summary.useFocus ? formatQuantity(summary.totalFocusRequired) : 'Foco desactivado'}
+            emphasis={summary.useFocus}
+          />
+          <SummaryRow
+            label="Objetos posibles"
+            value={formatQuantity(summary.maxItemsWithAvailableFocus)}
+          />
+        </section>
+      </div>
+
       <section className="print-card print-avoid-break">
         <h2>Venta y comisiones</h2>
         <div className="print-two-columns print-two-columns-compact">

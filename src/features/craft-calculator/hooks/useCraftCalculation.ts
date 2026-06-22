@@ -27,6 +27,11 @@ export function useCraftCalculation(
   const expandedPaths = useCraftTreeStore((s) => s.expandedPaths)
   const manualPrices = useCraftTreeStore((s) => s.manualPrices)
   const productionConfig = useCraftTreeStore((s) => s.productionConfig)
+  const stationFeeConfig = useCraftTreeStore((s) => s.stationFeeConfig)
+  const craftingSpecializationConfig = useCraftTreeStore(
+    (s) => s.craftingSpecializationConfig,
+  )
+  const itemValueOverride = useCraftTreeStore((s) => s.itemValueOverride)
   const selectedRecipeOptions = useCraftTreeStore(
     (s) => s.selectedRecipeOptions,
   )
@@ -37,6 +42,9 @@ export function useCraftCalculation(
       manualPrices,
       productionConfig,
       selectedRecipeOptions,
+      stationFeeConfig,
+      craftingSpecializationConfig,
+      itemValueOverride,
     }
     return calculateCraftCost(itemId, enchantment, quantity, repository, config)
   }, [
@@ -47,6 +55,9 @@ export function useCraftCalculation(
     expandedPaths,
     manualPrices,
     productionConfig,
+    stationFeeConfig,
+    craftingSpecializationConfig,
+    itemValueOverride,
     selectedRecipeOptions,
   ])
 }

@@ -56,6 +56,7 @@ interface RawEnchantments {
 interface RawItemNode {
     '@_uniquename': string
     '@_tier'?: string
+    '@_itemvalue'?: string
     '@_craftingcategory'?: string
     '@_shopcategory'?: string
     '@_shopsubcategory1'?: string
@@ -113,6 +114,7 @@ interface OutputItem {
     tier: number
     category: OutputCategory
     maxEnchantment: number
+    itemValue: number | null
     recipe: { tiers: OutputRecipeTier[] } | null
   }
 
@@ -248,7 +250,7 @@ function mapCategory(
       // Solo armas de combate real; gathering/vanity/other/magic quedan fuera.
       return shopCategory === 'weapons' ? 'weapon' : null
     }
-  
+
     if (tagName === 'equipmentitem') {
       if (shopCategory === 'armors' || shopCategory === 'head' || shopCategory === 'shoes') {
         return 'armor'
@@ -258,7 +260,7 @@ function mapCategory(
       // gathering, vanity, y cualquier otro shopcategory no contemplado: fuera de alcance.
       return null
     }
-  
+
     if (tagName === 'simpleitem') {
       if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
       if (shopSubcategory1 === 'resources') return 'resource'
@@ -292,7 +294,7 @@ function mapCategory(
 
       return null
     }
-  
+
     return null
   }
 
@@ -366,7 +368,7 @@ function parseItemNode(
     // Excluir ítems de debug/desarrollo (ej. T4_DEBUG_ARMOR_HIDDEN): no son
     // contenido real, y su nombre localizado tampoco existe.
     if (isDebugItem(id)) return null
-  
+
     const tier = node['@_tier'] ? Number(node['@_tier']) : 0
     const shopCategory = node['@_shopcategory']
     const shopSubcategory1 = node['@_shopsubcategory1']
@@ -374,7 +376,7 @@ function parseItemNode(
       ? 'other'
       : mapCategory(tagName, shopCategory, shopSubcategory1)
     if (category === null) return null // Fuera de alcance: gathering, vanity, etc.
-  
+
     const station = inferStation(shopSubcategory1)
 
   const tiers: OutputRecipeTier[] = []
@@ -418,6 +420,7 @@ function parseItemNode(
     tier,
     category,
     maxEnchantment,
+    itemValue: node['@_itemvalue'] ? Number(node['@_itemvalue']) : null,
     recipe,
   }
 }
@@ -434,7 +437,7 @@ async function main(): Promise<void> {
     }
     const xml = await xmlResponse.text()
     console.log(`Descargado (${(xml.length / 1024 / 1024).toFixed(1)} MB). Parseando...`)
-  
+
     console.log('Descargando nombres localizados (items.json)...')
     const localizationResponse = await fetch(ITEMS_LOCALIZATION_URL)
     if (!localizationResponse.ok) {
@@ -445,13 +448,13 @@ async function main(): Promise<void> {
     const localizationEntries: RawLocalizationEntry[] = await localizationResponse.json()
     const localizationMap = buildLocalizationMap(localizationEntries)
     console.log(`Mapa de nombres construido (${localizationMap.size} entradas).`)
-  
+
     const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
     const parsed = parser.parse(xml)
-  
+
     const relevantTags = ['weapon', 'equipmentitem', 'simpleitem'] as const
     const items: OutputItem[] = []
-  
+
     for (const tagName of relevantTags) {
       const nodes = toArray<RawItemNode>(parsed.items[tagName])
       console.log(`Procesando ${nodes.length} nodos <${tagName}>...`)

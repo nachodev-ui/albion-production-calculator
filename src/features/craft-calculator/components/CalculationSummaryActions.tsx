@@ -8,6 +8,8 @@ import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
 import type { Item } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { calculateReturnRate } from '@core/domain/entities/ReturnRate'
+import { CRAFTING_STATION_LABELS } from '@core/domain/entities/ProductionEconomy'
+import type { CraftingSpecializationConfig, StationFeeConfig } from '@core/domain/entities/ProductionEconomy'
 import { InfoHint } from '@shared/components/InfoHint'
 import {
   buildCalculationSummary,
@@ -23,6 +25,8 @@ interface CalculationSummaryActionsProps {
   readonly quantity: number
   readonly calculation: CraftCalculation
   readonly productionConfig: NodeReturnRateConfig
+  readonly stationFeeConfig: StationFeeConfig
+  readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly isPremium: boolean
   readonly unitSellPrice: number | null
   readonly repository: ItemRepository
@@ -60,6 +64,8 @@ export function CalculationSummaryActions({
   quantity,
   calculation,
   productionConfig,
+  stationFeeConfig,
+  craftingSpecializationConfig,
   isPremium,
   unitSellPrice,
   repository,
@@ -103,6 +109,29 @@ export function CalculationSummaryActions({
       hasDailyBonus: productionConfig.hasDailyBonus,
       dailyBonusAmount: productionConfig.dailyBonusAmount,
       returnRate: calculateReturnRate(productionConfig),
+      stationName:
+        CRAFTING_STATION_LABELS[calculation.stationFeeBreakdown.station],
+      stationAccessLabel:
+        stationFeeConfig.accessType === 'free'
+          ? 'Sin tarifa / isla'
+          : stationFeeConfig.accessType === 'associate'
+            ? 'Asociado'
+            : 'Usuario',
+      itemValue: calculation.stationFeeBreakdown.itemValue,
+      nutritionPerCraft: calculation.stationFeeBreakdown.nutritionPerCraft,
+      nutritionTotal: calculation.stationFeeBreakdown.nutritionTotal,
+      appliedFeePer100Nutrition:
+        calculation.stationFeeBreakdown.feePer100Nutrition,
+      stationUsageFee: calculation.stationUsageFee,
+      focusCostEfficiency: craftingSpecializationConfig.focusCostEfficiency,
+      availableFocus: craftingSpecializationConfig.availableFocus,
+      qualityIncrease: craftingSpecializationConfig.qualityIncrease,
+      baseFocusPerCraft: calculation.focusCostBreakdown.baseFocusPerCraft,
+      effectiveFocusPerCraft:
+        calculation.focusCostBreakdown.effectiveFocusPerCraft,
+      totalFocusRequired: calculation.focusCostBreakdown.totalFocusRequired,
+      maxItemsWithAvailableFocus:
+        calculation.focusCostBreakdown.maxItemsWithAvailableFocus,
       totalCost: calculation.grandTotal,
       silverSaved: calculation.totalSilverSavedByReturnRate,
       stationFees: calculation.totalStationFees,

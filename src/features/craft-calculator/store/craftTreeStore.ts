@@ -2,6 +2,14 @@ import { create } from 'zustand'
 import type { BaseItemId } from '@core/domain/entities/Item'
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import {
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  DEFAULT_STATION_FEE_CONFIG,
+} from '@core/domain/entities/ProductionEconomy'
+import type {
+  CraftingSpecializationConfig,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 import type { NodePath } from '@core/usecases/calculateCraftCost'
 import { DEFAULT_RETURN_RATE_CONFIG } from '@core/usecases/calculateCraftCost'
 import {
@@ -36,6 +44,10 @@ interface CraftTreeState {
     ReadonlyMap<NodePath, number>
   >
   readonly productionConfig: NodeReturnRateConfig
+  readonly stationFeeConfig: StationFeeConfig
+  readonly craftingSpecializationConfig: CraftingSpecializationConfig
+  readonly itemValueOverride: number | null
+  readonly itemValueOverridesByRoot: ReadonlyMap<string, number>
   readonly isPremium: boolean
 
   /** Cambia de receta y restaura los precios guardados para esa raíz. */
@@ -51,6 +63,9 @@ interface CraftTreeState {
   clearAllManualPrices: () => void
   setRecipeOption: (path: NodePath, optionIndex: number) => void
   setProductionConfig: (config: NodeReturnRateConfig) => void
+  setStationFeeConfig: (config: StationFeeConfig) => void
+  setCraftingSpecializationConfig: (config: CraftingSpecializationConfig) => void
+  setItemValueOverride: (value: number | null) => void
   setIsPremium: (isPremium: boolean) => void
 }
 
@@ -85,6 +100,11 @@ const initialProductionConfig = initialDefaultPreset
       initialDefaultPreset.productionConfig,
     )
   : DEFAULT_RETURN_RATE_CONFIG
+const initialStationFeeConfig =
+  initialDefaultPreset?.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG
+const initialCraftingSpecializationConfig =
+  initialDefaultPreset?.craftingSpecializationConfig ??
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG
 const initialIsPremium = initialDefaultPreset?.isPremium ?? true
 
 export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
@@ -95,6 +115,10 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   selectedRecipeOptions: new Map(),
   selectedRecipeOptionsByRoot: new Map(),
   productionConfig: initialProductionConfig,
+  stationFeeConfig: initialStationFeeConfig,
+  craftingSpecializationConfig: initialCraftingSpecializationConfig,
+  itemValueOverride: null,
+  itemValueOverridesByRoot: new Map(),
   isPremium: initialIsPremium,
 
   resetForItem: (itemId, enchantment, expandRoot) => {
@@ -103,6 +127,7 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
 
     const savedPrices = get().manualPricesByRoot.get(key)
     const savedRecipeOptions = get().selectedRecipeOptionsByRoot.get(key)
+    const savedItemValue = get().itemValueOverridesByRoot.get(key)
 
     set({
       rootKey: key,
@@ -111,6 +136,7 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
       selectedRecipeOptions: savedRecipeOptions
         ? new Map(savedRecipeOptions)
         : new Map(),
+      itemValueOverride: savedItemValue ?? null,
     })
   },
 
@@ -205,6 +231,31 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
 
   setProductionConfig: (config) => {
     set({ productionConfig: config })
+  },
+
+  setStationFeeConfig: (config) => {
+    set({ stationFeeConfig: config })
+  },
+
+  setCraftingSpecializationConfig: (config) => {
+    set({ craftingSpecializationConfig: config })
+  },
+
+  setItemValueOverride: (value) => {
+    const normalized =
+      value !== null && Number.isFinite(value) && value >= 0 ? value : null
+    const itemValueOverridesByRoot = new Map(get().itemValueOverridesByRoot)
+    const rootKey = get().rootKey
+
+    if (rootKey) {
+      if (normalized === null) itemValueOverridesByRoot.delete(rootKey)
+      else itemValueOverridesByRoot.set(rootKey, normalized)
+    }
+
+    set({
+      itemValueOverride: normalized,
+      itemValueOverridesByRoot,
+    })
   },
 
   setIsPremium: (isPremium) => {

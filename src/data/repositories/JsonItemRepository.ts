@@ -52,6 +52,7 @@ interface RawItem {
   readonly tier: number
   readonly category: string
   readonly maxEnchantment: number
+  readonly itemValue?: number | null
   readonly recipe: RawRecipe | null
 }
 
@@ -99,6 +100,10 @@ function mapItem(raw: RawItem): Item {
     tier: raw.tier,
     category: raw.category as ItemCategory,
     maxEnchantment: raw.maxEnchantment as EnchantmentLevel,
+    itemValue:
+      typeof raw.itemValue === 'number' && Number.isFinite(raw.itemValue)
+        ? raw.itemValue
+        : null,
     recipe: mapRecipe(raw.recipe),
   }
 }

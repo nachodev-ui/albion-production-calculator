@@ -1,6 +1,7 @@
 import type { BaseItemId } from './Item'
 import type { EnchantmentLevel } from './Enchantment'
 import type { ReturnRateParams } from './ReturnRate'
+import type { FocusCostBreakdown, StationFeeBreakdown } from './ProductionEconomy'
 
 /**
  * Precio ingresado manualmente por el usuario para un ítem específico
@@ -79,7 +80,12 @@ export interface CraftCostNode {
 /** Resultado completo de calcular el costo de craftear un ítem objetivo. */
 export interface CraftCalculation {
   readonly root: CraftCostNode
+  /** Tarifas fijas de receta más la tarifa de uso por nutrición. */
   readonly totalStationFees: number
+  /** Tarifa de uso del puesto calculada desde Item Value y nutrición. */
+  readonly stationUsageFee: number
+  readonly stationFeeBreakdown: StationFeeBreakdown
+  readonly focusCostBreakdown: FocusCostBreakdown
   readonly totalMaterialCost: number
   readonly grandTotal: number
   readonly totalSilverSavedByReturnRate: number

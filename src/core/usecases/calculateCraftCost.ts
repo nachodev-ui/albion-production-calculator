@@ -10,6 +10,16 @@ import type {
   NodeReturnRateConfig,
 } from '../domain/entities/CraftCostNode'
 import { calculateReturnRate } from '../domain/entities/ReturnRate'
+import {
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  DEFAULT_STATION_FEE_CONFIG,
+  calculateFocusCostBreakdown,
+  calculateStationUsageFee,
+} from '../domain/entities/ProductionEconomy'
+import type {
+  CraftingSpecializationConfig,
+  StationFeeConfig,
+} from '../domain/entities/ProductionEconomy'
 import type { ItemRepository } from '../domain/repositories/ItemRepository'
 import { collectReturnedMaterials } from './collectReturnedMaterials'
 import { resolveRecipeIngredient } from './resolveRecipeIngredient'
@@ -49,6 +59,10 @@ export interface CraftTreeConfig {
   readonly manualPrices: ReadonlyMap<NodePath, number>
   readonly productionConfig: NodeReturnRateConfig
   readonly selectedRecipeOptions?: ReadonlyMap<NodePath, number>
+  readonly stationFeeConfig?: StationFeeConfig
+  readonly craftingSpecializationConfig?: CraftingSpecializationConfig
+  /** Valor manual del objeto raíz; tiene prioridad sobre el dataset. */
+  readonly itemValueOverride?: number | null
 }
 
 export function createEmptyTreeConfig(): CraftTreeConfig {
@@ -57,6 +71,9 @@ export function createEmptyTreeConfig(): CraftTreeConfig {
     manualPrices: new Map(),
     productionConfig: DEFAULT_RETURN_RATE_CONFIG,
     selectedRecipeOptions: new Map(),
+    stationFeeConfig: DEFAULT_STATION_FEE_CONFIG,
+    craftingSpecializationConfig: DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+    itemValueOverride: null,
   }
 }
 
@@ -322,11 +339,62 @@ export function calculateCraftCost(
     built.missingPriceOccurrences,
   )
 
+  const rootItem = repository.getById(itemId)
+  const rootTier = rootItem?.recipe
+    ? getRecipeTier(rootItem.recipe, enchantment)
+    : null
+  const requestedRootOption = config.selectedRecipeOptions?.get('root') ?? 0
+  const rootOption = rootTier
+    ? getRecipeOption(rootTier, requestedRootOption)
+    : null
+  const craftsNeeded = rootOption
+    ? quantity / rootOption.outputQuantity
+    : 0
+  const hasManualItemValue =
+    config.itemValueOverride !== null &&
+    config.itemValueOverride !== undefined &&
+    Number.isFinite(config.itemValueOverride) &&
+    config.itemValueOverride >= 0
+  const datasetItemValue = rootItem?.itemValue ?? null
+  const itemValue = hasManualItemValue
+    ? config.itemValueOverride ?? 0
+    : datasetItemValue ?? 0
+  const itemValueSource = hasManualItemValue
+    ? 'manual' as const
+    : datasetItemValue !== null
+      ? 'dataset' as const
+      : 'missing' as const
+
+  const stationFeeBreakdown = calculateStationUsageFee({
+    station: rootTier?.station ?? 'unknown',
+    itemValue,
+    itemValueSource,
+    craftsNeeded,
+    config: config.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG,
+  })
+
+  const focusCostBreakdown = calculateFocusCostBreakdown({
+    baseFocusPerCraft: rootOption?.craftingFocus ?? 0,
+    craftsNeeded,
+    outputQuantity: rootOption?.outputQuantity ?? 1,
+    useFocus: config.productionConfig.useFocus,
+    config:
+      config.craftingSpecializationConfig ??
+      DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  })
+
+  const totalStationFees = built.stationFees + stationFeeBreakdown.totalFee
+  const totalMaterialCost = built.node.totalCost - built.stationFees
+  const grandTotal = built.node.totalCost + stationFeeBreakdown.totalFee
+
   return {
     root: built.node,
-    totalStationFees: built.stationFees,
-    totalMaterialCost: built.node.totalCost - built.stationFees,
-    grandTotal: built.node.totalCost,
+    totalStationFees,
+    stationUsageFee: stationFeeBreakdown.totalFee,
+    stationFeeBreakdown,
+    focusCostBreakdown,
+    totalMaterialCost,
+    grandTotal,
     totalSilverSavedByReturnRate,
     returnedMaterials,
     missingPriceItems,

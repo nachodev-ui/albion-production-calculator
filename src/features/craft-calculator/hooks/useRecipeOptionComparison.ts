@@ -28,6 +28,18 @@ export function useRecipeOptionComparison({
     (state) => state.manualPrices,
   )
 
+  const stationFeeConfig = useCraftTreeStore(
+    (state) => state.stationFeeConfig,
+  )
+
+  const craftingSpecializationConfig = useCraftTreeStore(
+    (state) => state.craftingSpecializationConfig,
+  )
+
+  const itemValueOverride = useCraftTreeStore(
+    (state) => state.itemValueOverride,
+  )
+
   const productionConfig = useCraftTreeStore(
     (state) => state.productionConfig,
   )
@@ -54,6 +66,9 @@ export function useRecipeOptionComparison({
           manualPrices,
           productionConfig,
           selectedRecipeOptions,
+          stationFeeConfig,
+          craftingSpecializationConfig,
+          itemValueOverride,
         },
       }),
     [
@@ -66,6 +81,9 @@ export function useRecipeOptionComparison({
       expandedPaths,
       manualPrices,
       productionConfig,
+      stationFeeConfig,
+      craftingSpecializationConfig,
+      itemValueOverride,
       selectedRecipeOptions,
     ],
   )

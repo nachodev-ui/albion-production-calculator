@@ -5,6 +5,7 @@ interface ReturnRateSavingsCardProps {
   readonly totalCost: number
   readonly silverSaved: number
   readonly quantity: number
+  readonly stationUsageFee?: number
 }
 
 function formatSilver(amount: number): string {
@@ -17,6 +18,7 @@ export function ReturnRateSavingsCard({
   totalCost,
   silverSaved,
   quantity,
+  stationUsageFee = 0,
 }: ReturnRateSavingsCardProps) {
   // grandTotal ya corresponde al costo después de aplicar el RRR.
   const netCost = totalCost
@@ -101,6 +103,17 @@ export function ReturnRateSavingsCard({
             {formatSilver(silverSaved)} plata
           </span>
         </div>
+
+        {stationUsageFee > 0 && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-text-faint">
+              Uso del puesto por nutrición
+            </span>
+            <span className="shrink-0 tabular text-text">
+              {formatSilver(stationUsageFee)} plata
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
           <div className="flex min-w-0 items-center gap-1.5">

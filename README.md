@@ -27,3 +27,9 @@ Armas, Armaduras, Offhands y Accesorios se agrupan por líneas de crafteo y fami
 Las piezas reales incluyen sus tres variantes de receta. Consulta
 `RECETAS_EQUIPO_REAL.md` para las reglas de piezas base, Sellos Reales y
 encantamientos.
+
+## Tarifas de estación y especialización
+
+La configuración incluye tarifas distintas para usuarios y asociados, cálculo
+de nutrición desde Item Value, costo de foco según especialización y bono de
+calidad informativo. Consulta `TARIFAS_ESTACION_Y_FOCO.md`.
