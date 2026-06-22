@@ -71,6 +71,8 @@ export interface CraftCostNode {
   /** Indica si este nodo y todas sus hojas tienen un precio confirmado. */
   readonly hasValidPrice: boolean
   readonly returnRate: MaterialReturnBreakdown | null
+  /** Índice de la variante usada cuando el nodo fue expandido. */
+  readonly recipeOptionIndex: number | null
   readonly children: readonly CraftCostNode[]
 }
 

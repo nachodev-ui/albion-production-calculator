@@ -1,6 +1,6 @@
 import type { BaseItemId } from '../domain/entities/Item'
 import type { EnchantmentLevel } from '../domain/entities/Enchantment'
-import { getRecipeTier } from '../domain/entities/Recipe'
+import { getRecipeOption, getRecipeTier } from '../domain/entities/Recipe'
 import { isReturnEligibleIngredient } from '../domain/entities/ResourceReturnEligibility'
 import type {
   CraftCalculation,
@@ -20,6 +20,20 @@ export function childPath(parent: NodePath, index: number): NodePath {
   return `${parent}-${index}`
 }
 
+/**
+ * Mantiene las rutas históricas para la opción principal y separa los
+ * precios/expansiones de las variantes alternativas.
+ */
+export function recipeChildPath(
+  parent: NodePath,
+  optionIndex: number,
+  childIndex: number,
+): NodePath {
+  return optionIndex === 0
+    ? childPath(parent, childIndex)
+    : `${parent}-option${optionIndex}-${childIndex}`
+}
+
 export const DEFAULT_RETURN_RATE_CONFIG: NodeReturnRateConfig = {
   cityId: 'island',
   hasSpecialtyBonus: false,
@@ -34,6 +48,7 @@ export interface CraftTreeConfig {
   readonly expandedPaths: ReadonlySet<NodePath>
   readonly manualPrices: ReadonlyMap<NodePath, number>
   readonly productionConfig: NodeReturnRateConfig
+  readonly selectedRecipeOptions?: ReadonlyMap<NodePath, number>
 }
 
 export function createEmptyTreeConfig(): CraftTreeConfig {
@@ -41,6 +56,7 @@ export function createEmptyTreeConfig(): CraftTreeConfig {
     expandedPaths: new Set(),
     manualPrices: new Map(),
     productionConfig: DEFAULT_RETURN_RATE_CONFIG,
+    selectedRecipeOptions: new Map(),
   }
 }
 
@@ -110,6 +126,7 @@ function buildLeaf(
       isManualPrice: true,
       hasValidPrice,
       returnRate: null,
+      recipeOptionIndex: null,
       children: [],
     },
     stationFees: 0,
@@ -137,10 +154,15 @@ function buildNode(
   }
 
   const rrrConfig = getProductionConfigForItem(config.productionConfig, item)
+  const requestedOptionIndex = config.selectedRecipeOptions?.get(path) ?? 0
+  const recipeOption = getRecipeOption(tier, requestedOptionIndex)
+  const recipeOptionIndex = requestedOptionIndex >= 0 && requestedOptionIndex <= (tier.alternatives?.length ?? 0)
+    ? requestedOptionIndex
+    : 0
 
-  const builtChildren: BuiltNode[] = tier.ingredients.map((ingredient, index) => {
+  const builtChildren: BuiltNode[] = recipeOption.ingredients.map((ingredient, index) => {
     const resolved = resolveRecipeIngredient(ingredient, repository)
-    const childPathValue = childPath(path, index)
+    const childPathValue = recipeChildPath(path, recipeOptionIndex, index)
 
     if (resolved.status === 'unresolved') {
       return buildLeaf(
@@ -162,7 +184,7 @@ function buildNode(
     )
   })
 
-  const craftsNeeded = quantity / tier.outputQuantity
+  const craftsNeeded = quantity / recipeOption.outputQuantity
 
   const grossMaterialCostPerCraft = builtChildren.reduce(
     (sum, child) => sum + child.node.totalCost,
@@ -189,8 +211,8 @@ function buildNode(
   )
 
   const netMaterialCostPerCraft = returnBreakdown.netQuantity
-  const totalCostPerCraft = netMaterialCostPerCraft + tier.silverFee
-  const unitCost = totalCostPerCraft / tier.outputQuantity
+  const totalCostPerCraft = netMaterialCostPerCraft + recipeOption.silverFee
+  const unitCost = totalCostPerCraft / recipeOption.outputQuantity
 
   /*
    * Los hijos describen una sola tirada del padre. Sus tarifas y ahorros
@@ -208,7 +230,7 @@ function buildNode(
 
   const stationFees =
     childStationFeesPerCraft * craftsNeeded +
-    tier.silverFee * craftsNeeded
+    recipeOption.silverFee * craftsNeeded
 
   const silverSavedByReturnRate =
     childSavingsPerCraft * craftsNeeded +
@@ -228,6 +250,7 @@ function buildNode(
       isManualPrice: false,
       hasValidPrice: missingPriceOccurrences.length === 0,
       returnRate: returnBreakdown,
+      recipeOptionIndex,
       children: builtChildren.map((child) => child.node),
     },
     stationFees,

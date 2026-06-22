@@ -30,6 +30,11 @@ interface CraftTreeState {
   readonly expandedPaths: ReadonlySet<NodePath>
   readonly manualPrices: ReadonlyMap<NodePath, number>
   readonly manualPricesByRoot: ManualPricesByRoot
+  readonly selectedRecipeOptions: ReadonlyMap<NodePath, number>
+  readonly selectedRecipeOptionsByRoot: ReadonlyMap<
+    string,
+    ReadonlyMap<NodePath, number>
+  >
   readonly productionConfig: NodeReturnRateConfig
   readonly isPremium: boolean
 
@@ -44,6 +49,7 @@ interface CraftTreeState {
   clearManualPrice: (path: NodePath) => void
   clearCurrentManualPrices: () => void
   clearAllManualPrices: () => void
+  setRecipeOption: (path: NodePath, optionIndex: number) => void
   setProductionConfig: (config: NodeReturnRateConfig) => void
   setIsPremium: (isPremium: boolean) => void
 }
@@ -86,6 +92,8 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   expandedPaths: new Set(),
   manualPrices: new Map(),
   manualPricesByRoot: initialManualPricesByRoot,
+  selectedRecipeOptions: new Map(),
+  selectedRecipeOptionsByRoot: new Map(),
   productionConfig: initialProductionConfig,
   isPremium: initialIsPremium,
 
@@ -94,11 +102,15 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
     if (get().rootKey === key) return
 
     const savedPrices = get().manualPricesByRoot.get(key)
+    const savedRecipeOptions = get().selectedRecipeOptionsByRoot.get(key)
 
     set({
       rootKey: key,
       expandedPaths: expandRoot ? new Set(['root']) : new Set(),
       manualPrices: savedPrices ? new Map(savedPrices) : new Map(),
+      selectedRecipeOptions: savedRecipeOptions
+        ? new Map(savedRecipeOptions)
+        : new Map(),
     })
   },
 
@@ -168,6 +180,27 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
 
   clearAllManualPrices: () => {
     persistAndSetPriceCache(set, new Map(), new Map())
+  },
+
+  setRecipeOption: (path, optionIndex) => {
+    if (!Number.isInteger(optionIndex) || optionIndex < 0) return
+
+    const selectedRecipeOptions = new Map(get().selectedRecipeOptions)
+    selectedRecipeOptions.set(path, optionIndex)
+
+    const selectedRecipeOptionsByRoot = new Map(
+      get().selectedRecipeOptionsByRoot,
+    )
+    const rootKey = get().rootKey
+
+    if (rootKey) {
+      selectedRecipeOptionsByRoot.set(rootKey, selectedRecipeOptions)
+    }
+
+    set({
+      selectedRecipeOptions,
+      selectedRecipeOptionsByRoot,
+    })
   },
 
   setProductionConfig: (config) => {

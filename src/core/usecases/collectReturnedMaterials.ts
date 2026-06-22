@@ -1,4 +1,4 @@
-import { getRecipeTier } from '../domain/entities/Recipe'
+import { getRecipeOption, getRecipeTier } from '../domain/entities/Recipe'
 import { isReturnEligibleIngredient } from '../domain/entities/ResourceReturnEligibility'
 import type {
   CraftCostNode,
@@ -77,10 +77,13 @@ export function collectReturnedMaterials(
       ? getRecipeTier(item.recipe, node.enchantment)
       : null
 
-    if (!item || !tier || tier.outputQuantity <= 0) return
+    if (!item || !tier) return
+
+    const option = getRecipeOption(tier, node.recipeOptionIndex ?? 0)
+    if (option.outputQuantity <= 0) return
 
     const actualOutputQuantity = node.quantity * occurrenceMultiplier
-    const actualCraftsNeeded = actualOutputQuantity / tier.outputQuantity
+    const actualCraftsNeeded = actualOutputQuantity / option.outputQuantity
     const returnRate = node.returnRate.returnRate
 
     for (const child of node.children) {
