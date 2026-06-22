@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CITIES } from '@core/domain/entities/City'
 import { useCraftPresetStore } from '@features/craft-calculator/store/craftPresetStore'
 import { applyPresetProductionConfig } from '@features/craft-calculator/store/craftPresetStorage'
+import { DEFAULT_CRAFTING_SPECIALIZATION_CONFIG, DEFAULT_STATION_FEE_CONFIG } from '@core/domain/entities/ProductionEconomy'
 import { useCraftTreeStore } from '@features/craft-calculator/store/craftTreeStore'
 import { ArrowRightIcon, PresetIcon } from '../../../app/AppIcons'
 
@@ -22,6 +23,10 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
   const productionConfig = useCraftTreeStore((state) => state.productionConfig)
   const setProductionConfig = useCraftTreeStore((state) => state.setProductionConfig)
   const setIsPremium = useCraftTreeStore((state) => state.setIsPremium)
+  const setStationFeeConfig = useCraftTreeStore((state) => state.setStationFeeConfig)
+  const setCraftingSpecializationConfig = useCraftTreeStore(
+    (state) => state.setCraftingSpecializationConfig,
+  )
   const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
 
   function openPresetInCrafting(presetId: string) {
@@ -32,6 +37,11 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
       applyPresetProductionConfig(productionConfig, preset.productionConfig),
     )
     setIsPremium(preset.isPremium)
+    setStationFeeConfig(preset.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG)
+    setCraftingSpecializationConfig(
+      preset.craftingSpecializationConfig ??
+        DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+    )
     setActivePreset(presetId)
     onOpenCrafting()
   }
@@ -45,7 +55,7 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
           </span>
           <h3 className="mt-5 font-display text-2xl text-text">Aún no tienes presets guardados</h3>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-text-muted">
-            Crea un preset desde la configuración de producción para guardar ciudad, foco, bono diario y estado Premium.
+            Crea un preset desde la configuración de producción para guardar ciudad, foco, tarifas del puesto, bonos pasivos y estado Premium.
           </p>
           <button
             type="button"
@@ -117,6 +127,24 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                         {preset.productionConfig.hasDailyBonus
                           ? `+${preset.productionConfig.dailyBonusAmount * 100}%`
                           : 'No'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-text-faint">Tarifa aplicada</dt>
+                      <dd className="mt-0.5 text-text">
+                        {preset.stationFeeConfig?.accessType === 'associate'
+                          ? 'Asociado'
+                          : preset.stationFeeConfig?.accessType === 'free'
+                            ? 'Gratis'
+                            : 'Usuario'}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-text-faint">Eficiencia de foco</dt>
+                      <dd className="mt-0.5 text-text">
+                        {new Intl.NumberFormat('es-CL').format(
+                          preset.craftingSpecializationConfig?.focusCostEfficiency ?? 0,
+                        )}
                       </dd>
                     </div>
                     <div>

@@ -19,6 +19,20 @@ const baseInput = {
   hasDailyBonus: false,
   dailyBonusAmount: 0.1,
   returnRate: 0.48,
+  stationName: "Elder's Warrior's Forge",
+  stationAccessLabel: 'Usuario',
+  itemValue: 8000,
+  nutritionPerCraft: 900,
+  nutritionTotal: 9000,
+  appliedFeePer100Nutrition: 450,
+  stationUsageFee: 40_500,
+  focusCostEfficiency: 24_000,
+  availableFocus: 10_000,
+  qualityIncrease: 6.05,
+  baseFocusPerCraft: 1000,
+  effectiveFocusPerCraft: 190,
+  totalFocusRequired: 1900,
+  maxItemsWithAvailableFocus: 52,
   totalCost: 935_000,
   silverSaved: 215_000,
   stationFees: 25_000,
@@ -46,6 +60,8 @@ describe('buildCalculationSummary', () => {
     expect(summary).toContain('Nivel: T8.2')
     expect(summary).toContain('RRR resultante: 48%')
     expect(summary).toContain('Costo bruto: 1.150.000 plata')
+    expect(summary).toContain('Costo de uso del puesto: 40.500 plata')
+    expect(summary).toContain('Focus Cost Efficiency: 24.000')
     expect(summary).toContain('Lingote de acero.2')
     expect(summary).toContain('Precio objetivo 20%: 120.000 plata por unidad')
     expect(summary).toContain('Resultado: +187.000 plata')

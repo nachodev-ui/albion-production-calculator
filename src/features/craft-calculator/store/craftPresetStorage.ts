@@ -1,12 +1,26 @@
 import { CITIES } from '@core/domain/entities/City'
 import type { CityId } from '@core/domain/entities/City'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import {
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  DEFAULT_STATION_FEE_CONFIG,
+} from '@core/domain/entities/ProductionEconomy'
+import type {
+  CraftingSpecializationConfig,
+  StationAccessType,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 
 export const CRAFT_PRESET_STORAGE_KEY =
   'albion-craft-calculator:craft-presets:v1'
 
-const STORAGE_VERSION = 1
+const STORAGE_VERSION = 2
 const VALID_CITY_IDS = new Set<CityId>(CITIES.map((city) => city.id))
+const VALID_ACCESS_TYPES = new Set<StationAccessType>([
+  'user',
+  'associate',
+  'free',
+])
 
 export interface CraftPresetProductionConfig {
   readonly cityId: CityId
@@ -21,6 +35,8 @@ export interface CraftPreset {
   readonly id: string
   readonly name: string
   readonly productionConfig: CraftPresetProductionConfig
+  readonly stationFeeConfig?: StationFeeConfig
+  readonly craftingSpecializationConfig?: CraftingSpecializationConfig
   readonly isPremium: boolean
 }
 
@@ -52,6 +68,12 @@ function isDailyBonusAmount(value: unknown): value is 0.1 | 0.2 {
   return value === 0.1 || value === 0.2
 }
 
+function sanitizeNonNegative(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : 0
+}
+
 function parseProductionConfig(
   value: unknown,
 ): CraftPresetProductionConfig | null {
@@ -79,6 +101,38 @@ function parseProductionConfig(
   }
 }
 
+function parseStationFeeConfig(value: unknown): StationFeeConfig {
+  if (!isRecord(value)) return DEFAULT_STATION_FEE_CONFIG
+
+  const accessType = VALID_ACCESS_TYPES.has(
+    value['accessType'] as StationAccessType,
+  )
+    ? (value['accessType'] as StationAccessType)
+    : DEFAULT_STATION_FEE_CONFIG.accessType
+
+  return {
+    accessType,
+    userFeePer100Nutrition: sanitizeNonNegative(
+      value['userFeePer100Nutrition'],
+    ),
+    associateFeePer100Nutrition: sanitizeNonNegative(
+      value['associateFeePer100Nutrition'],
+    ),
+  }
+}
+
+function parseSpecializationConfig(
+  value: unknown,
+): CraftingSpecializationConfig {
+  if (!isRecord(value)) return DEFAULT_CRAFTING_SPECIALIZATION_CONFIG
+
+  return {
+    focusCostEfficiency: sanitizeNonNegative(value['focusCostEfficiency']),
+    availableFocus: sanitizeNonNegative(value['availableFocus']),
+    qualityIncrease: sanitizeNonNegative(value['qualityIncrease']),
+  }
+}
+
 function parsePreset(value: unknown): CraftPreset | null {
   if (!isRecord(value)) return null
 
@@ -100,6 +154,10 @@ function parsePreset(value: unknown): CraftPreset | null {
     id: value['id'],
     name: value['name'].trim(),
     productionConfig,
+    stationFeeConfig: parseStationFeeConfig(value['stationFeeConfig']),
+    craftingSpecializationConfig: parseSpecializationConfig(
+      value['craftingSpecializationConfig'],
+    ),
     isPremium: value['isPremium'],
   }
 }
@@ -131,10 +189,35 @@ export function applyPresetProductionConfig(
   }
 }
 
+function equalStationFeeConfig(
+  left: StationFeeConfig,
+  right: StationFeeConfig,
+): boolean {
+  return (
+    left.accessType === right.accessType &&
+    left.userFeePer100Nutrition === right.userFeePer100Nutrition &&
+    left.associateFeePer100Nutrition === right.associateFeePer100Nutrition
+  )
+}
+
+function equalSpecializationConfig(
+  left: CraftingSpecializationConfig,
+  right: CraftingSpecializationConfig,
+): boolean {
+  return (
+    left.focusCostEfficiency === right.focusCostEfficiency &&
+    left.availableFocus === right.availableFocus &&
+    left.qualityIncrease === right.qualityIncrease
+  )
+}
+
 export function doesPresetMatchCurrentConfig(
   preset: CraftPreset,
   currentConfig: NodeReturnRateConfig,
   isPremium: boolean,
+  stationFeeConfig: StationFeeConfig = DEFAULT_STATION_FEE_CONFIG,
+  specializationConfig: CraftingSpecializationConfig =
+    DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
 ): boolean {
   const normalized = toPresetProductionConfig(currentConfig)
   const saved = preset.productionConfig
@@ -146,6 +229,15 @@ export function doesPresetMatchCurrentConfig(
     normalized.useFocus === saved.useFocus &&
     normalized.hasDailyBonus === saved.hasDailyBonus &&
     normalized.dailyBonusAmount === saved.dailyBonusAmount &&
+    equalStationFeeConfig(
+      preset.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG,
+      stationFeeConfig,
+    ) &&
+    equalSpecializationConfig(
+      preset.craftingSpecializationConfig ??
+        DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+      specializationConfig,
+    ) &&
     isPremium === preset.isPremium
   )
 }
@@ -171,7 +263,10 @@ export function loadCraftPresetStorage(): CraftPresetStorageState {
 
     const parsed: unknown = JSON.parse(raw)
 
-    if (!isRecord(parsed) || parsed['version'] !== STORAGE_VERSION) {
+    if (
+      !isRecord(parsed) ||
+      (parsed['version'] !== 1 && parsed['version'] !== STORAGE_VERSION)
+    ) {
       return EMPTY_STATE
     }
 
