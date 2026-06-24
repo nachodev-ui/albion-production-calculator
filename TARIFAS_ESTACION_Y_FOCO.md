@@ -1,28 +1,49 @@
-# Tarifas de estación, nutrición y especialización
+# Costo del puesto, nutrición y especialización
 
-## Tarifa de uso
+## Flujo recomendado: Total Cost directo
 
-La configuración de producción permite ingresar las dos tarifas visibles en
-cada puesto:
+La configuración de producción permite copiar directamente el `Total Cost` que
+Albion muestra justo antes de confirmar el crafteo. Ese monto corresponde al
+lote seleccionado y se suma tal cual al costo de producción.
+
+Ejemplo:
+
+```text
+Cantidad seleccionada: 15
+Total Cost mostrado por Albion: 1.015 plata
+Costo aplicado por la calculadora: 1.015 plata
+```
+
+Si después se modifica la cantidad, la calculadora escala el monto de forma
+proporcional según el número de tiradas. La interfaz avisa cuando está usando
+ese ajuste.
+
+El costo directo se guarda por objeto y encantamiento mientras la aplicación
+permanece abierta. Tiene prioridad sobre cualquier estimación avanzada.
+
+## Estimación avanzada por nutrición
+
+Cuando no se puede consultar el `Total Cost` en el juego, el panel avanzado
+permite reconstruirlo con:
 
 - `Usage fee per 100 Nutrition consumed (users)`
 - `Usage fee per 100 Nutrition consumed (associates)`
+- `Item Value`
+- acceso como usuario, asociado o estación gratuita
 
-También puede seleccionarse `Gratis / isla` para no sumar tarifa.
-
-El cálculo aplicado es:
+El cálculo de referencia es:
 
 ```text
 Nutrición por tirada = Item Value × 0,1125
-Costo del puesto = Nutrición total × tarifa aplicada / 100
+Costo estimado del puesto = Nutrición total × tarifa aplicada / 100
 ```
 
-El puesto se detecta desde la receta. El `Item Value` se toma del dataset cuando
-está disponible; de lo contrario puede ingresarse manualmente y queda asociado
-al objeto y encantamiento actuales.
+`Item Value` es un dato interno y no corresponde al precio de mercado ni al
+`Total Cost`. La estimación permanece visible como referencia, pero no reemplaza
+un costo directo ingresado.
 
-La tarifa de uso se suma al costo total, por lo que afecta profit líquido,
-punto de equilibrio, rentabilidad, comparación de variantes y exportaciones.
+El costo aplicado afecta el resultado en plata, punto de equilibrio,
+rentabilidad, comparación de variantes y exportaciones.
 
 ## Focus Cost Efficiency
 

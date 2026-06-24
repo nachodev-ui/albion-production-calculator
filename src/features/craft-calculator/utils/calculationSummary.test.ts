@@ -59,13 +59,30 @@ describe('buildCalculationSummary', () => {
     expect(summary).toContain('Espada del Anciano')
     expect(summary).toContain('Nivel: T8.2')
     expect(summary).toContain('RRR resultante: 48%')
-    expect(summary).toContain('Costo bruto: 1.150.000 plata')
-    expect(summary).toContain('Costo de uso del puesto: 40.500 plata')
+    expect(summary).toContain('Inversión inicial: 1.150.000 plata')
+    expect(summary).toContain('Costo aplicado al cálculo: 40.500 plata')
     expect(summary).toContain('Focus Cost Efficiency: 24.000')
     expect(summary).toContain('Lingote de acero.2')
-    expect(summary).toContain('Precio objetivo 20%: 120.000 plata por unidad')
-    expect(summary).toContain('Resultado: +187.000 plata')
-    expect(summary).toContain('Rentabilidad sobre costo: +20%')
+    expect(summary).toContain('Precio objetivo 20%: 147.594 plata por unidad')
+    expect(summary).toContain('Resultado en plata: -28.000 plata')
+    expect(summary).toContain('Valor recuperado: +215.000 plata')
+    expect(summary).toContain('Resultado económico total: +187.000 plata')
+    expect(summary).toContain('Rentabilidad en plata: -2,4%')
+    expect(summary).toContain('Rentabilidad económica total: +16,3%')
+  })
+
+  it('identifica el Total Cost directo sin confundirlo con Item Value', () => {
+    const summary = buildCalculationSummary({
+      ...baseInput,
+      stationFeeSource: 'manual_total' as const,
+      stationUsageFee: 1_015,
+      estimatedStationUsageFee: 1_020,
+    })
+
+    expect(summary).toContain('Fuente: Total Cost ingresado desde Albion')
+    expect(summary).toContain('Costo aplicado al cálculo: 1.015 plata')
+    expect(summary).toContain('Estimación avanzada de referencia: 1.020 plata')
+    expect(summary).not.toContain('Item Value: 8.000')
   })
 
   it('marca explícitamente un cálculo incompleto y enumera precios pendientes', () => {
@@ -97,7 +114,6 @@ describe('createCalculationSummaryFileName', () => {
   })
 })
 
-
 describe('CalculationSummarySnapshot', () => {
   it('convierte y restaura la fecha para la vista imprimible', () => {
     const snapshot = createCalculationSummarySnapshot(baseInput)
@@ -109,8 +125,8 @@ describe('CalculationSummarySnapshot', () => {
   })
 
   it('genera un título reconocible para la pestaña de impresión', () => {
-    expect(
-      createCalculationPrintTitle('Báculo Ígneo del Anciano', 8, 3),
-    ).toBe('Resumen Báculo Ígneo del Anciano T8.3 - Albion Craft Calculator')
+    expect(createCalculationPrintTitle('Báculo Ígneo del Anciano', 8, 3)).toBe(
+      'Resumen Báculo Ígneo del Anciano T8.3 - Albion Craft Calculator',
+    )
   })
 })

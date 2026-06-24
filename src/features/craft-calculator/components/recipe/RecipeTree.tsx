@@ -7,11 +7,21 @@ import type { NodePath } from '@core/usecases/calculateCraftCost'
 import { recipeChildPath } from '@core/usecases/calculateCraftCost'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import { ManualPriceInput } from '@features/price-input/components/ManualPriceInput'
+import { MaterialMarketCitySelect } from '@features/market-data/components/MaterialMarketCitySelect'
 import type {
   AutomaticMarketPriceDetail,
+  MarketCityId,
+  MarketDefinition,
   MarketRequestStatus,
+  MaterialMarketPriceComparisons,
+  MaterialPurchaseCityOverrides,
 } from '@features/market-data/types/MarketPrice'
-import { buildItemPriceKey } from '@features/market-data/types/MarketPrice'
+import type { MarketRefreshItemReport } from '@features/market-data/types/MarketRefresh'
+import {
+  buildItemPriceKey,
+  getMarketName,
+  resolveMaterialPurchaseCity,
+} from '@features/market-data/types/MarketPrice'
 import { useCraftTreeStore } from '../../store/craftTreeStore'
 import { getEnchantmentColor } from '../enchantmentColors'
 
@@ -30,7 +40,16 @@ interface RecipeTreeNodeProps {
   readonly automaticPrices: ReadonlyMap<string, number>
   readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
   readonly automaticPriceLabel: string
+  readonly refreshResults: ReadonlyMap<string, MarketRefreshItemReport>
   readonly marketStatus: MarketRequestStatus
+  readonly defaultPurchaseCity: MarketCityId
+  readonly markets: readonly MarketDefinition[]
+  readonly materialMarketPriceComparisons: MaterialMarketPriceComparisons
+  readonly materialPurchaseCityOverrides: MaterialPurchaseCityOverrides
+  readonly onMaterialPurchaseCityChange: (
+    itemPriceKey: string,
+    city: MarketCityId | null,
+  ) => void
 }
 
 /**
@@ -52,7 +71,13 @@ function RecipeTreeNode({
   automaticPrices,
   automaticPriceDetails,
   automaticPriceLabel,
+  refreshResults,
   marketStatus,
+  defaultPurchaseCity,
+  markets,
+  materialMarketPriceComparisons,
+  materialPurchaseCityOverrides,
+  onMaterialPurchaseCityChange,
 }: RecipeTreeNodeProps) {
   const isExpanded = useCraftTreeStore((state) =>
     state.expandedPaths.has(path),
@@ -82,6 +107,16 @@ function RecipeTreeNode({
   )
   const automaticPrice = automaticPrices.get(itemPriceKey)
   const automaticPriceDetail = automaticPriceDetails.get(itemPriceKey)
+  const refreshResult = refreshResults.get(itemPriceKey)
+  const materialPurchaseCityOverride =
+    materialPurchaseCityOverrides.get(itemPriceKey)
+  const materialPurchaseCity = resolveMaterialPurchaseCity(
+    materialPurchaseCityOverrides,
+    itemPriceKey,
+    defaultPurchaseCity,
+  )
+  const marketComparisons =
+    materialMarketPriceComparisons.get(itemPriceKey) ?? []
 
   const tier = item?.recipe
     ? getRecipeTier(item.recipe, node.enchantment)
@@ -98,7 +133,7 @@ function RecipeTreeNode({
   return (
     <div className="flex flex-col items-center">
       <div
-        className={`flex min-h-[204px] w-[320px] max-w-full flex-col rounded-xl border bg-surface-raised p-3 transition-colors ${
+        className={`flex min-h-[252px] w-[340px] max-w-full flex-col rounded-xl border bg-surface-raised p-3 transition-colors ${
           isExpandable ? 'hover:border-border-strong' : ''
         }`}
         data-missing-price={hasMissingPrice ? 'true' : undefined}
@@ -169,27 +204,47 @@ function RecipeTreeNode({
           )}
         </button>
 
-        <div className="mt-auto min-h-[124px] border-t border-border pt-2">
+        <div className="mt-auto min-h-[172px] border-t border-border pt-2">
           {isExpanded ? (
             <span className="text-sm tabular text-text">
               {formatSilver(node.totalCost)}
               <span className="text-text-faint"> plata</span>
             </span>
           ) : (
-            <ManualPriceInput
-              key={`${rootKey ?? 'uninitialized'}:${path}:${manualPrice ?? 'manual-missing'}:${automaticPrice ?? 'automatic-missing'}`}
-              value={manualPrice}
-              automaticValue={automaticPrice}
-              automaticLabel={automaticPriceLabel}
-              automaticUpdatedAt={automaticPriceDetail?.updatedAt ?? null}
-              isAutomaticLoading={marketStatus === 'loading'}
-              quantity={node.quantity}
-              onChange={(unitPrice) =>
-                setManualPrice(path, unitPrice)
-              }
-              onClear={() => clearManualPrice(path)}
-              placeholder="0"
-            />
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start justify-between gap-2 text-xs">
+                <span className="shrink-0 pt-2 text-text-faint">
+                  Comprar en
+                </span>
+
+                <MaterialMarketCitySelect
+                  value={materialPurchaseCityOverride ?? null}
+                  defaultCity={defaultPurchaseCity}
+                  markets={markets}
+                  comparisons={marketComparisons}
+                  ariaLabel={`Ciudad de compra de ${displayName}`}
+                  onChange={(city) =>
+                    onMaterialPurchaseCityChange(itemPriceKey, city)
+                  }
+                />
+              </div>
+
+              <ManualPriceInput
+                key={`${rootKey ?? 'uninitialized'}:${path}:${materialPurchaseCity}:${manualPrice ?? 'manual-missing'}:${automaticPrice ?? 'automatic-missing'}`}
+                value={manualPrice}
+                automaticValue={automaticPrice}
+                automaticLabel={`${getMarketName(markets, materialPurchaseCity)} · ${automaticPriceLabel}`}
+                automaticUpdatedAt={automaticPriceDetail?.updatedAt ?? null}
+                isAutomaticLoading={marketStatus === 'loading'}
+                refreshResult={refreshResult}
+                quantity={node.quantity}
+                onChange={(unitPrice) =>
+                  setManualPrice(path, unitPrice)
+                }
+                onClear={() => clearManualPrice(path)}
+                placeholder="0"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -224,7 +279,19 @@ function RecipeTreeNode({
                     automaticPrices={automaticPrices}
                     automaticPriceDetails={automaticPriceDetails}
                     automaticPriceLabel={automaticPriceLabel}
+                    refreshResults={refreshResults}
                     marketStatus={marketStatus}
+                    defaultPurchaseCity={defaultPurchaseCity}
+                    markets={markets}
+                    materialMarketPriceComparisons={
+                      materialMarketPriceComparisons
+                    }
+                    materialPurchaseCityOverrides={
+                      materialPurchaseCityOverrides
+                    }
+                    onMaterialPurchaseCityChange={
+                      onMaterialPurchaseCityChange
+                    }
                   />
                 </div>
               )
@@ -242,7 +309,16 @@ interface RecipeTreeProps {
   readonly automaticPrices: ReadonlyMap<string, number>
   readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
   readonly automaticPriceLabel: string
+  readonly refreshResults: ReadonlyMap<string, MarketRefreshItemReport>
   readonly marketStatus: MarketRequestStatus
+  readonly defaultPurchaseCity: MarketCityId
+  readonly markets: readonly MarketDefinition[]
+  readonly materialMarketPriceComparisons: MaterialMarketPriceComparisons
+  readonly materialPurchaseCityOverrides: MaterialPurchaseCityOverrides
+  readonly onMaterialPurchaseCityChange: (
+    itemPriceKey: string,
+    city: MarketCityId | null,
+  ) => void
 }
 
 /**
@@ -258,7 +334,13 @@ export function RecipeTree({
   automaticPrices,
   automaticPriceDetails,
   automaticPriceLabel,
+  refreshResults,
   marketStatus,
+  defaultPurchaseCity,
+  markets,
+  materialMarketPriceComparisons,
+  materialPurchaseCityOverrides,
+  onMaterialPurchaseCityChange,
 }: RecipeTreeProps) {
   if (rootNode.children.length === 0) {
     return (
@@ -291,7 +373,15 @@ export function RecipeTree({
             automaticPrices={automaticPrices}
             automaticPriceDetails={automaticPriceDetails}
             automaticPriceLabel={automaticPriceLabel}
+            refreshResults={refreshResults}
             marketStatus={marketStatus}
+            defaultPurchaseCity={defaultPurchaseCity}
+            markets={markets}
+            materialMarketPriceComparisons={
+              materialMarketPriceComparisons
+            }
+            materialPurchaseCityOverrides={materialPurchaseCityOverrides}
+            onMaterialPurchaseCityChange={onMaterialPurchaseCityChange}
           />
         )
       })}

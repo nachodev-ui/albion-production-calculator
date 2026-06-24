@@ -9,7 +9,10 @@ import type { Item } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { calculateReturnRate } from '@core/domain/entities/ReturnRate'
 import { CRAFTING_STATION_LABELS } from '@core/domain/entities/ProductionEconomy'
-import type { CraftingSpecializationConfig, StationFeeConfig } from '@core/domain/entities/ProductionEconomy'
+import type {
+  CraftingSpecializationConfig,
+  StationFeeConfig,
+} from '@core/domain/entities/ProductionEconomy'
 import { InfoHint } from '@shared/components/InfoHint'
 import {
   buildCalculationSummary,
@@ -95,7 +98,9 @@ export function CalculationSummaryActions({
   }
 
   function createSummaryInput(): CalculationSummaryInput {
-    const city = CITIES.find((candidate) => candidate.id === productionConfig.cityId)
+    const city = CITIES.find(
+      (candidate) => candidate.id === productionConfig.cityId,
+    )
 
     return {
       generatedAt: new Date(),
@@ -122,6 +127,9 @@ export function CalculationSummaryActions({
       nutritionTotal: calculation.stationFeeBreakdown.nutritionTotal,
       appliedFeePer100Nutrition:
         calculation.stationFeeBreakdown.feePer100Nutrition,
+      stationFeeSource: calculation.stationFeeBreakdown.source,
+      estimatedStationUsageFee:
+        calculation.stationFeeBreakdown.estimatedTotalFee,
       stationUsageFee: calculation.stationUsageFee,
       focusCostEfficiency: craftingSpecializationConfig.focusCostEfficiency,
       availableFocus: craftingSpecializationConfig.availableFocus,
@@ -137,11 +145,13 @@ export function CalculationSummaryActions({
       stationFees: calculation.totalStationFees,
       isComplete: calculation.isComplete,
       missingPrices: calculation.missingPriceItems.map((missing) => ({
-        name: repository.getById(missing.itemId)?.name ?? String(missing.itemId),
+        name:
+          repository.getById(missing.itemId)?.name ?? String(missing.itemId),
         enchantment: missing.enchantment,
       })),
       returnedMaterials: calculation.returnedMaterials.map((material) => ({
-        name: repository.getById(material.itemId)?.name ?? String(material.itemId),
+        name:
+          repository.getById(material.itemId)?.name ?? String(material.itemId),
         enchantment: material.enchantment,
         grossQuantity: material.grossQuantity,
         returnedQuantity: material.returnedQuantity,
@@ -249,7 +259,8 @@ export function CalculationSummaryActions({
           </div>
 
           <p className="mt-1 text-xs leading-relaxed text-text-faint">
-            Para crear un PDF, elige “Guardar como PDF” en el diálogo de impresión.
+            Para crear un PDF, elige “Guardar como PDF” en el diálogo de
+            impresión.
           </p>
 
           <p

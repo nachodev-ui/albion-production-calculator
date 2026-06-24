@@ -99,6 +99,6 @@ export const CITY_CRAFTING_SPECIALTIES: readonly CitySpecialty[] = [
   },
   {
     city: 'caerleon',
-    craftingCategories: ['tool', 'food', 'potion', 'gathering_gear', 'war_gloves'],
+    craftingCategories: ['tool', 'food', 'potion', 'gathering_gear', 'war_gloves', 'shapeshifter_staff'],
   },
 ]

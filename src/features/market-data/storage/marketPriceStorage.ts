@@ -4,11 +4,16 @@ import type {
 } from '../types/MarketPrice'
 import { DEFAULT_MARKET_CONFIG } from '../types/MarketPrice'
 
-const CONFIG_STORAGE_KEY = 'albion-production-calculator.market-config.v1'
-const CACHE_STORAGE_KEY = 'albion-production-calculator.market-cache.v1'
+const CONFIG_STORAGE_KEY = 'albion-production-calculator.market-config.v2'
+const CACHE_STORAGE_KEY =
+  'albion-production-calculator.local-market-cache.v2'
+const LEGACY_CACHE_STORAGE_KEYS = [
+  'albion-production-calculator.local-market-cache.v1',
+  'albion-production-calculator.market-cache.v1',
+] as const
 const SELL_OVERRIDES_STORAGE_KEY =
   'albion-production-calculator.manual-sell-prices.v1'
-const STORAGE_VERSION = 1
+const STORAGE_VERSION = 2
 const MAX_CACHE_ENTRIES = 1500
 const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -41,6 +46,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object'
 }
 
+function isValidMarketKey(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
 function isValidMarketConfig(value: unknown): value is MarketConfig {
   if (!isObject(value)) return false
 
@@ -50,27 +59,16 @@ function isValidMarketConfig(value: unknown): value is MarketConfig {
     (candidate.server === 'americas' ||
       candidate.server === 'europe' ||
       candidate.server === 'asia') &&
-    (candidate.purchaseCity === 'martlock' ||
-      candidate.purchaseCity === 'bridgewatch' ||
-      candidate.purchaseCity === 'lymhurst' ||
-      candidate.purchaseCity === 'fort_sterling' ||
-      candidate.purchaseCity === 'thetford' ||
-      candidate.purchaseCity === 'caerleon' ||
-      candidate.purchaseCity === 'brecilien') &&
-    (candidate.saleCity === 'martlock' ||
-      candidate.saleCity === 'bridgewatch' ||
-      candidate.saleCity === 'lymhurst' ||
-      candidate.saleCity === 'fort_sterling' ||
-      candidate.saleCity === 'thetford' ||
-      candidate.saleCity === 'caerleon' ||
-      candidate.saleCity === 'brecilien') &&
+    isValidMarketKey(candidate.purchaseCity) &&
+    isValidMarketKey(candidate.saleCity) &&
     (candidate.purchaseStrategy === 'buy-now' ||
       candidate.purchaseStrategy === 'buy-order') &&
     (candidate.saleStrategy === 'sell-order' ||
       candidate.saleStrategy === 'sell-now') &&
     typeof candidate.quality === 'number' &&
     Number.isInteger(candidate.quality) &&
-    candidate.quality > 0
+    candidate.quality >= 1 &&
+    candidate.quality <= 5
   )
 }
 
@@ -95,13 +93,7 @@ function isValidSnapshot(value: unknown): value is MarketPriceSnapshot {
       candidate.server === 'europe' ||
       candidate.server === 'asia') &&
     typeof candidate.itemIdentifier === 'string' &&
-    (candidate.city === 'martlock' ||
-      candidate.city === 'bridgewatch' ||
-      candidate.city === 'lymhurst' ||
-      candidate.city === 'fort_sterling' ||
-      candidate.city === 'thetford' ||
-      candidate.city === 'caerleon' ||
-      candidate.city === 'brecilien') &&
+    isValidMarketKey(candidate.city) &&
     typeof candidate.quality === 'number' &&
     Number.isInteger(candidate.quality) &&
     candidate.quality > 0 &&
@@ -220,6 +212,7 @@ export function clearStoredMarketCache(): void {
 
   try {
     storage.removeItem(CACHE_STORAGE_KEY)
+    for (const key of LEGACY_CACHE_STORAGE_KEYS) storage.removeItem(key)
   } catch {
     // Sin acción.
   }

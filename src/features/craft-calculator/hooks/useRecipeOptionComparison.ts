@@ -22,17 +22,11 @@ export function useRecipeOptionComparison({
   repository,
   automaticPrices,
 }: UseRecipeOptionComparisonParams) {
-  const expandedPaths = useCraftTreeStore(
-    (state) => state.expandedPaths,
-  )
+  const expandedPaths = useCraftTreeStore((state) => state.expandedPaths)
 
-  const manualPrices = useCraftTreeStore(
-    (state) => state.manualPrices,
-  )
+  const manualPrices = useCraftTreeStore((state) => state.manualPrices)
 
-  const stationFeeConfig = useCraftTreeStore(
-    (state) => state.stationFeeConfig,
-  )
+  const stationFeeConfig = useCraftTreeStore((state) => state.stationFeeConfig)
 
   const craftingSpecializationConfig = useCraftTreeStore(
     (state) => state.craftingSpecializationConfig,
@@ -42,17 +36,17 @@ export function useRecipeOptionComparison({
     (state) => state.itemValueOverride,
   )
 
-  const productionConfig = useCraftTreeStore(
-    (state) => state.productionConfig,
+  const stationUsageFeeOverride = useCraftTreeStore(
+    (state) => state.stationUsageFeeOverride,
   )
+
+  const productionConfig = useCraftTreeStore((state) => state.productionConfig)
 
   const selectedRecipeOptions = useCraftTreeStore(
     (state) => state.selectedRecipeOptions,
   )
 
-  const isPremium = useCraftTreeStore(
-    (state) => state.isPremium,
-  )
+  const isPremium = useCraftTreeStore((state) => state.isPremium)
 
   return useMemo(
     () =>
@@ -72,6 +66,7 @@ export function useRecipeOptionComparison({
           stationFeeConfig,
           craftingSpecializationConfig,
           itemValueOverride,
+          stationUsageFeeOverride,
         },
       }),
     [
@@ -88,6 +83,7 @@ export function useRecipeOptionComparison({
       stationFeeConfig,
       craftingSpecializationConfig,
       itemValueOverride,
+      stationUsageFeeOverride,
       selectedRecipeOptions,
     ],
   )

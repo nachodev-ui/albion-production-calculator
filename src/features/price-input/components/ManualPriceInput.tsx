@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
+import { MarketRefreshItemFeedback } from '@features/market-data/components/MarketRefreshFeedback'
+import type { MarketRefreshItemReport } from '@features/market-data/types/MarketRefresh'
 
 function formatSilver(amount: number): string {
   return new Intl.NumberFormat('es-CL', {
@@ -8,12 +10,13 @@ function formatSilver(amount: number): string {
 }
 
 interface ManualPriceInputProps {
-  /** Override manual. `undefined` significa que puede usarse AODP. */
+  /** Override manual. `undefined` significa que puede usarse el servicio local. */
   readonly value: number | undefined
   readonly automaticValue?: number
   readonly automaticLabel?: string
   readonly automaticUpdatedAt?: string | null
   readonly isAutomaticLoading?: boolean
+  readonly refreshResult?: MarketRefreshItemReport | null
   readonly quantity: number
   readonly onChange: (unitPrice: number) => void
   readonly onClear: () => void
@@ -30,9 +33,10 @@ interface ManualPriceInputProps {
 export function ManualPriceInput({
   value,
   automaticValue,
-  automaticLabel = 'AODP',
+  automaticLabel = 'Servicio local',
   automaticUpdatedAt = null,
   isAutomaticLoading = false,
+  refreshResult = null,
   quantity,
   onChange,
   onClear,
@@ -129,7 +133,7 @@ export function ManualPriceInput({
                 }}
                 className="truncate text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
               >
-                Usar precio AODP
+                Usar precio local
               </button>
             ) : (
               <span className="text-text-faint">Precio manual</span>
@@ -142,9 +146,9 @@ export function ManualPriceInput({
               {automaticLabel}
             </span>
           ) : isAutomaticLoading ? (
-            <span className="text-text-faint">Consultando AODP…</span>
+            <span className="text-text-faint">Consultando servicio local…</span>
           ) : (
-            <span className="text-text-faint">Sin precio AODP</span>
+            <span className="text-text-faint">Sin precio local</span>
           )}
         </div>
 
@@ -167,6 +171,11 @@ export function ManualPriceInput({
           )}
         </div>
       </div>
+
+      <MarketRefreshItemFeedback
+        result={isAutomaticLoading ? null : refreshResult}
+        isManualOverride={isManualOverride}
+      />
 
       {(!isAutomaticLoading || hasAutomaticValue) && (
         <MarketPriceFreshnessStatus

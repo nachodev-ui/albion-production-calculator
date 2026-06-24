@@ -27,10 +27,7 @@ export function ReturnRateSavingsCard({
   const savedPerUnit = quantity > 0 ? silverSaved / quantity : 0
   const netCostPerUnit = quantity > 0 ? netCost / quantity : 0
 
-  const savingsPercentage =
-    grossCost > 0
-      ? silverSaved / grossCost
-      : 0
+  const savingsPercentage = grossCost > 0 ? silverSaved / grossCost : 0
 
   const hasSavings = silverSaved > 0
 
@@ -65,9 +62,7 @@ export function ReturnRateSavingsCard({
       <div className="space-y-2 text-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="text-text-faint">
-              Costo bruto
-            </span>
+            <span className="text-text-faint">Costo bruto</span>
 
             <InfoHint
               label="Costo bruto"
@@ -83,9 +78,7 @@ export function ReturnRateSavingsCard({
 
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="text-text-faint">
-              Ahorro por RRR
-            </span>
+            <span className="text-text-faint">Ahorro por RRR</span>
 
             <InfoHint
               label="Ahorro por RRR"
@@ -107,7 +100,7 @@ export function ReturnRateSavingsCard({
         {stationUsageFee > 0 && (
           <div className="flex items-center justify-between gap-4">
             <span className="text-text-faint">
-              Uso del puesto por nutrición
+              Costo de fabricación en el puesto
             </span>
             <span className="shrink-0 tabular text-text">
               {formatSilver(stationUsageFee)} plata
@@ -117,9 +110,7 @@ export function ReturnRateSavingsCard({
 
         <div className="flex items-center justify-between gap-4 border-t border-border pt-3">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="font-medium text-text">
-              Costo neto
-            </span>
+            <span className="font-medium text-text">Costo neto</span>
 
             <InfoHint
               label="Costo neto"
@@ -137,9 +128,7 @@ export function ReturnRateSavingsCard({
           <>
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="text-text-faint">
-                  Costo neto por unidad
-                </span>
+                <span className="text-text-faint">Costo neto por unidad</span>
 
                 <InfoHint
                   label="Costo neto por unidad"
@@ -155,9 +144,7 @@ export function ReturnRateSavingsCard({
 
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="text-text-faint">
-                  Ahorro por unidad
-                </span>
+                <span className="text-text-faint">Ahorro por unidad</span>
 
                 <InfoHint
                   label="Ahorro por unidad"
@@ -180,8 +167,8 @@ export function ReturnRateSavingsCard({
 
       {!hasSavings && (
         <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-text-faint">
-          El ahorro aparecerá cuando el RRR sea mayor que 0% y hayas
-          ingresado precios para los materiales.
+          El ahorro aparecerá cuando el RRR sea mayor que 0% y hayas ingresado
+          precios para los materiales.
         </p>
       )}
     </section>
