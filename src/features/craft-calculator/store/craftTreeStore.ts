@@ -9,6 +9,7 @@ import {
 import type {
   CraftingSpecializationConfig,
   StationFeeConfig,
+  StationUsageFeeOverride,
 } from '@core/domain/entities/ProductionEconomy'
 import type { NodePath } from '@core/usecases/calculateCraftCost'
 import { DEFAULT_RETURN_RATE_CONFIG } from '@core/usecases/calculateCraftCost'
@@ -16,10 +17,7 @@ import {
   applyPresetProductionConfig,
   loadCraftPresetStorage,
 } from './craftPresetStorage'
-import {
-  loadManualPrices,
-  saveManualPrices,
-} from './manualPriceStorage'
+import { loadManualPrices, saveManualPrices } from './manualPriceStorage'
 import type { ManualPricesByRoot } from './manualPriceStorage'
 
 /**
@@ -48,6 +46,11 @@ interface CraftTreeState {
   readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly itemValueOverride: number | null
   readonly itemValueOverridesByRoot: ReadonlyMap<string, number>
+  readonly stationUsageFeeOverride: StationUsageFeeOverride | null
+  readonly stationUsageFeeOverridesByRoot: ReadonlyMap<
+    string,
+    StationUsageFeeOverride
+  >
   readonly isPremium: boolean
 
   /** Cambia de receta y restaura los precios guardados para esa raíz. */
@@ -64,12 +67,18 @@ interface CraftTreeState {
   setRecipeOption: (path: NodePath, optionIndex: number) => void
   setProductionConfig: (config: NodeReturnRateConfig) => void
   setStationFeeConfig: (config: StationFeeConfig) => void
-  setCraftingSpecializationConfig: (config: CraftingSpecializationConfig) => void
+  setCraftingSpecializationConfig: (
+    config: CraftingSpecializationConfig,
+  ) => void
   setItemValueOverride: (value: number | null) => void
+  setStationUsageFeeOverride: (value: StationUsageFeeOverride | null) => void
   setIsPremium: (isPremium: boolean) => void
 }
 
-function buildRootKey(itemId: BaseItemId, enchantment: EnchantmentLevel): string {
+function buildRootKey(
+  itemId: BaseItemId,
+  enchantment: EnchantmentLevel,
+): string {
   return `${itemId}@${enchantment}`
 }
 
@@ -119,6 +128,8 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   craftingSpecializationConfig: initialCraftingSpecializationConfig,
   itemValueOverride: null,
   itemValueOverridesByRoot: new Map(),
+  stationUsageFeeOverride: null,
+  stationUsageFeeOverridesByRoot: new Map(),
   isPremium: initialIsPremium,
 
   resetForItem: (itemId, enchantment, expandRoot) => {
@@ -128,6 +139,7 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
     const savedPrices = get().manualPricesByRoot.get(key)
     const savedRecipeOptions = get().selectedRecipeOptionsByRoot.get(key)
     const savedItemValue = get().itemValueOverridesByRoot.get(key)
+    const savedStationUsageFee = get().stationUsageFeeOverridesByRoot.get(key)
 
     set({
       rootKey: key,
@@ -137,6 +149,7 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
         ? new Map(savedRecipeOptions)
         : new Map(),
       itemValueOverride: savedItemValue ?? null,
+      stationUsageFeeOverride: savedStationUsageFee ?? null,
     })
   },
 
@@ -255,6 +268,33 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
     set({
       itemValueOverride: normalized,
       itemValueOverridesByRoot,
+    })
+  },
+
+  setStationUsageFeeOverride: (value) => {
+    const normalized =
+      value !== null &&
+      Number.isFinite(value.totalFee) &&
+      value.totalFee >= 0 &&
+      Number.isFinite(value.quantity) &&
+      value.quantity > 0 &&
+      Number.isFinite(value.craftsNeeded) &&
+      value.craftsNeeded > 0
+        ? value
+        : null
+    const stationUsageFeeOverridesByRoot = new Map(
+      get().stationUsageFeeOverridesByRoot,
+    )
+    const rootKey = get().rootKey
+
+    if (rootKey) {
+      if (normalized === null) stationUsageFeeOverridesByRoot.delete(rootKey)
+      else stationUsageFeeOverridesByRoot.set(rootKey, normalized)
+    }
+
+    set({
+      stationUsageFeeOverride: normalized,
+      stationUsageFeeOverridesByRoot,
     })
   },
 

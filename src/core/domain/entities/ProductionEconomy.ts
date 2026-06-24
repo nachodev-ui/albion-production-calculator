@@ -17,14 +17,39 @@ export interface CraftingSpecializationConfig {
   readonly qualityIncrease: number
 }
 
+export interface StationUsageFeeOverride {
+  /** Total Cost mostrado por Albion para el lote usado como referencia. */
+  readonly totalFee: number
+  /** Cantidad de objetos terminados incluida en el Total Cost ingresado. */
+  readonly quantity: number
+  /** Cantidad de tiradas incluida en el Total Cost ingresado. */
+  readonly craftsNeeded: number
+}
+
+export type StationFeeSource = 'manual_total' | 'estimated'
+
 export interface StationFeeBreakdown {
   readonly station: CraftingStation
   readonly accessType: StationAccessType
+  readonly source: StationFeeSource
   readonly itemValue: number
   readonly itemValueSource: 'dataset' | 'manual' | 'missing'
+  readonly quantity: number
+  readonly craftsNeeded: number
   readonly nutritionPerCraft: number
   readonly nutritionTotal: number
   readonly feePer100Nutrition: number
+  /** Resultado de la estimación avanzada por nutrición. */
+  readonly estimatedTotalFee: number
+  /** Total Cost original ingresado por el usuario, antes de escalarlo. */
+  readonly manualTotalFee: number | null
+  /** Cantidad de objetos asociada al Total Cost original. */
+  readonly manualQuantity: number | null
+  /** Cantidad de tiradas asociada al Total Cost original. */
+  readonly manualCraftsNeeded: number | null
+  /** Total Cost directo escalado a la cantidad actual. */
+  readonly appliedManualTotalFee: number | null
+  /** Costo efectivo que se suma al cálculo. */
   readonly totalFee: number
 }
 
@@ -47,13 +72,16 @@ export const DEFAULT_STATION_FEE_CONFIG: StationFeeConfig = {
   associateFeePer100Nutrition: 0,
 }
 
-export const DEFAULT_CRAFTING_SPECIALIZATION_CONFIG: CraftingSpecializationConfig = {
-  focusCostEfficiency: 0,
-  availableFocus: 0,
-  qualityIncrease: 0,
-}
+export const DEFAULT_CRAFTING_SPECIALIZATION_CONFIG: CraftingSpecializationConfig =
+  {
+    focusCostEfficiency: 0,
+    availableFocus: 0,
+    qualityIncrease: 0,
+  }
 
-export const CRAFTING_STATION_LABELS: Readonly<Record<CraftingStation, string>> = {
+export const CRAFTING_STATION_LABELS: Readonly<
+  Record<CraftingStation, string>
+> = {
   warrior_forge: "Elder's Warrior's Forge",
   hunter_lodge: "Elder's Hunter's Lodge",
   mage_tower: "Elder's Mage Tower",
@@ -70,9 +98,7 @@ function sanitizeNonNegative(value: number): number {
   return Number.isFinite(value) && value > 0 ? value : 0
 }
 
-export function getAppliedStationFeePer100(
-  config: StationFeeConfig,
-): number {
+export function getAppliedStationFeePer100(config: StationFeeConfig): number {
   if (config.accessType === 'free') return 0
 
   return sanitizeNonNegative(
@@ -91,24 +117,63 @@ export function calculateStationUsageFee(params: {
   readonly station: CraftingStation
   readonly itemValue: number
   readonly itemValueSource: StationFeeBreakdown['itemValueSource']
+  readonly quantity: number
   readonly craftsNeeded: number
   readonly config: StationFeeConfig
+  readonly manualOverride?: StationUsageFeeOverride | null
 }): StationFeeBreakdown {
   const itemValue = sanitizeNonNegative(params.itemValue)
+  const quantity = sanitizeNonNegative(params.quantity)
   const craftsNeeded = sanitizeNonNegative(params.craftsNeeded)
   const nutritionPerCraft = calculateNutritionPerCraft(itemValue)
   const nutritionTotal = nutritionPerCraft * craftsNeeded
   const feePer100Nutrition = getAppliedStationFeePer100(params.config)
-  const totalFee = (nutritionTotal * feePer100Nutrition) / 100
+  const estimatedTotalFee = (nutritionTotal * feePer100Nutrition) / 100
+
+  const manualOverride = params.manualOverride
+  const hasManualOverride =
+    manualOverride !== null &&
+    manualOverride !== undefined &&
+    Number.isFinite(manualOverride.totalFee) &&
+    manualOverride.totalFee >= 0 &&
+    Number.isFinite(manualOverride.craftsNeeded) &&
+    manualOverride.craftsNeeded > 0
+
+  const manualTotalFee = hasManualOverride
+    ? sanitizeNonNegative(manualOverride.totalFee)
+    : null
+  const manualQuantity = hasManualOverride
+    ? sanitizeNonNegative(manualOverride.quantity)
+    : null
+  const manualCraftsNeeded = hasManualOverride
+    ? sanitizeNonNegative(manualOverride.craftsNeeded)
+    : null
+  const appliedManualTotalFee =
+    manualTotalFee !== null &&
+    manualCraftsNeeded !== null &&
+    manualCraftsNeeded > 0
+      ? manualTotalFee * (craftsNeeded / manualCraftsNeeded)
+      : null
+  const source: StationFeeSource =
+    appliedManualTotalFee !== null ? 'manual_total' : 'estimated'
+  const totalFee = appliedManualTotalFee ?? estimatedTotalFee
 
   return {
     station: params.station,
     accessType: params.config.accessType,
+    source,
     itemValue,
     itemValueSource: params.itemValueSource,
+    quantity,
+    craftsNeeded,
     nutritionPerCraft,
     nutritionTotal,
     feePer100Nutrition,
+    estimatedTotalFee,
+    manualTotalFee,
+    manualQuantity,
+    manualCraftsNeeded,
+    appliedManualTotalFee,
     totalFee,
   }
 }

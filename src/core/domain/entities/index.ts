@@ -1,5 +1,9 @@
 export type { EnchantmentLevel } from './Enchantment'
-export { ENCHANTMENT_LEVELS, isValidEnchantmentLevel, formatEnchantment } from './Enchantment'
+export {
+  ENCHANTMENT_LEVELS,
+  isValidEnchantmentLevel,
+  formatEnchantment,
+} from './Enchantment'
 
 export type { BaseItemId, Item, ItemCategory } from './Item'
 export { asBaseItemId, buildItemIconUrl } from './Item'
@@ -39,6 +43,8 @@ export { calculateReturnRate } from './ReturnRate'
 export type {
   StationAccessType,
   StationFeeConfig,
+  StationUsageFeeOverride,
+  StationFeeSource,
   CraftingSpecializationConfig,
   StationFeeBreakdown,
   FocusCostBreakdown,

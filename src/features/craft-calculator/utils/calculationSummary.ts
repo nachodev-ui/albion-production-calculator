@@ -1,6 +1,7 @@
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
+import type { StationFeeSource } from '@core/domain/entities/ProductionEconomy'
 import { formatEnchantment } from '@core/domain/entities/Enchantment'
-import { calculateProfitBreakdown } from './profitCalculations'
+import { calculateCraftEconomicSummary } from './profitCalculations'
 
 export interface CalculationSummaryMaterial {
   readonly name: string
@@ -36,6 +37,8 @@ export interface CalculationSummaryInput {
   readonly nutritionPerCraft: number
   readonly nutritionTotal: number
   readonly appliedFeePer100Nutrition: number
+  readonly stationFeeSource?: StationFeeSource
+  readonly estimatedStationUsageFee?: number
   readonly stationUsageFee: number
 
   readonly focusCostEfficiency: number
@@ -61,8 +64,10 @@ export interface CalculationSummaryInput {
  * Versión serializable del resumen usada por la vista imprimible.
  * La fecha se guarda como ISO para poder transportarla entre pestañas.
  */
-export interface CalculationSummarySnapshot
-  extends Omit<CalculationSummaryInput, 'generatedAt'> {
+export interface CalculationSummarySnapshot extends Omit<
+  CalculationSummaryInput,
+  'generatedAt'
+> {
   readonly generatedAt: string
 }
 
@@ -141,12 +146,39 @@ export function buildCalculationSummary(
   const normalizedSellPrice = input.unitSellPrice ?? 0
   const hasSellPrice = normalizedSellPrice > 0
 
-  const economics = calculateProfitBreakdown({
+  const economics = calculateCraftEconomicSummary({
     totalCost: input.totalCost,
+    recoveredMaterialValue: input.silverSaved,
     quantity: safeQuantity,
     unitSellPrice: normalizedSellPrice,
     isPremium: input.isPremium,
   })
+  const { cashBreakdown } = economics
+  const stationFeeSource = input.stationFeeSource ?? 'estimated'
+  const stationLines =
+    stationFeeSource === 'manual_total'
+      ? [
+          'PUESTO Y COSTO DE FABRICACIÓN',
+          `- Puesto: ${input.stationName}`,
+          '- Fuente: Total Cost ingresado desde Albion',
+          `- Costo aplicado al cálculo: ${formatSilver(input.stationUsageFee)}`,
+          ...(input.estimatedStationUsageFee !== undefined
+            ? [
+                `- Estimación avanzada de referencia: ${formatSilver(input.estimatedStationUsageFee)}`,
+              ]
+            : []),
+        ]
+      : [
+          'PUESTO Y COSTO DE FABRICACIÓN',
+          `- Puesto: ${input.stationName}`,
+          '- Fuente: estimación por nutrición',
+          `- Acceso: ${input.stationAccessLabel}`,
+          `- Item Value: ${formatQuantity(input.itemValue)}`,
+          `- Nutrición por tirada: ${formatQuantity(input.nutritionPerCraft)}`,
+          `- Nutrición total: ${formatQuantity(input.nutritionTotal)}`,
+          `- Tarifa aplicada / 100 nutrición: ${formatSilver(input.appliedFeePer100Nutrition)}`,
+          `- Costo aplicado al cálculo: ${formatSilver(input.stationUsageFee)}`,
+        ]
 
   const lines: string[] = [
     'ALBION CRAFT CALCULATOR',
@@ -178,14 +210,7 @@ export function buildCalculationSummary(
     }`,
     `- RRR resultante: ${formatPercentage(input.returnRate)}`,
     '',
-    'PUESTO Y NUTRICIÓN',
-    `- Puesto: ${input.stationName}`,
-    `- Acceso: ${input.stationAccessLabel}`,
-    `- Item Value: ${formatQuantity(input.itemValue)}`,
-    `- Nutrición por tirada: ${formatQuantity(input.nutritionPerCraft)}`,
-    `- Nutrición total: ${formatQuantity(input.nutritionTotal)}`,
-    `- Tarifa aplicada / 100 nutrición: ${formatSilver(input.appliedFeePer100Nutrition)}`,
-    `- Costo de uso del puesto: ${formatSilver(input.stationUsageFee)}`,
+    ...stationLines,
     '',
     'ESPECIALIZACIÓN Y FOCO',
     `- Focus Cost Efficiency: ${formatQuantity(input.focusCostEfficiency)}`,
@@ -197,9 +222,9 @@ export function buildCalculationSummary(
     `- Objetos posibles con el foco indicado: ${formatQuantity(input.maxItemsWithAvailableFocus)}`,
     '',
     'COSTOS',
-    `- Costo bruto${input.isComplete ? '' : ' parcial'}: ${formatSilver(grossCost)}`,
-    `- Ahorro estimado por RRR: -${formatSilver(input.silverSaved)}`,
-    `- Costo ${input.isComplete ? 'neto' : 'parcial'}: ${formatSilver(input.totalCost)}`,
+    `- Inversión inicial${input.isComplete ? '' : ' parcial'}: ${formatSilver(grossCost)}`,
+    `- Valor recuperado por RRR: +${formatSilver(input.silverSaved)}`,
+    `- Costo económico ${input.isComplete ? 'neto' : 'parcial'}: ${formatSilver(input.totalCost)}`,
     `- Costo ${input.isComplete ? 'neto' : 'parcial'} por unidad: ${formatSilver(netCostPerUnit)}`,
     `- Ahorro por unidad: ${formatSilver(savingsPerUnit)}`,
     `- Tarifas de estación incluidas: ${formatSilver(input.stationFees)}`,
@@ -233,9 +258,9 @@ export function buildCalculationSummary(
     '',
     'VENTA Y RENTABILIDAD',
     `- Cuenta Premium: ${formatYesNo(input.isPremium)}`,
-    `- Tax de venta: ${formatPercentage(economics.taxRate)}`,
-    `- Setup Fee: ${formatPercentage(economics.setupFeeRate)}`,
-    `- Comisiones totales: ${formatPercentage(economics.totalFeeRate)}`,
+    `- Tax de venta: ${formatPercentage(cashBreakdown.taxRate)}`,
+    `- Setup Fee: ${formatPercentage(cashBreakdown.setupFeeRate)}`,
+    `- Comisiones totales: ${formatPercentage(cashBreakdown.totalFeeRate)}`,
     `- Precio de venta unitario: ${
       hasSellPrice ? formatSilver(normalizedSellPrice) : 'No ingresado'
     }`,
@@ -243,8 +268,8 @@ export function buildCalculationSummary(
 
   if (input.isComplete) {
     lines.push(
-      `- Precio mínimo por unidad: ${formatSilver(economics.breakEvenUnitPrice)}`,
-      ...economics.targetPrices.map(
+      `- Precio mínimo por unidad: ${formatSilver(cashBreakdown.breakEvenUnitPrice)}`,
+      ...cashBreakdown.targetPrices.map(
         ({ target, unitPrice }) =>
           `- Precio objetivo ${formatPercentage(target)}: ${formatSilver(unitPrice)} por unidad`,
       ),
@@ -258,14 +283,14 @@ export function buildCalculationSummary(
 
   if (hasSellPrice) {
     lines.push(
-      `- Venta bruta: ${formatSilver(economics.grossRevenue)}`,
-      `- Tax descontado: -${formatSilver(economics.taxAmount)}`,
-      `- Setup Fee descontado: -${formatSilver(economics.setupFeeAmount)}`,
-      `- Venta neta: ${formatSilver(economics.netRevenue)}`,
+      `- Venta bruta: ${formatSilver(cashBreakdown.grossRevenue)}`,
+      `- Tax descontado: -${formatSilver(cashBreakdown.taxAmount)}`,
+      `- Setup Fee descontado: -${formatSilver(cashBreakdown.setupFeeAmount)}`,
+      `- Venta neta: ${formatSilver(cashBreakdown.netRevenue)}`,
     )
 
     if (input.isComplete) {
-      const comparison = normalizedSellPrice - economics.breakEvenUnitPrice
+      const comparison = normalizedSellPrice - cashBreakdown.breakEvenUnitPrice
 
       lines.push(
         `- Diferencia frente al mínimo: ${
@@ -273,17 +298,25 @@ export function buildCalculationSummary(
             ? 'Sin diferencia'
             : `${comparison > 0 ? '+' : '-'}${formatSilver(Math.abs(comparison))}`
         }`,
-        `- Resultado: ${economics.profit >= 0 ? '+' : '-'}${formatSilver(
-          Math.abs(economics.profit),
+        `- Resultado en plata: ${economics.cashResult >= 0 ? '+' : '-'}${formatSilver(
+          Math.abs(economics.cashResult),
         )}`,
-        `- Rentabilidad sobre costo: ${
-          economics.profitability > 0 ? '+' : ''
-        }${formatPercentage(economics.profitability)}`,
+        `- Valor recuperado: +${formatSilver(economics.recoveredMaterialValue)}`,
+        `- Resultado económico total: ${economics.economicResult >= 0 ? '+' : '-'}${formatSilver(
+          Math.abs(economics.economicResult),
+        )}`,
+        `- Rentabilidad en plata: ${
+          economics.cashProfitability > 0 ? '+' : ''
+        }${formatPercentage(economics.cashProfitability)}`,
+        `- Rentabilidad económica total: ${
+          economics.economicProfitability > 0 ? '+' : ''
+        }${formatPercentage(economics.economicProfitability)}`,
       )
     } else {
       lines.push(
-        '- Resultado: Pendiente porque faltan precios de materiales',
-        '- Rentabilidad: Pendiente porque faltan precios de materiales',
+        '- Resultado en plata: Pendiente porque faltan precios de materiales',
+        '- Resultado económico total: Pendiente porque faltan precios de materiales',
+        '- Rentabilidades: Pendientes porque faltan precios de materiales',
       )
     }
   }

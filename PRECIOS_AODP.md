@@ -11,7 +11,9 @@ La tarjeta **Configuración de mercado** permite seleccionar:
 - ciudad donde se compran los materiales;
 - ciudad donde se vende el producto;
 - estrategia de compra;
-- estrategia de venta.
+- estrategia de venta;
+- calidad del producto terminado: Normal, Bueno, Sobresaliente, Excelente u
+  Obra maestra.
 
 Las estrategias se interpretan así:
 
@@ -22,7 +24,10 @@ Las estrategias se interpretan así:
 | Producto | Vender mediante orden | `sell_price_min` |
 | Producto | Vender inmediatamente | `buy_price_max` |
 
-La primera versión consulta calidad Normal (`quality = 1`).
+La calidad elegida se utiliza para el precio de venta y el historial del
+producto terminado. Los materiales se consultan siempre con calidad Normal
+(`quality = 1`), porque los recursos empleados por las recetas no poseen
+calidad de mercado.
 
 ## Prioridad de precios
 
@@ -76,9 +81,10 @@ guardan en `localStorage`.
   nueva solicitud.
 - Si AODP falla, se conservan los últimos datos guardados y los precios
   manuales siguen disponibles.
-- **Actualizar precios** fuerza una consulta para el objeto y sus ingredientes.
-- **Limpiar caché** elimina únicamente los snapshots AODP; no borra los precios
-  manuales existentes.
+- **Actualizar precios** fuerza una consulta para el objeto, sus ingredientes y
+  el historial del producto terminado.
+- **Limpiar caché** elimina los snapshots actuales e históricos de AODP; no borra
+  los precios manuales existentes.
 
 Cada snapshot conserva por separado:
 
@@ -90,9 +96,10 @@ Por ello, volver a consultar un precio antiguo no lo convierte en reciente.
 
 ## Solicitudes agrupadas
 
-Los ingredientes visibles y las alternativas de la receta raíz se agrupan en
-solicitudes por servidor, ciudades y calidad. Cuando la URL resultante se acerca
-al límite del proveedor, la aplicación la divide en varios lotes.
+Los materiales se agrupan por servidor y ciudad de compra con calidad Normal.
+El producto terminado se consulta por separado con la ciudad de venta y la
+calidad seleccionada. Cuando una URL se acerca al límite del proveedor, la
+aplicación la divide en varios lotes.
 
 ## Alcance implementado
 
@@ -101,15 +108,50 @@ Incluido:
 - precios actuales;
 - servidor y ciudades;
 - estrategias de compra y venta;
+- selector de calidad para el producto terminado;
 - override manual;
 - retorno al precio automático;
 - caché persistente y manejo de errores;
 - fecha exacta y tiempo relativo;
 - clasificación de confianza;
-- advertencia por precios antiguos.
+- advertencia por precios antiguos;
+- historial diario de 7 y 28 días;
+- precio promedio ponderado, mínimo y máximo;
+- volumen total y promedio diario;
+- volatilidad de precios;
+- gráfico combinado de precio y volumen.
 
-Pendiente para siguientes cambios:
+## Historial de precio y volumen
 
-- historial de precios;
-- volumen de ventas;
-- lote máximo recomendado.
+Para el producto terminado se consulta el endpoint histórico de AODP en la
+ciudad de venta y calidad seleccionadas. La solicitud utiliza agregación diaria
+(`time-scale = 24`) y conserva los últimos 28 días UTC completos. El límite
+superior enviado a AODP avanza hasta la medianoche del día siguiente para no
+perder los buckets del último día completo. La vista de 7 días se deriva desde
+el mismo snapshot.
+
+La aplicación normaliza la serie para incluir con volumen `0` los días que
+AODP omite. Así, el volumen diario promedio no se infla contando únicamente
+días con registros.
+
+Las métricas se calculan de la siguiente manera:
+
+- **Precio promedio:** ponderado por `item_count` cuando existe volumen.
+- **Mínimo y máximo:** extremos de los precios promedio diarios observados.
+- **Volumen diario:** volumen total dividido por 7 o 28 días, incluidos ceros.
+- **Volatilidad:** desviación estándar de los precios promedio diarios dividida
+  por su media, expresada como porcentaje.
+
+El gráfico muestra la evolución del precio promedio diario y barras de volumen.
+Los puntos históricos se guardan en una caché separada durante 30 minutos; si
+la consulta falla, puede utilizarse el último snapshot local disponible.
+
+AODP documenta el historial como datos de **órdenes de venta**. Por lo tanto,
+cambiar entre **Vender mediante orden** y **Vender inmediatamente** modifica el
+precio actual usado por la calculadora, pero no el gráfico histórico. El volumen
+no representa todas las órdenes de compra, ventas garantizadas ni la liquidez
+futura del objeto.
+
+Pendiente para el siguiente cambio:
+
+- lote máximo recomendado según volumen histórico.

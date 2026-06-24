@@ -6,6 +6,7 @@ import {
   buildMarketItemIdentifier,
   classifyMarketPriceFreshness,
   formatMarketPriceRelativeAge,
+  resolveMaterialPurchaseCity,
   resolvePurchasePrice,
   resolvePurchasePriceDate,
   resolvePurchasePriceDetail,
@@ -27,7 +28,7 @@ const snapshot: MarketPriceSnapshot = {
 }
 
 describe('MarketPrice', () => {
-  it('construye el identificador AODP con encantamiento', () => {
+  it('construye el identificador de mercado con encantamiento', () => {
     const itemId = asBaseItemId('T4_SWORD')
 
     expect(buildMarketItemIdentifier(itemId, 0)).toBe('T4_SWORD')
@@ -90,6 +91,17 @@ describe('MarketPrice', () => {
 
     expect(text).toContain('24')
     expect(text).toContain('minuto')
+  })
+
+  it('resuelve una ciudad individual sin perder la predeterminada', () => {
+    const overrides = new Map([['T4_SWORD@2', 'brecilien' as const]])
+
+    expect(
+      resolveMaterialPurchaseCity(overrides, 'T4_SWORD@2', 'martlock'),
+    ).toBe('brecilien')
+    expect(
+      resolveMaterialPurchaseCity(overrides, 'T4_PLANKS@0', 'martlock'),
+    ).toBe('martlock')
   })
 
   it('separa la caché por servidor, ciudad, objeto y calidad', () => {

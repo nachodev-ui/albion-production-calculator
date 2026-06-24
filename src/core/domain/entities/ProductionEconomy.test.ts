@@ -16,6 +16,7 @@ describe('ProductionEconomy', () => {
       station: 'warrior_forge',
       itemValue: 8_000,
       itemValueSource: 'manual',
+      quantity: 10,
       craftsNeeded: 10,
       config: {
         accessType: 'user',
@@ -33,6 +34,7 @@ describe('ProductionEconomy', () => {
       station: 'hunter_lodge' as const,
       itemValue: 1_000,
       itemValueSource: 'dataset' as const,
+      quantity: 2,
       craftsNeeded: 2,
     }
 
@@ -57,6 +59,31 @@ describe('ProductionEconomy', () => {
         },
       }).totalFee,
     ).toBe(0)
+  })
+
+  it('prioriza el Total Cost directo y lo escala según las tiradas actuales', () => {
+    const result = calculateStationUsageFee({
+      station: 'mage_tower',
+      itemValue: 64,
+      itemValueSource: 'manual',
+      quantity: 30,
+      craftsNeeded: 30,
+      config: {
+        accessType: 'user',
+        userFeePer100Nutrition: 940,
+        associateFeePer100Nutrition: 0,
+      },
+      manualOverride: {
+        totalFee: 1_015,
+        quantity: 15,
+        craftsNeeded: 15,
+      },
+    })
+
+    expect(result.source).toBe('manual_total')
+    expect(result.estimatedTotalFee).toBeCloseTo(2_030.4, 10)
+    expect(result.appliedManualTotalFee).toBe(2_030)
+    expect(result.totalFee).toBe(2_030)
   })
 
   it('reduce el costo de foco a la mitad cada 10.000 de eficiencia', () => {

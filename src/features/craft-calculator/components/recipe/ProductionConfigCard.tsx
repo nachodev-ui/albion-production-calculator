@@ -7,19 +7,25 @@ import type {
   FocusCostBreakdown,
   StationFeeBreakdown,
   StationFeeConfig,
+  StationUsageFeeOverride,
 } from '@core/domain/entities/ProductionEconomy'
+import type { ProductionCityRecommendation } from '../../utils/productionRecommendation'
+import { normalizeProductionConfigForRecommendation } from '../../utils/productionRecommendation'
 import { CraftPresetManager } from './CraftPresetManager'
 import { CraftingSpecializationPanel } from './CraftingSpecializationPanel'
 import { StationFeeConfigPanel } from './StationFeeConfigPanel'
 
 interface ProductionConfigCardProps {
   readonly config: NodeReturnRateConfig
+  readonly recommendation: ProductionCityRecommendation | null
   readonly isPremium: boolean
   readonly station: CraftingStation
+  readonly quantity: number
   readonly stationFeeConfig: StationFeeConfig
   readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly detectedItemValue: number | null
   readonly itemValueOverride: number | null
+  readonly stationUsageFeeOverride: StationUsageFeeOverride | null
   readonly stationFeeBreakdown: StationFeeBreakdown
   readonly focusCostBreakdown: FocusCostBreakdown
   readonly onChange: (config: NodeReturnRateConfig) => void
@@ -29,16 +35,22 @@ interface ProductionConfigCardProps {
     config: CraftingSpecializationConfig,
   ) => void
   readonly onItemValueOverrideChange: (value: number | null) => void
+  readonly onStationUsageFeeOverrideChange: (
+    value: StationUsageFeeOverride | null,
+  ) => void
 }
 
 export function ProductionConfigCard({
   config,
+  recommendation,
   isPremium,
   station,
+  quantity,
   stationFeeConfig,
   craftingSpecializationConfig,
   detectedItemValue,
   itemValueOverride,
+  stationUsageFeeOverride,
   stationFeeBreakdown,
   focusCostBreakdown,
   onChange,
@@ -46,22 +58,26 @@ export function ProductionConfigCard({
   onStationFeeConfigChange,
   onCraftingSpecializationConfigChange,
   onItemValueOverrideChange,
+  onStationUsageFeeOverrideChange,
 }: ProductionConfigCardProps) {
   const rrr = calculateReturnRate(config)
 
+  function commit(nextConfig: NodeReturnRateConfig) {
+    onChange(
+      normalizeProductionConfigForRecommendation(nextConfig, recommendation),
+    )
+  }
+
   function update(patch: Partial<NodeReturnRateConfig>) {
-    onChange({ ...config, ...patch })
+    commit({ ...config, ...patch })
   }
 
   function handleCityChange(cityId: CityId) {
-    const isIsland = cityId === 'island'
-
-    update({
-      cityId,
-      isIsland,
-      hasSpecialtyBonus: isIsland ? false : config.hasSpecialtyBonus,
-    })
+    update({ cityId })
   }
+
+  const isRecommendedCity =
+    recommendation !== null && config.cityId === recommendation.cityId
 
   return (
     <section className="mb-6 rounded-xl border border-border bg-surface p-4">
@@ -80,7 +96,7 @@ export function ProductionConfigCard({
         isPremium={isPremium}
         stationFeeConfig={stationFeeConfig}
         craftingSpecializationConfig={craftingSpecializationConfig}
-        onConfigChange={onChange}
+        onConfigChange={commit}
         onPremiumChange={onPremiumChange}
         onStationFeeConfigChange={onStationFeeConfigChange}
         onCraftingSpecializationConfigChange={
@@ -90,42 +106,67 @@ export function ProductionConfigCard({
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-raised p-3">
-          <label className="text-sm text-text-muted">Ciudad</label>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="text-sm text-text-muted">Ciudad</label>
+              {isRecommendedCity && (
+                <span className="rounded-md border border-positive/35 bg-positive-muted px-2 py-0.5 text-[11px] font-medium text-positive">
+                  Recomendada
+                </span>
+              )}
+            </div>
+            {recommendation && (
+              <p className="mt-1 text-[11px] text-text-faint">
+                Bono para {recommendation.specialtyLabel}:{' '}
+                {recommendation.cityName}.
+              </p>
+            )}
+          </div>
 
           <select
             value={config.cityId}
-            onChange={(event) =>
-              handleCityChange(event.target.value as CityId)
-            }
-            className="min-w-44 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+            onChange={(event) => handleCityChange(event.target.value as CityId)}
+            className="min-w-48 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
             {CITIES.map((city) => (
               <option key={city.id} value={city.id}>
                 {city.name}
+                {recommendation?.cityId === city.id ? ' · Recomendada' : ''}
               </option>
             ))}
           </select>
         </div>
 
-        <label
-          className={`flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3 ${
-            config.isIsland ? 'opacity-45' : ''
+        <div
+          className={`flex items-center justify-between gap-3 rounded-lg border p-3 ${
+            isRecommendedCity
+              ? 'border-positive/30 bg-positive-muted/60'
+              : 'border-border bg-surface-raised'
           }`}
         >
-          <span className="text-sm text-text-muted">
-            Bono de especialidad
-          </span>
+          <div>
+            <span className="text-sm text-text-muted">
+              Bono de especialidad
+            </span>
+            <p className="mt-1 text-[11px] text-text-faint">
+              {recommendation
+                ? isRecommendedCity
+                  ? `Activo automáticamente para ${recommendation.specialtyLabel}.`
+                  : `No aplica aquí. La ciudad recomendada es ${recommendation.cityName}.`
+                : 'No se detectó una ciudad con bono para esta categoría.'}
+            </p>
+          </div>
 
-          <input
-            type="checkbox"
-            disabled={config.isIsland}
-            checked={config.hasSpecialtyBonus}
-            onChange={(event) =>
-              update({ hasSpecialtyBonus: event.target.checked })
-            }
-            className="accent-accent"
-          />
-        </label>
+          <span
+            className={`rounded-md border px-2 py-1 text-xs font-medium ${
+              isRecommendedCity
+                ? 'border-positive/35 bg-positive-muted text-positive'
+                : 'border-border bg-surface text-text-faint'
+            }`}
+          >
+            {isRecommendedCity ? 'Activo' : 'No aplica'}
+          </span>
+        </div>
 
         <label className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
           <span className="text-sm text-text-muted">Usar foco</span>
@@ -191,12 +232,15 @@ export function ProductionConfigCard({
 
       <StationFeeConfigPanel
         station={station}
+        quantity={quantity}
         config={stationFeeConfig}
         detectedItemValue={detectedItemValue}
         itemValueOverride={itemValueOverride}
+        manualTotalCost={stationUsageFeeOverride}
         breakdown={stationFeeBreakdown}
         onChange={onStationFeeConfigChange}
         onItemValueOverrideChange={onItemValueOverrideChange}
+        onManualTotalCostChange={onStationUsageFeeOverrideChange}
       />
 
       <CraftingSpecializationPanel

@@ -44,7 +44,14 @@ function buildTestRepository(): ItemRepository {
   const GRAIN = asBaseItemId('GRAIN')
   const FOOD = asBaseItemId('FOOD')
 
-  add({ id: ORE, name: 'Ore', tier: 4, category: 'resource' as ItemCategory, maxEnchantment: 0, recipe: null })
+  add({
+    id: ORE,
+    name: 'Ore',
+    tier: 4,
+    category: 'resource' as ItemCategory,
+    maxEnchantment: 0,
+    recipe: null,
+  })
 
   add({
     id: INGOT,
@@ -146,7 +153,14 @@ function buildTestRepository(): ItemRepository {
     },
   })
 
-  add({ id: GRAIN, name: 'Grain', tier: 1, category: 'resource' as ItemCategory, maxEnchantment: 0, recipe: null })
+  add({
+    id: GRAIN,
+    name: 'Grain',
+    tier: 1,
+    category: 'resource' as ItemCategory,
+    maxEnchantment: 0,
+    recipe: null,
+  })
 
   add({
     id: FOOD,
@@ -206,14 +220,11 @@ describe('calculateCraftCost', () => {
     expect(result.grandTotal).toBe(300)
   })
 
-
   it('usa el precio automático cuando no existe override manual', () => {
     const sword = asBaseItemId('SWORD')
     const config: CraftTreeConfig = {
       ...createEmptyTreeConfig(),
-      automaticPrices: new Map([
-        [buildItemPriceKey(sword, 0), 80],
-      ]),
+      automaticPrices: new Map([[buildItemPriceKey(sword, 0), 80]]),
     }
 
     const result = calculateCraftCost(sword, 0, 3, repo, config)
@@ -230,9 +241,7 @@ describe('calculateCraftCost', () => {
     const config: CraftTreeConfig = {
       ...createEmptyTreeConfig(),
       manualPrices: new Map([['root', 100]]),
-      automaticPrices: new Map([
-        [buildItemPriceKey(sword, 0), 80],
-      ]),
+      automaticPrices: new Map([[buildItemPriceKey(sword, 0), 80]]),
     }
 
     const result = calculateCraftCost(sword, 0, 2, repo, config)
@@ -241,7 +250,6 @@ describe('calculateCraftCost', () => {
     expect(result.root.priceSource).toBe('manual')
     expect(result.grandTotal).toBe(200)
   })
-
 
   it('distingue un precio 0 confirmado de un precio faltante', () => {
     const config: CraftTreeConfig = {
@@ -459,12 +467,17 @@ describe('calculateCraftCost', () => {
       manualPrices: new Map([['root', 7]]),
     }
     const result1 = calculateCraftCost(asBaseItemId('ORE'), 0, 1, repo, config)
-    const result10 = calculateCraftCost(asBaseItemId('ORE'), 0, 10, repo, config)
+    const result10 = calculateCraftCost(
+      asBaseItemId('ORE'),
+      0,
+      10,
+      repo,
+      config,
+    )
 
     expect(result10.grandTotal).toBe(result1.grandTotal * 10)
   })
 })
-
 
 function buildRoyalRecipeRepository(): ItemRepository {
   const items = new Map<BaseItemId, Item>()
@@ -627,6 +640,40 @@ describe('recetas alternativas de equipo real', () => {
     expect(result.totalSilverSavedByReturnRate).toBe(0)
     expect(result.returnedMaterials).toHaveLength(0)
   })
+  it('prioriza el Total Cost directo del puesto sobre la estimación por nutrición', () => {
+    const config: CraftTreeConfig = {
+      expandedPaths: new Set(['root']),
+      manualPrices: new Map([
+        [childPath('root', 0), 20],
+        [childPath('root', 1), 5],
+      ]),
+      productionConfig: DEFAULT_RETURN_RATE_CONFIG,
+      stationFeeConfig: {
+        accessType: 'user',
+        userFeePer100Nutrition: 450,
+        associateFeePer100Nutrition: 250,
+      },
+      stationUsageFeeOverride: {
+        totalFee: 1_015,
+        quantity: 10,
+        craftsNeeded: 10,
+      },
+    }
+
+    const result = calculateCraftCost(
+      asBaseItemId('SWORD'),
+      0,
+      10,
+      repo,
+      config,
+    )
+
+    expect(result.stationFeeBreakdown.source).toBe('manual_total')
+    expect(result.stationFeeBreakdown.estimatedTotalFee).toBe(40_500)
+    expect(result.stationUsageFee).toBe(1_015)
+    expect(result.grandTotal).toBeCloseTo(result.root.totalCost + 1_015, 10)
+  })
+
   it('suma la tarifa de uso por nutrición y calcula el foco efectivo', () => {
     const config: CraftTreeConfig = {
       expandedPaths: new Set(['root']),
@@ -650,17 +697,19 @@ describe('recetas alternativas de equipo real', () => {
       },
     }
 
-    const result = calculateCraftCost(asBaseItemId('SWORD'), 0, 10, repo, config)
+    const result = calculateCraftCost(
+      asBaseItemId('SWORD'),
+      0,
+      10,
+      repo,
+      config,
+    )
 
     expect(result.stationFeeBreakdown.nutritionPerCraft).toBe(900)
     expect(result.stationUsageFee).toBe(40_500)
-    expect(result.grandTotal).toBeCloseTo(
-      result.root.totalCost + 40_500,
-      10,
-    )
+    expect(result.grandTotal).toBeCloseTo(result.root.totalCost + 40_500, 10)
     expect(result.focusCostBreakdown.effectiveFocusPerCraft).toBe(500)
     expect(result.focusCostBreakdown.totalFocusRequired).toBe(5_000)
     expect(result.focusCostBreakdown.maxItemsWithAvailableFocus).toBe(20)
   })
-
 })

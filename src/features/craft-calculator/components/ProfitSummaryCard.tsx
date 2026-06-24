@@ -1,12 +1,28 @@
 import { useState } from 'react'
 import { InfoHint } from '@shared/components/InfoHint'
 import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
+import { MarketRefreshItemFeedback } from '@features/market-data/components/MarketRefreshFeedback'
+import type { MarketRefreshItemReport } from '@features/market-data/types/MarketRefresh'
 import { PROFIT_SUMMARY_INFO } from '../content/craftInfoDescriptions'
-import { calculateProfitBreakdown } from '../utils/profitCalculations'
-import type { MarketRequestStatus } from '@features/market-data/types/MarketPrice'
+import { calculateCraftEconomicSummary } from '../utils/profitCalculations'
+import type {
+  MarketCityId,
+  MarketConfig,
+  MarketDefinition,
+  MarketQuality,
+  MarketRequestStatus,
+  SaleStrategy,
+} from '@features/market-data/types/MarketPrice'
+import {
+  MARKET_QUALITIES,
+  MARKET_QUALITY_LABELS,
+  SALE_STRATEGY_LABELS,
+  getMarketName,
+} from '@features/market-data/types/MarketPrice'
 
 interface ProfitSummaryCardProps {
   readonly totalCost: number
+  readonly recoveredMaterialValue: number
   readonly quantity: number
   readonly isCalculationComplete: boolean
   readonly isPremium: boolean
@@ -17,6 +33,10 @@ interface ProfitSummaryCardProps {
   readonly automaticPriceLabel: string
   readonly automaticPriceUpdatedAt: string | null
   readonly marketStatus: MarketRequestStatus
+  readonly refreshResult: MarketRefreshItemReport | null
+  readonly marketConfig: MarketConfig
+  readonly markets: readonly MarketDefinition[]
+  readonly onMarketConfigChange: (patch: Partial<MarketConfig>) => void
   readonly onUnitSellPriceChange: (price: number | null) => void
   readonly onUseAutomaticSellPrice: () => void
 }
@@ -37,6 +57,7 @@ function formatPercentage(rate: number): string {
 
 export function ProfitSummaryCard({
   totalCost,
+  recoveredMaterialValue,
   quantity,
   isCalculationComplete,
   isPremium,
@@ -47,6 +68,10 @@ export function ProfitSummaryCard({
   automaticPriceLabel,
   automaticPriceUpdatedAt,
   marketStatus,
+  refreshResult,
+  marketConfig,
+  markets,
+  onMarketConfigChange,
   onUnitSellPriceChange,
   onUseAutomaticSellPrice,
 }: ProfitSummaryCardProps) {
@@ -59,19 +84,25 @@ export function ProfitSummaryCard({
   const canShowEconomicResult = hasSellPrice && isCalculationComplete
 
   const {
-    taxRate,
-    setupFeeRate,
-    totalFeeRate,
-    grossRevenue,
-    taxAmount,
-    setupFeeAmount,
-    netRevenue,
-    profit,
-    profitability,
-    breakEvenUnitPrice,
-    targetPrices,
-  } = calculateProfitBreakdown({
+    initialInvestment,
+    cashResult,
+    economicResult,
+    cashProfitability,
+    economicProfitability,
+    cashBreakdown: {
+      taxRate,
+      setupFeeRate,
+      totalFeeRate,
+      grossRevenue,
+      taxAmount,
+      setupFeeAmount,
+      netRevenue,
+      breakEvenUnitPrice,
+      targetPrices,
+    },
+  } = calculateCraftEconomicSummary({
     totalCost,
+    recoveredMaterialValue,
     quantity,
     unitSellPrice: normalizedUnitSellPrice,
     isPremium,
@@ -91,9 +122,15 @@ export function ProfitSummaryCard({
   const isAtBreakEven =
     canShowEconomicResult && priceDifference === 0
 
-  const resultClassName = !canShowEconomicResult
+  const cashResultClassName = !canShowEconomicResult
     ? 'text-text-faint'
-    : profit >= 0
+    : cashResult >= 0
+      ? 'text-positive'
+      : 'text-negative'
+
+  const economicResultClassName = !canShowEconomicResult
+    ? 'text-text-faint'
+    : economicResult >= 0
       ? 'text-positive'
       : 'text-negative'
 
@@ -181,7 +218,7 @@ export function ProfitSummaryCard({
           </div>
 
           <p className="mt-1 text-xs text-text-faint">
-            Calcula el precio mínimo y el resultado real después de comisiones.
+            Separa la plata disponible del valor que conservas en materiales retornados.
           </p>
         </div>
 
@@ -191,19 +228,114 @@ export function ProfitSummaryCard({
           </span>
         ) : hasSellPrice ? (
           <span
-            className={`shrink-0 rounded-md px-2.5 py-1 text-xs font-medium ${
-              isBelowBreakEven
-                ? 'border border-border bg-surface text-negative'
-                : 'bg-positive-muted text-positive'
+            className={`shrink-0 rounded-md border px-2.5 py-1 text-xs font-medium ${
+              cashResult >= 0
+                ? 'border-positive/40 bg-positive-muted text-positive'
+                : economicResult >= 0
+                  ? 'border-accent-border bg-accent-muted text-accent'
+                  : 'border-border bg-surface text-negative'
             }`}
           >
-            {isBelowBreakEven
-              ? 'Pérdida estimada'
-              : isAtBreakEven
-                ? 'Sin pérdida'
-                : 'Ganancia estimada'}
+            {cashResult > 0
+              ? 'Ganancia en plata'
+              : cashResult === 0
+                ? 'Plata recuperada'
+                : economicResult >= 0
+                  ? 'Valor total positivo'
+                  : 'Pérdida estimada'}
           </span>
         ) : null}
+      </div>
+
+      <div className="mb-4 rounded-lg border border-border bg-surface p-3">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
+          <div className="min-w-0 xl:w-48">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-text-faint">
+              Configuración de venta
+            </h4>
+            <p className="mt-1 text-[10px] leading-relaxed text-text-faint">
+              Estos controles actualizan el precio y el resultado económico del producto terminado.
+            </p>
+          </div>
+
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span className="text-[11px] font-medium text-text-faint">
+              Vender en
+            </span>
+            <select
+              value={marketConfig.saleCity}
+              onChange={(event) =>
+                onMarketConfigChange({
+                  saleCity: event.target.value as MarketCityId,
+                })
+              }
+              className="w-full rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent-border"
+            >
+              {markets.map((market) => (
+                <option key={market.key} value={market.key}>
+                  {market.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span className="text-[11px] font-medium text-text-faint">
+              Método de venta
+            </span>
+            <select
+              value={marketConfig.saleStrategy}
+              onChange={(event) =>
+                onMarketConfigChange({
+                  saleStrategy: event.target.value as SaleStrategy,
+                })
+              }
+              className="w-full rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent-border"
+            >
+              {(Object.keys(SALE_STRATEGY_LABELS) as SaleStrategy[]).map(
+                (strategy) => (
+                  <option key={strategy} value={strategy}>
+                    {SALE_STRATEGY_LABELS[strategy]}
+                  </option>
+                ),
+              )}
+            </select>
+          </label>
+
+          <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <span className="text-[11px] font-medium text-text-faint">
+              Calidad
+            </span>
+            <select
+              value={marketConfig.quality}
+              onChange={(event) =>
+                onMarketConfigChange({
+                  quality: Number(event.target.value) as MarketQuality,
+                })
+              }
+              className="w-full rounded-md border border-border bg-surface-raised px-3 py-2 text-sm text-text outline-none transition-colors hover:border-border-strong focus-visible:ring-2 focus-visible:ring-accent-border"
+            >
+              {MARKET_QUALITIES.map((quality) => (
+                <option key={quality} value={quality}>
+                  {MARKET_QUALITY_LABELS[quality]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <p
+          className={`mt-3 border-t border-border pt-2 text-[11px] leading-relaxed ${
+            marketStatus === 'loading' ? 'text-accent' : 'text-text-faint'
+          }`}
+          aria-live="polite"
+        >
+          {marketStatus === 'loading'
+            ? `Consultando ${getMarketName(markets, marketConfig.saleCity)} · ${MARKET_QUALITY_LABELS[marketConfig.quality]}…`
+            : isManualSellPrice
+              ? `La referencia automática usa ${getMarketName(markets, marketConfig.saleCity)} · ${SALE_STRATEGY_LABELS[marketConfig.saleStrategy]} · ${MARKET_QUALITY_LABELS[marketConfig.quality]}; el precio manual conserva la prioridad.`
+              : `Precio aplicado desde ${getMarketName(markets, marketConfig.saleCity)} · ${SALE_STRATEGY_LABELS[marketConfig.saleStrategy]} · ${MARKET_QUALITY_LABELS[marketConfig.quality]}.`}
+        </p>
       </div>
 
       {!isCalculationComplete && (
@@ -273,22 +405,31 @@ export function ProfitSummaryCard({
                       onClick={onUseAutomaticSellPrice}
                       className="text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
                     >
-                      Usar precio AODP ({formatSilver(automaticUnitSellPrice)})
+                      Usar precio local ({formatSilver(automaticUnitSellPrice)})
                     </button>
                   ) : (
                     <span className="text-text-faint">Precio manual</span>
                   )
                 ) : automaticUnitSellPrice !== null ? (
                   <span className="text-positive">
-                    AODP · {automaticPriceLabel}
+                    Servicio local · {automaticPriceLabel}
                   </span>
                 ) : marketStatus === 'loading' ? (
-                  <span className="text-text-faint">Consultando AODP…</span>
+                  <span className="text-text-faint">
+                    Consultando servicio local…
+                  </span>
                 ) : (
                   <span className="text-text-faint">
                     Sin precio automático disponible
                   </span>
                 )}
+              </div>
+
+              <div className="mt-2">
+                <MarketRefreshItemFeedback
+                  result={marketStatus === 'loading' ? null : refreshResult}
+                  isManualOverride={isManualSellPrice}
+                />
               </div>
 
               {(marketStatus !== 'loading' ||
@@ -461,16 +602,20 @@ export function ProfitSummaryCard({
           className="rounded-lg border border-border bg-surface p-3"
           aria-live="polite"
         >
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-faint">
-            Resultado económico
-          </h4>
+          <div className="mb-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-text-faint">
+              Resultado económico
+            </h4>
+            <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
+              El resultado en plata no cuenta los materiales devueltos. El
+              resultado económico total sí suma su valor reutilizable.
+            </p>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-surface-raised p-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-text-faint">
-                  Venta bruta
-                </span>
+                <span className="text-xs text-text-faint">Venta bruta</span>
 
                 <InfoHint
                   label="Venta bruta"
@@ -480,17 +625,13 @@ export function ProfitSummaryCard({
               </div>
 
               <p className="mt-1 text-sm font-medium tabular text-text">
-                {hasSellPrice
-                  ? `${formatSilver(grossRevenue)} plata`
-                  : '—'}
+                {hasSellPrice ? `${formatSilver(grossRevenue)} plata` : '—'}
               </p>
             </div>
 
             <div className="rounded-lg bg-surface-raised p-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-text-faint">
-                  Venta neta
-                </span>
+                <span className="text-xs text-text-faint">Venta neta</span>
 
                 <InfoHint
                   label="Venta neta"
@@ -500,24 +641,28 @@ export function ProfitSummaryCard({
               </div>
 
               <p className="mt-1 text-sm font-medium tabular text-text">
-                {hasSellPrice
-                  ? `${formatSilver(netRevenue)} plata`
-                  : '—'}
+                {hasSellPrice ? `${formatSilver(netRevenue)} plata` : '—'}
               </p>
             </div>
 
             <div className="rounded-lg bg-surface-raised p-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-text-faint">
-                  {isCalculationComplete ? 'Costo neto' : 'Costo parcial'}
+                  {isCalculationComplete
+                    ? 'Inversión inicial'
+                    : 'Inversión parcial'}
                 </span>
 
                 <InfoHint
-                  label={isCalculationComplete ? 'Costo neto' : 'Costo parcial'}
+                  label={
+                    isCalculationComplete
+                      ? 'Inversión inicial'
+                      : 'Inversión parcial'
+                  }
                   text={
                     isCalculationComplete
-                      ? PROFIT_SUMMARY_INFO.netCost
-                      : 'Es la suma de los materiales que ya tienen precio. Todavía puede aumentar cuando completes los valores pendientes.'
+                      ? PROFIT_SUMMARY_INFO.initialInvestment
+                      : 'Suma provisional de materiales, componentes y tarifas con precio disponible. Todavía puede aumentar.'
                   }
                   align="left"
                 />
@@ -528,27 +673,81 @@ export function ProfitSummaryCard({
                   isCalculationComplete ? 'text-text' : 'text-accent'
                 }`}
               >
-                {formatSilver(totalCost)} plata
+                {formatSilver(initialInvestment)} plata
+              </p>
+              <p className="mt-1 text-[10px] text-text-faint">
+                Antes de recibir retornos
               </p>
             </div>
 
             <div className="rounded-lg bg-surface-raised p-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-text-faint">
-                  Resultado
+                  Resultado en plata
                 </span>
 
                 <InfoHint
-                  label="Resultado"
-                  text={PROFIT_SUMMARY_INFO.result}
+                  label="Resultado en plata"
+                  text={PROFIT_SUMMARY_INFO.cashResult}
                   align="right"
                 />
               </div>
 
-              <p className={`mt-1 text-sm font-semibold tabular ${resultClassName}`}>
+              <p
+                className={`mt-1 text-sm font-semibold tabular ${cashResultClassName}`}
+              >
                 {canShowEconomicResult
-                  ? `${profit > 0 ? '+' : ''}${formatSilver(profit)} plata`
+                  ? `${cashResult > 0 ? '+' : ''}${formatSilver(cashResult)} plata`
                   : '—'}
+              </p>
+              <p className="mt-1 text-[10px] text-text-faint">
+                Plata líquida de esta operación
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-accent-border/60 bg-accent-muted/40 p-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-accent">Valor recuperado</span>
+
+                <InfoHint
+                  label="Valor recuperado"
+                  text={PROFIT_SUMMARY_INFO.recoveredValue}
+                  align="left"
+                />
+              </div>
+
+              <p className="mt-1 text-sm font-semibold tabular text-accent">
+                {isCalculationComplete
+                  ? `+${formatSilver(recoveredMaterialValue)} plata`
+                  : '—'}
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed text-text-faint">
+                Inventario reutilizable, no plata disponible
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-positive/40 bg-positive-muted/40 p-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-text-faint">
+                  Resultado económico total
+                </span>
+
+                <InfoHint
+                  label="Resultado económico total"
+                  text={PROFIT_SUMMARY_INFO.economicResult}
+                  align="right"
+                />
+              </div>
+
+              <p
+                className={`mt-1 text-sm font-semibold tabular ${economicResultClassName}`}
+              >
+                {canShowEconomicResult
+                  ? `${economicResult > 0 ? '+' : ''}${formatSilver(economicResult)} plata`
+                  : '—'}
+              </p>
+              <p className="mt-1 text-[10px] text-text-faint">
+                Resultado en plata + retornos
               </p>
             </div>
           </div>
@@ -568,9 +767,7 @@ export function ProfitSummaryCard({
               </div>
 
               <span className="shrink-0 tabular text-negative">
-                {hasSellPrice
-                  ? `-${formatSilver(taxAmount)} plata`
-                  : '—'}
+                {hasSellPrice ? `-${formatSilver(taxAmount)} plata` : '—'}
               </span>
             </div>
 
@@ -597,22 +794,46 @@ export function ProfitSummaryCard({
             <div className="flex items-center justify-between gap-4 border-t border-border pt-2">
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="font-medium text-text">
-                  Rentabilidad sobre costo
+                  Rentabilidad en plata
                 </span>
 
                 <InfoHint
-                  label="Rentabilidad sobre costo"
-                  text={PROFIT_SUMMARY_INFO.profitability}
+                  label="Rentabilidad en plata"
+                  text={PROFIT_SUMMARY_INFO.cashProfitability}
                   align="left"
                 />
               </div>
 
               <span
-                className={`shrink-0 font-mono font-semibold tabular ${resultClassName}`}
+                className={`shrink-0 font-mono font-semibold tabular ${cashResultClassName}`}
               >
                 {canShowEconomicResult
-                  ? `${profitability > 0 ? '+' : ''}${(
-                      profitability * 100
+                  ? `${cashProfitability > 0 ? '+' : ''}${(
+                      cashProfitability * 100
+                    ).toFixed(1)}%`
+                  : '—'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="font-medium text-text">
+                  Rentabilidad económica total
+                </span>
+
+                <InfoHint
+                  label="Rentabilidad económica total"
+                  text={PROFIT_SUMMARY_INFO.economicProfitability}
+                  align="left"
+                />
+              </div>
+
+              <span
+                className={`shrink-0 font-mono font-semibold tabular ${economicResultClassName}`}
+              >
+                {canShowEconomicResult
+                  ? `${economicProfitability > 0 ? '+' : ''}${(
+                      economicProfitability * 100
                     ).toFixed(1)}%`
                   : '—'}
               </span>
