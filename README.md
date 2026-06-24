@@ -91,6 +91,7 @@ pnpm generate:dataset
 - Precios manuales persistentes.
 - Progreso, resumen y trazabilidad contextual al actualizar precios.
 - Comparación de recetas y cálculo de rentabilidad.
+- Estimación de fama de crafteo por cantidad, con detalle de fama base, Premium, total y progreso válido para diarios.
 - Optimizador de mercados con ahorro frente a la configuración actual, mejor
   ciudad de venta y combinación completa de mayor resultado económico.
 - Separación entre inversión inicial, resultado en plata, valor recuperado y resultado económico total.
@@ -99,7 +100,8 @@ pnpm generate:dataset
 
 La documentación funcional adicional se conserva en los archivos Markdown de
 la raíz del proyecto. Consulta `OPTIMIZADOR_RENTABILIDAD.md` para el alcance,
-las fórmulas y los límites de la recomendación automática.
+las fórmulas y los límites de la recomendación automática, y
+`FAMA_CRAFTEO.md` para el cálculo y los límites de la fama estimada.
 
 ## Catálogo de mercados del servicio local
 

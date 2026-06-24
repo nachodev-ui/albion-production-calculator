@@ -9,6 +9,7 @@ import {
   getRecipeTier,
 } from '@core/domain/entities/Recipe'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
+import { calculateCraftingFame } from '@core/usecases/calculateCraftingFame'
 import {
   getRecipeResolutionStatus,
   resolveRecipeTierIngredients,
@@ -421,6 +422,26 @@ export function ItemRecipeCard({
   const initialInvestment =
     calculation.grandTotal + calculation.totalSilverSavedByReturnRate
 
+  const craftingFame = useMemo(
+    () =>
+      calculateCraftingFame({
+        itemId: item.id,
+        enchantment,
+        quantity,
+        isPremium,
+        repository,
+        recipeOptionIndex: normalizedRootOptionIndex,
+      }),
+    [
+      enchantment,
+      isPremium,
+      item.id,
+      normalizedRootOptionIndex,
+      quantity,
+      repository,
+    ],
+  )
+
   const unitSellPrice = hasManualSellPrice
     ? manualSellPrice
     : market.automaticSalePrice
@@ -559,7 +580,11 @@ export function ItemRecipeCard({
             onStationUsageFeeOverrideChange={setStationUsageFeeOverride}
           />
 
-          <CraftQuantityInput value={quantity} onChange={setQuantity} />
+          <CraftQuantityInput
+            value={quantity}
+            onChange={setQuantity}
+            fame={craftingFame}
+          />
 
           <section className="mt-4 rounded-xl border border-border bg-surface-raised p-4">
             <div className="mb-4">
