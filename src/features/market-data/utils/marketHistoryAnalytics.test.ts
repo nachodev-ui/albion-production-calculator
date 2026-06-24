@@ -51,6 +51,9 @@ describe('marketHistoryAnalytics', () => {
     const summary = summarizeMarketHistory(normalized, 7)
 
     expect(summary.averagePrice).toBe(175)
+    expect(summary.medianPrice).toBe(200)
+    expect(summary.lowerQuartilePrice).toBe(150)
+    expect(summary.upperQuartilePrice).toBe(250)
     expect(summary.minimumPrice).toBe(100)
     expect(summary.maximumPrice).toBe(300)
     expect(summary.totalVolume).toBe(40)

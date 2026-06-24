@@ -47,13 +47,7 @@ export function useMarketHistory({
 
   useEffect(() => {
     void refreshHistory({ target: saleTarget, config })
-  }, [
-    config.quality,
-    config.saleCity,
-    config.server,
-    refreshHistory,
-    saleTarget,
-  ])
+  }, [config, refreshHistory, saleTarget])
 
   const refresh = useCallback(
     () => refreshHistory({ target: saleTarget, config, force: true }),

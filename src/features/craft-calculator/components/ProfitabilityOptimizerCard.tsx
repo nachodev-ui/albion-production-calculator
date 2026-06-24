@@ -1,12 +1,24 @@
-import type { MarketDefinition, MarketRequestStatus } from '@features/market-data/types/MarketPrice'
+import type { MarketHistoryRefreshProgress } from '@features/market-data/types/MarketHistory'
+import type {
+  MarketDefinition,
+  MarketRequestStatus,
+} from '@features/market-data/types/MarketPrice'
 import { getMarketName } from '@features/market-data/types/MarketPrice'
 import { getMarketCityTone } from '@features/market-data/presentation/marketCityPresentation'
-import type { ProfitabilityMarketRecommendation } from '@features/market-data/utils/profitabilityOptimizer'
+import type { MarketLiquidityAssessment } from '@features/market-data/utils/marketLiquidity'
+import { getMarketLiquidityReasonLabel } from '@features/market-data/utils/marketLiquidity'
+import type {
+  ProfitabilityMarketRecommendation,
+  RejectedMarketCandidate,
+} from '@features/market-data/utils/profitabilityOptimizer'
 
 interface ProfitabilityOptimizerCardProps {
   readonly recommendation: ProfitabilityMarketRecommendation
   readonly markets: readonly MarketDefinition[]
   readonly marketStatus: MarketRequestStatus
+  readonly liquidityStatus: MarketRequestStatus
+  readonly liquidityError: string | null
+  readonly liquidityProgress: MarketHistoryRefreshProgress | null
   readonly currentTotalCost: number
   readonly optimizedTotalCost: number
   readonly purchaseSavings: number | null
@@ -16,6 +28,7 @@ interface ProfitabilityOptimizerCardProps {
   readonly isManualSellPrice: boolean
   readonly manualMaterialPriceCount: number
   readonly onApply: () => void
+  readonly onRefreshLiquidity: () => void
 }
 
 function formatSilver(amount: number): string {
@@ -24,9 +37,22 @@ function formatSilver(amount: number): string {
   }).format(amount)
 }
 
+function formatQuantity(amount: number): string {
+  return new Intl.NumberFormat('es-CL', {
+    maximumFractionDigits: 1,
+  }).format(amount)
+}
+
 function formatSignedSilver(amount: number): string {
   const sign = amount > 0 ? '+' : amount < 0 ? '−' : ''
   return `${sign}${formatSilver(Math.abs(amount))}`
+}
+
+function formatEstimatedDays(days: number | null): string {
+  if (days === null || !Number.isFinite(days)) return 'sin estimación'
+  if (days < 0.1) return 'menos de 0,1 días'
+  if (days < 1) return `${days.toFixed(1).replace('.', ',')} días`
+  return `${Math.ceil(days)} días`
 }
 
 function CityBadge({
@@ -52,10 +78,100 @@ function CityBadge({
   )
 }
 
+function LiquidityBadge({
+  assessment,
+}: {
+  readonly assessment: MarketLiquidityAssessment | null
+}) {
+  if (!assessment) {
+    return (
+      <span className="rounded border border-border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-faint">
+        Sin historial
+      </span>
+    )
+  }
+
+  const isHigh = assessment.confidence === 'high'
+  const isMedium = assessment.confidence === 'medium'
+
+  return (
+    <span
+      className={`rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+        isHigh
+          ? 'border-positive/40 bg-positive-muted text-positive'
+          : isMedium
+            ? 'border-accent-border bg-accent-muted text-accent'
+            : 'border-negative/40 bg-negative-muted text-negative'
+      }`}
+    >
+      {isHigh
+        ? 'Confianza alta'
+        : isMedium
+          ? 'Confianza media'
+          : 'No elegible'}
+    </span>
+  )
+}
+
+function LiquiditySummary({
+  assessment,
+}: {
+  readonly assessment: MarketLiquidityAssessment | null
+}) {
+  if (!assessment) {
+    return <span>Historial todavía no disponible.</span>
+  }
+
+  const usesHistoricalDateFallback = assessment.reasonCodes.includes(
+    'stale-current-price',
+  )
+
+  return (
+    <span>
+      {formatQuantity(assessment.summary.averageDailyVolume)} u./día ·{' '}
+      {assessment.summary.activeVolumeDays}/28 días activos · aprox.{' '}
+      {formatEstimatedDays(assessment.estimatedDaysToFill)} para completar{' '}
+      {formatQuantity(assessment.requiredQuantity)} u.
+      {usesHistoricalDateFallback && (
+        <> · fecha actual no verificable; validado con historial reciente</>
+      )}
+    </span>
+  )
+}
+
+function RejectedCandidateNotice({
+  candidate,
+  markets,
+  label,
+}: {
+  readonly candidate: RejectedMarketCandidate | null
+  readonly markets: readonly MarketDefinition[]
+  readonly label: string
+}) {
+  if (!candidate) return null
+
+  const reasons = candidate.liquidity?.reasonCodes
+    .map(getMarketLiquidityReasonLabel)
+    .slice(0, 2)
+    .join(' y ')
+
+  return (
+    <div className="rounded-md border border-negative/30 bg-negative-muted px-2.5 py-2 text-[10px] leading-relaxed text-negative">
+      <span className="font-semibold">{label}:</span>{' '}
+      {getMarketName(markets, candidate.city)} ·{' '}
+      {formatSilver(candidate.unitPrice)} plata/u.
+      {reasons ? ` · ${reasons}` : ' · historial insuficiente'}
+    </div>
+  )
+}
+
 export function ProfitabilityOptimizerCard({
   recommendation,
   markets,
   marketStatus,
+  liquidityStatus,
+  liquidityError,
+  liquidityProgress,
   currentTotalCost,
   optimizedTotalCost,
   purchaseSavings,
@@ -65,10 +181,13 @@ export function ProfitabilityOptimizerCard({
   isManualSellPrice,
   manualMaterialPriceCount,
   onApply,
+  onRefreshLiquidity,
 }: ProfitabilityOptimizerCardProps) {
+  const isLoading =
+    marketStatus === 'loading' || liquidityStatus === 'loading'
   const hasChanges =
     recommendation.materialChangeCount > 0 || recommendation.saleCityChanged
-  const canApply = recommendation.isComplete && hasChanges
+  const canApply = recommendation.isComplete && hasChanges && !isLoading
   const missingRecommendationText = (() => {
     const missing: string[] = []
 
@@ -76,16 +195,26 @@ export function ProfitabilityOptimizerCard({
       missing.push(
         `${recommendation.missingMaterialCount} ${
           recommendation.missingMaterialCount === 1 ? 'material' : 'materiales'
-        }`,
+        } sin mercado viable`,
       )
     }
 
     if (recommendation.saleUnitPrice === null) {
-      missing.push('un precio de venta válido')
+      missing.push('una ciudad de venta con liquidez suficiente')
     }
 
     return missing.join(' y ')
   })()
+  const currentSaleRejectedCandidate: RejectedMarketCandidate | null =
+    recommendation.currentSaleUnitPrice !== null &&
+    recommendation.currentSaleLiquidity !== null &&
+    recommendation.currentSaleLiquidity.isEligibleForRecommendation === false
+      ? {
+          city: recommendation.currentSaleLiquidity.city,
+          unitPrice: recommendation.currentSaleUnitPrice,
+          liquidity: recommendation.currentSaleLiquidity,
+        }
+      : null
   const sortedMaterials = [...recommendation.materials].sort((left, right) => {
     if (left.cityChanged !== right.cityChanged) {
       return left.cityChanged ? -1 : 1
@@ -103,40 +232,61 @@ export function ProfitabilityOptimizerCard({
               Optimizador de rentabilidad
             </h3>
             <span className="rounded-md border border-accent-border bg-accent-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">
-              Mercados
+              Liquidez 28 días
             </span>
           </div>
 
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-faint">
-            Compara todos los mercados disponibles, conserva tu receta y configuración de producción actuales y combina la compra más barata de cada material con la mejor ciudad de venta.
+            Compara precios actuales con ventas históricas, descarta valores atípicos y solo recomienda mercados con confianza alta o media para la cantidad configurada.
           </p>
         </div>
 
         <button
           type="button"
-          disabled={!canApply || marketStatus === 'loading'}
+          disabled={!canApply}
           onClick={onApply}
           className="shrink-0 rounded-lg border border-accent-border bg-accent-muted px-3.5 py-2 text-xs font-semibold text-accent transition-colors hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-45"
         >
-          {marketStatus === 'loading'
-            ? 'Actualizando mercados…'
+          {isLoading
+            ? 'Validando liquidez…'
             : recommendation.isComplete === false
-              ? 'Faltan datos de mercado'
+              ? 'Sin combinación viable'
               : hasChanges
                 ? 'Aplicar ciudades recomendadas'
                 : 'Configuración ya óptima'}
         </button>
       </div>
 
-      {marketStatus === 'loading' && (
+      {isLoading && (
         <div className="mt-4 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs text-accent">
-          Actualizando precios de compra y venta en todos los mercados…
+          {marketStatus === 'loading'
+            ? 'Actualizando precios en todos los mercados…'
+            : `Consultando historial por candidato${
+                liquidityProgress
+                  ? ` (${liquidityProgress.completed}/${liquidityProgress.total})`
+                  : '…'
+              }`}
         </div>
       )}
 
-      {!recommendation.isComplete && marketStatus !== 'loading' && (
+      {liquidityError && liquidityStatus !== 'loading' && (
+        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-negative/30 bg-negative-muted px-3 py-2 text-xs text-negative sm:flex-row sm:items-center sm:justify-between">
+          <span>{liquidityError}</span>
+          <button
+            type="button"
+            onClick={onRefreshLiquidity}
+            className="shrink-0 rounded border border-negative/40 px-2 py-1 font-semibold"
+          >
+            Reintentar historial
+          </button>
+        </div>
+      )}
+
+      {!recommendation.isComplete && !isLoading && (
         <div className="mt-4 rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted">
-          La recomendación está incompleta: falta {missingRecommendationText || 'información de mercado suficiente'}. Recorre esos mercados en Albion y vuelve a actualizar.
+          No existe todavía una combinación completamente viable: falta{' '}
+          {missingRecommendationText || 'información histórica suficiente'}.
+          Los precios teóricos descartados se muestran en el detalle, pero no se aplican automáticamente.
         </div>
       )}
 
@@ -156,7 +306,7 @@ export function ProfitabilityOptimizerCard({
 
         <div className="rounded-lg border border-border bg-surface p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-text-faint">
-            Compra optimizada
+            Compra viable optimizada
           </p>
           <p className="mt-1 text-base font-semibold tabular text-text">
             {recommendation.missingMaterialCount === 0
@@ -168,14 +318,14 @@ export function ProfitabilityOptimizerCard({
           </p>
           <p className="mt-1 text-[10px] text-positive">
             {purchaseSavings === null
-              ? 'Pendiente de precios'
+              ? 'Pendiente de mercados viables'
               : `${formatSignedSilver(purchaseSavings)} frente a la actual`}
           </p>
         </div>
 
         <div className="rounded-lg border border-border bg-surface p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-text-faint">
-            Resultado económico óptimo
+            Resultado económico viable
           </p>
           <p
             className={`mt-1 text-base font-semibold tabular ${
@@ -197,7 +347,7 @@ export function ProfitabilityOptimizerCard({
 
         <div className="rounded-lg border border-border bg-surface p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-text-faint">
-            Mejora total
+            Mejora viable total
           </p>
           <p
             className={`mt-1 text-base font-semibold tabular ${
@@ -213,7 +363,7 @@ export function ProfitabilityOptimizerCard({
               : `${formatSignedSilver(resultImprovement)} plata`}
           </p>
           <p className="mt-1 text-[10px] text-text-faint">
-            Resultado óptimo menos actual
+            Resultado viable menos actual
           </p>
         </div>
       </div>
@@ -221,7 +371,7 @@ export function ProfitabilityOptimizerCard({
       <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <div className="rounded-lg border border-border bg-surface p-3">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-text-faint">
-            Mejor ciudad para vender
+            Mejor ciudad viable para vender
           </p>
 
           {recommendation.saleCity && recommendation.saleUnitPrice !== null ? (
@@ -231,7 +381,12 @@ export function ProfitabilityOptimizerCard({
                 <span className="text-sm font-semibold tabular text-text">
                   {formatSilver(recommendation.saleUnitPrice)} plata/u.
                 </span>
+                <LiquidityBadge assessment={recommendation.saleLiquidity} />
               </div>
+
+              <p className="text-[11px] leading-relaxed text-text-faint">
+                <LiquiditySummary assessment={recommendation.saleLiquidity} />
+              </p>
 
               <p className="text-[11px] leading-relaxed text-text-faint">
                 Actual:{' '}
@@ -255,11 +410,31 @@ export function ProfitabilityOptimizerCard({
                     : `${formatSignedSilver(currentEconomicResult)} plata`}
                 </span>
               </p>
+
+              <RejectedCandidateNotice
+                candidate={currentSaleRejectedCandidate}
+                markets={markets}
+                label="Ciudad de venta actual no elegible"
+              />
             </div>
           ) : (
-            <p className="mt-2 text-xs text-text-faint">
-              No existe un precio de venta comparable para la calidad y método seleccionados.
-            </p>
+            <div className="mt-2 space-y-2">
+              <p className="text-xs text-text-faint">
+                Ninguna ciudad posee un precio respaldado por historial suficiente y liquidez para vender esta cantidad.
+              </p>
+              <RejectedCandidateNotice
+                candidate={
+                  currentSaleRejectedCandidate ??
+                  recommendation.theoreticalBestSale
+                }
+                markets={markets}
+                label={
+                  currentSaleRejectedCandidate
+                    ? 'Ciudad de venta actual no elegible'
+                    : 'Mejor precio teórico descartado'
+                }
+              />
+            </div>
           )}
         </div>
 
@@ -267,9 +442,10 @@ export function ProfitabilityOptimizerCard({
           <summary className="cursor-pointer list-none text-xs font-semibold text-text">
             <span className="flex items-center justify-between gap-3">
               <span>
-                Ciudad más barata por material
+                Ciudad viable más barata por material
                 <span className="ml-2 font-normal text-text-faint">
-                  {recommendation.materialChangeCount} cambios
+                  {recommendation.materialChangeCount} cambios ·{' '}
+                  {recommendation.excludedCandidateCount} candidatos descartados
                 </span>
               </span>
               <span className="text-[10px] font-normal text-text-faint">
@@ -278,7 +454,7 @@ export function ProfitabilityOptimizerCard({
             </span>
           </summary>
 
-          <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
+          <div className="mt-3 max-h-96 space-y-2 overflow-y-auto pr-1">
             {sortedMaterials.map((material) => (
               <div
                 key={material.itemPriceKey}
@@ -286,17 +462,23 @@ export function ProfitabilityOptimizerCard({
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-xs font-medium text-text">
-                    {material.label}
+                    {material.label}{' '}
+                    <span className="font-normal text-text-faint">
+                      · {formatQuantity(material.requiredQuantity)} u. netas
+                    </span>
                   </p>
-                  {material.cityChanged ? (
-                    <span className="rounded border border-positive/40 bg-positive-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-positive">
-                      Más barato
-                    </span>
-                  ) : (
-                    <span className="text-[9px] uppercase tracking-wide text-text-faint">
-                      Sin cambio
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <LiquidityBadge assessment={material.liquidity} />
+                    {material.cityChanged ? (
+                      <span className="rounded border border-positive/40 bg-positive-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-positive">
+                        Más barato viable
+                      </span>
+                    ) : (
+                      <span className="text-[9px] uppercase tracking-wide text-text-faint">
+                        Sin cambio
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
@@ -310,13 +492,43 @@ export function ProfitabilityOptimizerCard({
                   {material.recommendedCity ? (
                     <CityBadge city={material.recommendedCity} markets={markets} />
                   ) : (
-                    <span className="text-text-faint">sin recomendación</span>
+                    <span className="text-text-faint">sin recomendación viable</span>
                   )}
                   <span className="tabular text-text-muted">
                     {material.recommendedUnitPrice === null
                       ? 'sin precio'
                       : formatSilver(material.recommendedUnitPrice)}
                   </span>
+                </div>
+
+                <p className="mt-2 text-[10px] leading-relaxed text-text-faint">
+                  <LiquiditySummary assessment={material.liquidity} />
+                </p>
+
+                <div className="mt-2">
+                  <RejectedCandidateNotice
+                    candidate={
+                      material.currentUnitPrice !== null &&
+                      material.currentLiquidity !== null &&
+                      material.currentLiquidity.isEligibleForRecommendation === false
+                        ? {
+                            city: material.currentCity,
+                            unitPrice: material.currentUnitPrice,
+                            liquidity: material.currentLiquidity,
+                          }
+                        : material.recommendedCity === null
+                          ? material.theoreticalBest
+                          : null
+                    }
+                    markets={markets}
+                    label={
+                      material.currentUnitPrice !== null &&
+                      material.currentLiquidity !== null &&
+                      material.currentLiquidity.isEligibleForRecommendation === false
+                        ? 'Ciudad seleccionada no elegible'
+                        : 'Precio mínimo teórico descartado'
+                    }
+                  />
                 </div>
               </div>
             ))}
@@ -333,14 +545,14 @@ export function ProfitabilityOptimizerCard({
           )}
           {isManualSellPrice && (
             <span>
-              La proyección del optimizador compara precios automáticos de venta; aplicar ciudades no elimina tu precio manual.
+              La proyección compara precios automáticos de venta; aplicar ciudades no elimina tu precio manual.
             </span>
           )}
         </div>
       )}
 
       <p className="mt-3 text-[10px] leading-relaxed text-text-faint">
-        Este primer alcance optimiza mercados con la receta, cantidad, ciudad de producción, RRR, foco, tarifa de estación, Premium, método de compra y método de venta actuales. No agrega costos de transporte ni valida volumen disponible.
+        La liquidez usa 28 días de ventas, mediana histórica, días activos y tiempo estimado para la cantidad neta. Sigue sin conocer la profundidad exacta de órdenes ni costos de transporte, por lo que la confianza es una estimación y no una garantía de ejecución.
       </p>
     </section>
   )

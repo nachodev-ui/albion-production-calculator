@@ -19,11 +19,17 @@ import { MaterialPurchaseConfigBar } from '@features/market-data/components/Mate
 import { MarketHistoryCard } from '@features/market-data/components/MarketHistoryCard'
 import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
 import { useMarketHistory } from '@features/market-data/hooks/useMarketHistory'
+import { useProfitabilityLiquidity } from '@features/market-data/hooks/useProfitabilityLiquidity'
 import { useMarketDataStore } from '@features/market-data/store/marketDataStore'
 import type { MarketConfig } from '@features/market-data/types/MarketPrice'
 import { buildItemPriceKey } from '@features/market-data/types/MarketPrice'
 import { collectMarketPriceTargets } from '@features/market-data/utils/collectMarketPriceTargets'
+import { collectMarketQuantityRequirements } from '@features/market-data/utils/collectMarketQuantityRequirements'
 import { buildProfitabilityMarketRecommendation } from '@features/market-data/utils/profitabilityOptimizer'
+import {
+  buildMaterialLiquidityAssessments,
+  buildSaleLiquidityAssessments,
+} from '@features/market-data/utils/profitabilityLiquidity'
 import {
   applyRecommendedProductionCity,
   getProductionCityRecommendation,
@@ -253,6 +259,58 @@ export function ItemRecipeCard({
     manualOverrideCount:
       manualMaterialPriceCount + (hasManualSellPrice ? 1 : 0),
   })
+  const requiredMaterialQuantities = useMemo(
+    () => collectMarketQuantityRequirements(structureCalculation.root, repository),
+    [repository, structureCalculation.root],
+  )
+  const profitabilityLiquidityHistory = useProfitabilityLiquidity({
+    materialTargets: activeMaterialPriceTargets,
+    materialComparisons: market.materialMarketPriceComparisons,
+    saleTarget,
+    saleOptions: market.saleMarketPriceOptions,
+    markets: market.markets,
+    config: market.config,
+  })
+  const materialLiquidityAssessments = useMemo(
+    () =>
+      buildMaterialLiquidityAssessments({
+        targets: activeMaterialPriceTargets,
+        comparisons: market.materialMarketPriceComparisons,
+        requiredQuantities: requiredMaterialQuantities,
+        snapshots: profitabilityLiquidityHistory.snapshots,
+        server: market.config.server,
+        strategy: market.config.purchaseStrategy,
+      }),
+    [
+      activeMaterialPriceTargets,
+      market.config.purchaseStrategy,
+      market.config.server,
+      market.materialMarketPriceComparisons,
+      profitabilityLiquidityHistory.snapshots,
+      requiredMaterialQuantities,
+    ],
+  )
+  const saleLiquidityAssessments = useMemo(
+    () =>
+      buildSaleLiquidityAssessments({
+        target: saleTarget,
+        options: market.saleMarketPriceOptions,
+        requiredQuantity: quantity,
+        snapshots: profitabilityLiquidityHistory.snapshots,
+        server: market.config.server,
+        quality: market.config.quality,
+        strategy: market.config.saleStrategy,
+      }),
+    [
+      market.config.quality,
+      market.config.saleStrategy,
+      market.config.server,
+      market.saleMarketPriceOptions,
+      profitabilityLiquidityHistory.snapshots,
+      quantity,
+      saleTarget,
+    ],
+  )
   const historyConfig = useMemo<MarketConfig>(
     () => ({
       ...market.config,
@@ -277,11 +335,14 @@ export function ItemRecipeCard({
     () =>
       buildProfitabilityMarketRecommendation({
         materialComparisons: market.materialMarketPriceComparisons,
+        materialLiquidity: materialLiquidityAssessments,
+        requiredMaterialQuantities,
         resolvedMaterialCities: market.resolvedMaterialPurchaseCities,
         currentAutomaticPurchasePrices: market.automaticPurchasePrices,
         targetLabels: marketTargetLabels,
         targetKeys: activeOptimizerTargetKeys,
         saleOptions: market.saleMarketPriceOptions,
+        saleLiquidity: saleLiquidityAssessments,
         defaultPurchaseCity: market.config.purchaseCity,
         currentSaleCity: market.config.saleCity,
         currentSaleUnitPrice: market.automaticSalePrice,
@@ -292,8 +353,11 @@ export function ItemRecipeCard({
       market.config.purchaseCity,
       market.config.saleCity,
       market.materialMarketPriceComparisons,
+      materialLiquidityAssessments,
+      requiredMaterialQuantities,
       market.resolvedMaterialPurchaseCities,
       market.saleMarketPriceOptions,
+      saleLiquidityAssessments,
       marketTargetLabels,
       activeOptimizerTargetKeys,
     ],
@@ -597,6 +661,10 @@ export function ItemRecipeCard({
             recommendation={profitabilityRecommendation}
             markets={market.markets}
             marketStatus={market.status}
+            liquidityStatus={profitabilityLiquidityHistory.status}
+            liquidityError={profitabilityLiquidityHistory.error}
+            liquidityProgress={profitabilityLiquidityHistory.progress}
+            onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
             currentTotalCost={calculation.grandTotal}
             optimizedTotalCost={optimizedCalculation.grandTotal}
             purchaseSavings={optimizerPurchaseSavings}
