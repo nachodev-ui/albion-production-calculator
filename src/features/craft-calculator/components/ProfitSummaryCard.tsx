@@ -452,6 +452,15 @@ export function ProfitSummaryCard({
 
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-1.5">
+                <img
+                  src="/assets/ui/premium-crown.png"
+                  alt=""
+                  aria-hidden="true"
+                  className={`h-5 w-5 shrink-0 object-contain transition-all ${
+                    isPremium ? '' : 'grayscale opacity-40'
+                  }`}
+                />
+
                 <span className="text-sm text-text-muted">
                   Cuenta Premium
                 </span>
