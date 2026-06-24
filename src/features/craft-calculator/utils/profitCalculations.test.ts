@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  calculateCraftEconomicSummary,
   calculateProfitBreakdown,
   calculateRequiredUnitPrice,
 } from './profitCalculations'
@@ -68,5 +69,27 @@ describe('calculateProfitBreakdown', () => {
     expect(result.profitability).toBe(0.2)
     expect(result.breakEvenUnitPrice).toBe(100_000)
     expect(result.targetPrices[1]?.unitPrice).toBe(120_000)
+  })
+})
+
+
+describe('calculateCraftEconomicSummary', () => {
+  it('separa el resultado en plata del valor recuperado sin contarlo dos veces', () => {
+    const result = calculateCraftEconomicSummary({
+      totalCost: 1_720_471,
+      recoveredMaterialValue: 1_300_146,
+      quantity: 1,
+      unitSellPrice: 2_789_990,
+      isPremium: true,
+    })
+
+    expect(result.initialInvestment).toBe(3_020_617)
+    expect(result.cashBreakdown.netRevenue).toBeCloseTo(2_608_640.65)
+    expect(result.cashResult).toBeCloseTo(-411_976.35)
+    expect(result.economicResult).toBeCloseTo(888_169.65)
+    expect(result.cashResult + result.recoveredMaterialValue).toBeCloseTo(
+      result.economicResult,
+    )
+    expect(result.cashBreakdown.breakEvenUnitPrice).toBe(3_230_607)
   })
 })

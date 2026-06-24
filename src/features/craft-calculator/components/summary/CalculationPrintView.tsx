@@ -1,6 +1,6 @@
 import { formatEnchantment } from '@core/domain/entities/Enchantment'
 import type { CalculationSummarySnapshot } from '../../utils/calculationSummary'
-import { calculateProfitBreakdown } from '../../utils/profitCalculations'
+import { calculateCraftEconomicSummary } from '../../utils/profitCalculations'
 
 interface CalculationPrintViewProps {
   readonly summary: CalculationSummarySnapshot
@@ -62,7 +62,9 @@ function SummaryRow({
       : 'print-value'
 
   return (
-    <div className={`print-summary-row ${emphasis ? 'print-summary-row-emphasis' : ''}`}>
+    <div
+      className={`print-summary-row ${emphasis ? 'print-summary-row-emphasis' : ''}`}
+    >
       <span>{label}</span>
       <strong className={valueClassName}>{value}</strong>
     </div>
@@ -76,15 +78,18 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
   const savingsPerUnit = summary.silverSaved / safeQuantity
   const unitSellPrice = summary.unitSellPrice ?? 0
   const hasSellPrice = unitSellPrice > 0
+  const usesDirectStationCost = summary.stationFeeSource === 'manual_total'
 
-  const economics = calculateProfitBreakdown({
+  const economics = calculateCraftEconomicSummary({
     totalCost: summary.totalCost,
+    recoveredMaterialValue: summary.silverSaved,
     quantity: safeQuantity,
     unitSellPrice,
     isPremium: summary.isPremium,
   })
+  const { cashBreakdown } = economics
 
-  const priceDifference = unitSellPrice - economics.breakEvenUnitPrice
+  const priceDifference = unitSellPrice - cashBreakdown.breakEvenUnitPrice
   const canShowResult = summary.isComplete && hasSellPrice
   const generatedAt = new Date(summary.generatedAt)
 
@@ -101,7 +106,9 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
 
         <div
           className={`print-status ${
-            summary.isComplete ? 'print-status-complete' : 'print-status-incomplete'
+            summary.isComplete
+              ? 'print-status-complete'
+              : 'print-status-incomplete'
           }`}
         >
           {summary.isComplete
@@ -119,13 +126,16 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
           <p className="print-section-kicker">Objeto</p>
           <h2>{summary.itemName}</h2>
           <p className="print-muted">
-            T{summary.tier}{formatEnchantment(summary.enchantment)} · {safeQuantity}{' '}
+            T{summary.tier}
+            {formatEnchantment(summary.enchantment)} · {safeQuantity}{' '}
             {safeQuantity === 1 ? 'unidad' : 'unidades'}
           </p>
         </div>
 
         <div className="print-hero-cost">
-          <span>{summary.isComplete ? 'Costo neto' : 'Costo parcial'}</span>
+          <span>
+            {summary.isComplete ? 'Costo neto tras RRR' : 'Costo neto parcial'}
+          </span>
           <strong>{formatSilver(summary.totalCost)}</strong>
           <small>{formatSilver(netCostPerUnit)} por unidad</small>
         </div>
@@ -149,7 +159,10 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
             label="Bono de especialidad"
             value={formatYesNo(summary.hasSpecialtyBonus)}
           />
-          <SummaryRow label="Uso de foco" value={formatYesNo(summary.useFocus)} />
+          <SummaryRow
+            label="Uso de foco"
+            value={formatYesNo(summary.useFocus)}
+          />
           <SummaryRow
             label="Bono diario"
             value={
@@ -167,14 +180,21 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
 
         <section className="print-card print-avoid-break">
           <h2>Costos de producción</h2>
-          <SummaryRow label="Costo bruto" value={formatSilver(grossCost)} />
           <SummaryRow
-            label="Ahorro por RRR"
+            label="Inversión inicial"
+            value={formatSilver(grossCost)}
+          />
+          <SummaryRow
+            label="Valor recuperado por RRR"
             value={`-${formatSilver(summary.silverSaved)}`}
             positive
           />
           <SummaryRow
-            label={summary.isComplete ? 'Costo neto' : 'Costo parcial'}
+            label={
+              summary.isComplete
+                ? 'Costo económico neto'
+                : 'Costo económico parcial'
+            }
             value={formatSilver(summary.totalCost)}
             emphasis
           />
@@ -191,24 +211,46 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
 
       <div className="print-two-columns">
         <section className="print-card print-avoid-break">
-          <h2>Puesto y nutrición</h2>
+          <h2>Puesto y costo de fabricación</h2>
           <SummaryRow label="Puesto" value={summary.stationName} />
-          <SummaryRow label="Acceso" value={summary.stationAccessLabel} />
-          <SummaryRow label="Item Value" value={formatQuantity(summary.itemValue)} />
           <SummaryRow
-            label="Nutrición por tirada"
-            value={formatQuantity(summary.nutritionPerCraft)}
+            label="Fuente"
+            value={
+              usesDirectStationCost
+                ? 'Total Cost ingresado desde Albion'
+                : 'Estimación por nutrición'
+            }
           />
+          {!usesDirectStationCost && (
+            <>
+              <SummaryRow label="Acceso" value={summary.stationAccessLabel} />
+              <SummaryRow
+                label="Item Value"
+                value={formatQuantity(summary.itemValue)}
+              />
+              <SummaryRow
+                label="Nutrición por tirada"
+                value={formatQuantity(summary.nutritionPerCraft)}
+              />
+              <SummaryRow
+                label="Nutrición total"
+                value={formatQuantity(summary.nutritionTotal)}
+              />
+              <SummaryRow
+                label="Tarifa / 100 nutrición"
+                value={formatSilver(summary.appliedFeePer100Nutrition)}
+              />
+            </>
+          )}
+          {usesDirectStationCost &&
+            summary.estimatedStationUsageFee !== undefined && (
+              <SummaryRow
+                label="Estimación avanzada de referencia"
+                value={formatSilver(summary.estimatedStationUsageFee)}
+              />
+            )}
           <SummaryRow
-            label="Nutrición total"
-            value={formatQuantity(summary.nutritionTotal)}
-          />
-          <SummaryRow
-            label="Tarifa / 100 nutrición"
-            value={formatSilver(summary.appliedFeePer100Nutrition)}
-          />
-          <SummaryRow
-            label="Costo de uso del puesto"
+            label="Costo aplicado al cálculo"
             value={formatSilver(summary.stationUsageFee)}
             emphasis
           />
@@ -238,7 +280,11 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
           />
           <SummaryRow
             label="Foco para este lote"
-            value={summary.useFocus ? formatQuantity(summary.totalFocusRequired) : 'Foco desactivado'}
+            value={
+              summary.useFocus
+                ? formatQuantity(summary.totalFocusRequired)
+                : 'Foco desactivado'
+            }
             emphasis={summary.useFocus}
           />
           <SummaryRow
@@ -258,28 +304,30 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
             />
             <SummaryRow
               label="Tax de venta"
-              value={formatPercentage(economics.taxRate)}
+              value={formatPercentage(cashBreakdown.taxRate)}
             />
             <SummaryRow
               label="Setup Fee"
-              value={formatPercentage(economics.setupFeeRate)}
+              value={formatPercentage(cashBreakdown.setupFeeRate)}
             />
             <SummaryRow
               label="Comisiones totales"
-              value={formatPercentage(economics.totalFeeRate)}
+              value={formatPercentage(cashBreakdown.totalFeeRate)}
             />
           </div>
 
           <div>
             <SummaryRow
               label="Precio de venta unitario"
-              value={hasSellPrice ? formatSilver(unitSellPrice) : 'No ingresado'}
+              value={
+                hasSellPrice ? formatSilver(unitSellPrice) : 'No ingresado'
+              }
             />
             <SummaryRow
               label="Precio mínimo por unidad"
               value={
                 summary.isComplete
-                  ? formatSilver(economics.breakEvenUnitPrice)
+                  ? formatSilver(cashBreakdown.breakEvenUnitPrice)
                   : 'Pendiente'
               }
               emphasis
@@ -303,7 +351,7 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
 
         {summary.isComplete && (
           <div className="print-target-grid">
-            {economics.targetPrices.map(({ target, unitPrice }) => (
+            {cashBreakdown.targetPrices.map(({ target, unitPrice }) => (
               <div key={target} className="print-target-card">
                 <span>Objetivo {formatPercentage(target)}</span>
                 <strong>{formatSilver(unitPrice)}</strong>
@@ -320,58 +368,104 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
           <div className="print-metric-grid">
             <div className="print-metric">
               <span>Venta bruta</span>
-              <strong>{formatSilver(economics.grossRevenue)}</strong>
+              <strong>{formatSilver(cashBreakdown.grossRevenue)}</strong>
             </div>
             <div className="print-metric">
               <span>Venta neta</span>
-              <strong>{formatSilver(economics.netRevenue)}</strong>
+              <strong>{formatSilver(cashBreakdown.netRevenue)}</strong>
+            </div>
+            <div className="print-metric">
+              <span>Inversión inicial</span>
+              <strong>{formatSilver(economics.initialInvestment)}</strong>
+            </div>
+            <div className="print-metric">
+              <span>Valor recuperado</span>
+              <strong className="print-value-positive">
+                +{formatSilver(economics.recoveredMaterialValue)}
+              </strong>
+            </div>
+            <div className="print-metric print-metric-highlight">
+              <span>Resultado en plata</span>
+              <strong
+                className={
+                  canShowResult
+                    ? economics.cashResult >= 0
+                      ? 'print-value-positive'
+                      : 'print-value-negative'
+                    : ''
+                }
+              >
+                {canShowResult
+                  ? `${economics.cashResult >= 0 ? '+' : '-'}${formatSilver(
+                      Math.abs(economics.cashResult),
+                    )}`
+                  : 'Pendiente'}
+              </strong>
+            </div>
+            <div className="print-metric print-metric-highlight">
+              <span>Resultado económico total</span>
+              <strong
+                className={
+                  canShowResult
+                    ? economics.economicResult >= 0
+                      ? 'print-value-positive'
+                      : 'print-value-negative'
+                    : ''
+                }
+              >
+                {canShowResult
+                  ? `${economics.economicResult >= 0 ? '+' : '-'}${formatSilver(
+                      Math.abs(economics.economicResult),
+                    )}`
+                  : 'Pendiente'}
+              </strong>
+            </div>
+            <div className="print-metric">
+              <span>Rentabilidad en plata</span>
+              <strong
+                className={
+                  canShowResult
+                    ? economics.cashProfitability >= 0
+                      ? 'print-value-positive'
+                      : 'print-value-negative'
+                    : ''
+                }
+              >
+                {canShowResult
+                  ? `${economics.cashProfitability > 0 ? '+' : ''}${formatPercentage(
+                      economics.cashProfitability,
+                    )}`
+                  : 'Pendiente'}
+              </strong>
+            </div>
+            <div className="print-metric">
+              <span>Rentabilidad económica total</span>
+              <strong
+                className={
+                  canShowResult
+                    ? economics.economicProfitability >= 0
+                      ? 'print-value-positive'
+                      : 'print-value-negative'
+                    : ''
+                }
+              >
+                {canShowResult
+                  ? `${economics.economicProfitability > 0 ? '+' : ''}${formatPercentage(
+                      economics.economicProfitability,
+                    )}`
+                  : 'Pendiente'}
+              </strong>
             </div>
             <div className="print-metric">
               <span>Tax descontado</span>
               <strong className="print-value-negative">
-                -{formatSilver(economics.taxAmount)}
+                -{formatSilver(cashBreakdown.taxAmount)}
               </strong>
             </div>
             <div className="print-metric">
               <span>Setup Fee descontado</span>
               <strong className="print-value-negative">
-                -{formatSilver(economics.setupFeeAmount)}
-              </strong>
-            </div>
-            <div className="print-metric print-metric-highlight">
-              <span>Resultado</span>
-              <strong
-                className={
-                  canShowResult
-                    ? economics.profit >= 0
-                      ? 'print-value-positive'
-                      : 'print-value-negative'
-                    : ''
-                }
-              >
-                {canShowResult
-                  ? `${economics.profit >= 0 ? '+' : '-'}${formatSilver(
-                      Math.abs(economics.profit),
-                    )}`
-                  : 'Pendiente'}
-              </strong>
-            </div>
-            <div className="print-metric print-metric-highlight">
-              <span>Rentabilidad sobre costo</span>
-              <strong
-                className={
-                  canShowResult
-                    ? economics.profitability >= 0
-                      ? 'print-value-positive'
-                      : 'print-value-negative'
-                    : ''
-                }
-              >
-                {canShowResult
-                  ? `${economics.profitability > 0 ? '+' : ''}${formatPercentage(
-                      economics.profitability,
-                    )}`
-                  : 'Pendiente'}
+                -{formatSilver(cashBreakdown.setupFeeAmount)}
               </strong>
             </div>
           </div>
@@ -400,7 +494,8 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
               {summary.returnedMaterials.map((material) => (
                 <tr key={`${material.name}-${material.enchantment}`}>
                   <td>
-                    {material.name}{formatEnchantment(material.enchantment)}
+                    {material.name}
+                    {formatEnchantment(material.enchantment)}
                   </td>
                   <td>{formatQuantity(material.grossQuantity)}</td>
                   <td className="print-value-positive">
@@ -421,7 +516,8 @@ export function CalculationPrintView({ summary }: CalculationPrintViewProps) {
           <ul className="print-missing-list">
             {summary.missingPrices.map((missing) => (
               <li key={`${missing.name}-${missing.enchantment}`}>
-                {missing.name}{formatEnchantment(missing.enchantment)}
+                {missing.name}
+                {formatEnchantment(missing.enchantment)}
               </li>
             ))}
           </ul>

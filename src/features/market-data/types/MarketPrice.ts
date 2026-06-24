@@ -1,13 +1,33 @@
-import type { CityId } from '@core/domain/entities/City'
 import type { BaseItemId } from '@core/domain/entities/Item'
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
 
 export type AlbionServer = 'americas' | 'europe' | 'asia'
-export type MarketCityId = Exclude<CityId, 'island'>
+export type MarketKey = string
+/** @deprecated Use MarketKey. Conservado para compatibilidad interna. */
+export type MarketCityId = MarketKey
 export type PurchaseStrategy = 'buy-now' | 'buy-order'
 export type SaleStrategy = 'sell-order' | 'sell-now'
+export type MarketQuality = 1 | 2 | 3 | 4 | 5
 export type MarketRequestStatus = 'idle' | 'loading' | 'success' | 'error'
+export type MarketType = 'regular' | 'black-market'
+
+export interface MarketDefinition {
+  readonly key: MarketKey
+  readonly name: string
+  readonly type: MarketType
+  readonly cityLocationId: string
+  readonly marketLocationId: string | null
+  readonly enabled: boolean
+}
+
+export type MarketCatalogStatus = 'idle' | 'loading' | 'success' | 'error'
+
 export type MarketPriceSource = 'automatic' | 'manual' | 'missing'
+export type MaterialPurchaseCityOverrides = ReadonlyMap<string, MarketCityId>
+export type MaterialPurchaseCitiesByRoot = ReadonlyMap<
+  string,
+  MaterialPurchaseCityOverrides
+>
 export type MarketPriceFreshness =
   | 'recent'
   | 'acceptable'
@@ -16,12 +36,14 @@ export type MarketPriceFreshness =
 
 export interface MarketConfig {
   readonly server: AlbionServer
+  /** Fallback para materiales que no poseen una ciudad individual. */
   readonly purchaseCity: MarketCityId
+  /** Mercado utilizado exclusivamente para el producto terminado. */
   readonly saleCity: MarketCityId
   readonly purchaseStrategy: PurchaseStrategy
   readonly saleStrategy: SaleStrategy
-  /** AODP usa 1 para calidad Normal. */
-  readonly quality: number
+  /** Calidad del producto terminado consultado para venta e historial. */
+  readonly quality: MarketQuality
 }
 
 export interface MarketPriceTarget {
@@ -38,7 +60,7 @@ export interface MarketPriceSnapshot {
   readonly sellPriceMinDate: string | null
   readonly buyPriceMax: number | null
   readonly buyPriceMaxDate: string | null
-  /** Momento en que nuestra aplicación consultó AODP. */
+  /** Momento en que nuestra aplicación consultó el servicio local. */
   readonly fetchedAt: string
 }
 
@@ -50,11 +72,38 @@ export interface ResolvedMarketPrice {
 
 export interface AutomaticMarketPriceDetail {
   readonly value: number | null
-  /** Fecha informada por AODP para el precio seleccionado. */
+  /** Fecha de captura informada por el servicio local para el precio seleccionado. */
   readonly updatedAt: string | null
   readonly freshness: MarketPriceFreshness
   readonly snapshot: MarketPriceSnapshot | null
 }
+
+export type MaterialMarketPriceBadge =
+  | 'best'
+  | 'highest'
+  | 'same'
+  | 'only'
+  | null
+
+export interface MaterialMarketPriceOption {
+  readonly city: MarketCityId
+  readonly value: number | null
+  readonly updatedAt: string | null
+  readonly freshness: MarketPriceFreshness
+  readonly badge: MaterialMarketPriceBadge
+}
+
+export interface SaleMarketPriceOption {
+  readonly city: MarketCityId
+  readonly value: number | null
+  readonly updatedAt: string | null
+  readonly freshness: MarketPriceFreshness
+}
+
+export type MaterialMarketPriceComparisons = ReadonlyMap<
+  string,
+  readonly MaterialMarketPriceOption[]
+>
 
 export interface MarketFreshnessSummary {
   readonly recent: number
@@ -75,6 +124,23 @@ export const DEFAULT_MARKET_CONFIG: MarketConfig = {
   quality: 1,
 }
 
+export const MARKET_QUALITIES: readonly MarketQuality[] = [1, 2, 3, 4, 5]
+
+export const MARKET_QUALITY_LABELS: Record<MarketQuality, string> = {
+  1: 'Normal',
+  2: 'Bueno',
+  3: 'Sobresaliente',
+  4: 'Excelente',
+  5: 'Obra maestra',
+}
+
+/** Los materiales de crafteo no poseen calidad en el mercado. */
+export const MATERIAL_MARKET_QUALITY: MarketQuality = 1
+
+export function formatMarketQuality(quality: number): string {
+  return MARKET_QUALITY_LABELS[quality as MarketQuality] ?? `Calidad ${quality}`
+}
+
 export const MARKET_SERVER_LABELS: Record<AlbionServer, string> = {
   americas: 'Americas',
   europe: 'Europe',
@@ -91,19 +157,16 @@ export const SALE_STRATEGY_LABELS: Record<SaleStrategy, string> = {
   'sell-now': 'Vender inmediatamente',
 }
 
-export const MARKET_CITY_NAMES: Record<MarketCityId, string> = {
-  martlock: 'Martlock',
-  bridgewatch: 'Bridgewatch',
-  lymhurst: 'Lymhurst',
-  fort_sterling: 'Fort Sterling',
-  thetford: 'Thetford',
-  caerleon: 'Caerleon',
-  brecilien: 'Brecilien',
+export function getMarketName(
+  markets: readonly MarketDefinition[],
+  marketKey: MarketKey,
+): string {
+  return markets.find((market) => market.key === marketKey)?.name ?? marketKey
 }
 
-export const MARKET_CITIES = Object.entries(MARKET_CITY_NAMES).map(
-  ([id, name]) => ({ id: id as MarketCityId, name }),
-)
+export function isUsableMarket(market: MarketDefinition): boolean {
+  return market.enabled && market.marketLocationId !== null
+}
 
 export const EMPTY_MARKET_FRESHNESS_SUMMARY: MarketFreshnessSummary = {
   recent: 0,
@@ -124,6 +187,14 @@ export function buildItemPriceKey(
   enchantment: EnchantmentLevel,
 ): string {
   return `${itemId}@${enchantment}`
+}
+
+export function resolveMaterialPurchaseCity(
+  overrides: MaterialPurchaseCityOverrides | undefined,
+  itemPriceKey: string,
+  defaultCity: MarketCityId,
+): MarketCityId {
+  return overrides?.get(itemPriceKey) ?? defaultCity
 }
 
 export function buildMarketCacheKey(

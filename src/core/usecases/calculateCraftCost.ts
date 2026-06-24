@@ -19,6 +19,7 @@ import {
 import type {
   CraftingSpecializationConfig,
   StationFeeConfig,
+  StationUsageFeeOverride,
 } from '../domain/entities/ProductionEconomy'
 import type { ItemRepository } from '../domain/repositories/ItemRepository'
 import { collectReturnedMaterials } from './collectReturnedMaterials'
@@ -75,6 +76,8 @@ export interface CraftTreeConfig {
   readonly craftingSpecializationConfig?: CraftingSpecializationConfig
   /** Valor manual del objeto raíz; tiene prioridad sobre el dataset. */
   readonly itemValueOverride?: number | null
+  /** Total Cost mostrado por Albion para el lote actual. */
+  readonly stationUsageFeeOverride?: StationUsageFeeOverride | null
 }
 
 export function createEmptyTreeConfig(): CraftTreeConfig {
@@ -87,6 +90,7 @@ export function createEmptyTreeConfig(): CraftTreeConfig {
     stationFeeConfig: DEFAULT_STATION_FEE_CONFIG,
     craftingSpecializationConfig: DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
     itemValueOverride: null,
+    stationUsageFeeOverride: null,
   }
 }
 
@@ -109,7 +113,8 @@ function getProductionConfigForItem(
 ): NodeReturnRateConfig {
   return {
     ...config,
-    specialtyKind: item.category === 'refined_resource' ? 'refining' : 'crafting',
+    specialtyKind:
+      item.category === 'refined_resource' ? 'refining' : 'crafting',
   }
 }
 
@@ -155,7 +160,7 @@ function buildLeaf(
     automaticUnitPrice >= 0
   const hasValidPrice = hasManualPrice || hasAutomaticPrice
   const unitPrice = hasManualPrice
-    ? manualUnitPrice ?? 0
+    ? (manualUnitPrice ?? 0)
     : hasAutomaticPrice
       ? automaticUnitPrice
       : 0
@@ -205,33 +210,37 @@ function buildNode(
   const rrrConfig = getProductionConfigForItem(config.productionConfig, item)
   const requestedOptionIndex = config.selectedRecipeOptions?.get(path) ?? 0
   const recipeOption = getRecipeOption(tier, requestedOptionIndex)
-  const recipeOptionIndex = requestedOptionIndex >= 0 && requestedOptionIndex <= (tier.alternatives?.length ?? 0)
-    ? requestedOptionIndex
-    : 0
+  const recipeOptionIndex =
+    requestedOptionIndex >= 0 &&
+    requestedOptionIndex <= (tier.alternatives?.length ?? 0)
+      ? requestedOptionIndex
+      : 0
 
-  const builtChildren: BuiltNode[] = recipeOption.ingredients.map((ingredient, index) => {
-    const resolved = resolveRecipeIngredient(ingredient, repository)
-    const childPathValue = recipeChildPath(path, recipeOptionIndex, index)
+  const builtChildren: BuiltNode[] = recipeOption.ingredients.map(
+    (ingredient, index) => {
+      const resolved = resolveRecipeIngredient(ingredient, repository)
+      const childPathValue = recipeChildPath(path, recipeOptionIndex, index)
 
-    if (resolved.status === 'unresolved') {
-      return buildLeaf(
-        resolved.itemId,
-        enchantment,
+      if (resolved.status === 'unresolved') {
+        return buildLeaf(
+          resolved.itemId,
+          enchantment,
+          resolved.quantity,
+          childPathValue,
+          config,
+        )
+      }
+
+      return buildNode(
+        resolved.item.id,
+        resolved.enchantment,
         resolved.quantity,
         childPathValue,
+        repository,
         config,
       )
-    }
-
-    return buildNode(
-      resolved.item.id,
-      resolved.enchantment,
-      resolved.quantity,
-      childPathValue,
-      repository,
-      config,
-    )
-  })
+    },
+  )
 
   const craftsNeeded = quantity / recipeOption.outputQuantity
 
@@ -244,7 +253,10 @@ function buildNode(
     (sum, child) => {
       const ingredientItem = repository.getById(child.node.itemId)
 
-      if (!ingredientItem || !isReturnEligibleIngredient(item, ingredientItem)) {
+      if (
+        !ingredientItem ||
+        !isReturnEligibleIngredient(item, ingredientItem)
+      ) {
         return sum
       }
 
@@ -380,9 +392,7 @@ export function calculateCraftCost(
   const rootOption = rootTier
     ? getRecipeOption(rootTier, requestedRootOption)
     : null
-  const craftsNeeded = rootOption
-    ? quantity / rootOption.outputQuantity
-    : 0
+  const craftsNeeded = rootOption ? quantity / rootOption.outputQuantity : 0
   const hasManualItemValue =
     config.itemValueOverride !== null &&
     config.itemValueOverride !== undefined &&
@@ -390,20 +400,22 @@ export function calculateCraftCost(
     config.itemValueOverride >= 0
   const datasetItemValue = rootItem?.itemValue ?? null
   const itemValue = hasManualItemValue
-    ? config.itemValueOverride ?? 0
-    : datasetItemValue ?? 0
+    ? (config.itemValueOverride ?? 0)
+    : (datasetItemValue ?? 0)
   const itemValueSource = hasManualItemValue
-    ? 'manual' as const
+    ? ('manual' as const)
     : datasetItemValue !== null
-      ? 'dataset' as const
-      : 'missing' as const
+      ? ('dataset' as const)
+      : ('missing' as const)
 
   const stationFeeBreakdown = calculateStationUsageFee({
     station: rootTier?.station ?? 'unknown',
     itemValue,
     itemValueSource,
+    quantity,
     craftsNeeded,
     config: config.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG,
+    manualOverride: config.stationUsageFeeOverride,
   })
 
   const focusCostBreakdown = calculateFocusCostBreakdown({

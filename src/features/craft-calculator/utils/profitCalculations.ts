@@ -17,6 +17,11 @@ export interface ProfitBreakdownParams {
   readonly isPremium: boolean
 }
 
+export interface CraftEconomicSummaryParams extends ProfitBreakdownParams {
+  /** Valor de reposición estimado de los materiales devueltos por el RRR. */
+  readonly recoveredMaterialValue: number
+}
+
 export interface ProfitTargetPrice {
   readonly target: (typeof PROFITABILITY_TARGETS)[number]
   readonly unitPrice: number
@@ -35,6 +40,27 @@ export interface ProfitBreakdown {
   readonly profitability: number
   readonly breakEvenUnitPrice: number
   readonly targetPrices: readonly ProfitTargetPrice[]
+}
+
+export interface CraftEconomicSummary {
+  /** Plata necesaria antes de recibir los materiales retornados. */
+  readonly initialInvestment: number
+  /** Costo económico después de descontar el valor recuperado. */
+  readonly netProductionCost: number
+  readonly recoveredMaterialValue: number
+  /** Venta neta menos la inversión inicial. */
+  readonly cashResult: number
+  /** Resultado en plata más el valor de los materiales recuperados. */
+  readonly economicResult: number
+  readonly cashProfitability: number
+  readonly economicProfitability: number
+  /**
+   * Usa la inversión inicial para el punto de equilibrio y los objetivos.
+   * Así el precio sugerido recupera realmente la plata desembolsada.
+   */
+  readonly cashBreakdown: ProfitBreakdown
+  /** Conserva el resultado patrimonial después de valorar los retornos. */
+  readonly economicBreakdown: ProfitBreakdown
 }
 
 /**
@@ -67,9 +93,7 @@ export function calculateRequiredUnitPrice({
 }
 
 /**
- * Fuente única para los cálculos económicos de la UI y del resumen exportado.
- * De esta forma, copiar o descargar un resumen nunca usa fórmulas distintas
- * a las mostradas en `ProfitSummaryCard`.
+ * Fuente única para los cálculos de venta después de impuestos y comisiones.
  */
 export function calculateProfitBreakdown({
   totalCost,
@@ -119,5 +143,58 @@ export function calculateProfitBreakdown({
     profitability,
     breakEvenUnitPrice,
     targetPrices,
+  }
+}
+
+/**
+ * Separa el flujo de plata del valor patrimonial de los materiales retornados.
+ *
+ * - Inversión inicial = costo neto + valor recuperado.
+ * - Resultado en plata = venta neta - inversión inicial.
+ * - Resultado económico = resultado en plata + valor recuperado.
+ *
+ * De esta forma los retornos no se cuentan dos veces y tampoco se presentan
+ * como si fueran plata líquida disponible inmediatamente.
+ */
+export function calculateCraftEconomicSummary({
+  totalCost,
+  recoveredMaterialValue,
+  quantity,
+  unitSellPrice,
+  isPremium,
+}: CraftEconomicSummaryParams): CraftEconomicSummary {
+  const safeNetCost = Math.max(0, totalCost)
+  const safeRecoveredValue = Math.max(0, recoveredMaterialValue)
+  const initialInvestment = safeNetCost + safeRecoveredValue
+
+  const cashBreakdown = calculateProfitBreakdown({
+    totalCost: initialInvestment,
+    quantity,
+    unitSellPrice,
+    isPremium,
+  })
+
+  const economicBreakdown = calculateProfitBreakdown({
+    totalCost: safeNetCost,
+    quantity,
+    unitSellPrice,
+    isPremium,
+  })
+
+  const cashResult = cashBreakdown.profit
+  const economicResult = economicBreakdown.profit
+
+  return {
+    initialInvestment,
+    netProductionCost: safeNetCost,
+    recoveredMaterialValue: safeRecoveredValue,
+    cashResult,
+    economicResult,
+    cashProfitability:
+      initialInvestment > 0 ? cashResult / initialInvestment : 0,
+    economicProfitability:
+      initialInvestment > 0 ? economicResult / initialInvestment : 0,
+    cashBreakdown,
+    economicBreakdown,
   }
 }

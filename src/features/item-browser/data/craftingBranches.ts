@@ -3,6 +3,36 @@ import type { Item, ItemCategory } from '@core/domain/entities/Item'
 export type BranchCategory = 'weapon' | 'armor' | 'offhand' | 'accessory'
 export type CraftingBranchKind = 'introduction' | 'specialization' | 'collection'
 export type CraftingBranchId = string
+
+export type CraftingSpecialtyCategory =
+  | 'sword'
+  | 'axe'
+  | 'mace'
+  | 'hammer'
+  | 'crossbow'
+  | 'war_gloves'
+  | 'bow'
+  | 'spear'
+  | 'nature_staff'
+  | 'dagger'
+  | 'quarterstaff'
+  | 'fire_staff'
+  | 'holy_staff'
+  | 'arcane_staff'
+  | 'frost_staff'
+  | 'cursed_staff'
+  | 'shapeshifter_staff'
+  | 'plate_helmet'
+  | 'plate_armor'
+  | 'plate_shoes'
+  | 'leather_helmet'
+  | 'leather_armor'
+  | 'leather_shoes'
+  | 'cloth_helmet'
+  | 'cloth_armor'
+  | 'cloth_shoes'
+  | 'offhand'
+
 export type CraftingStationGroup =
   | 'starter'
   | 'warrior_forge'
@@ -1117,4 +1147,70 @@ export function buildArmorSearchFamilies(items: readonly Item[]): readonly ItemF
 
 export function isGroupedDestinyBoardArmor(item: Item): boolean {
   return isGroupedCraftingItem('armor', item)
+}
+
+/**
+ * Devuelve la categoría de especialidad de crafteo usada por los bonos
+ * locales de ciudad. Reutiliza las mismas familias curadas que alimentan
+ * la navegación del Destiny Board, incluyendo variantes de artefacto,
+ * avalonianas y de cristal.
+ */
+export function getCraftingSpecialtyCategory(
+  item: Item,
+): CraftingSpecialtyCategory | null {
+  const parsed = parseTieredItemId(item)
+  if (!parsed) return null
+
+  if (item.category === 'weapon') {
+    if (
+      !parsed.familyId.startsWith('ARTEFACT_') &&
+      parsed.familyId.includes('SHAPESHIFTER')
+    ) {
+      return 'shapeshifter_staff'
+    }
+
+    const line = findWeaponLine(parsed.familyId)
+
+    const categoryByLine: Readonly<
+      Record<keyof typeof WEAPON_FAMILIES, CraftingSpecialtyCategory>
+    > = {
+      sword: 'sword',
+      axe: 'axe',
+      mace: 'mace',
+      hammer: 'hammer',
+      crossbow: 'crossbow',
+      brawling: 'war_gloves',
+      bow: 'bow',
+      spear: 'spear',
+      nature: 'nature_staff',
+      dagger: 'dagger',
+      quarterstaff: 'quarterstaff',
+      fire: 'fire_staff',
+      holy: 'holy_staff',
+      arcane: 'arcane_staff',
+      frost: 'frost_staff',
+      cursed: 'cursed_staff',
+    }
+
+    return line ? categoryByLine[line] : null
+  }
+
+  if (item.category === 'armor') {
+    const match = ARMOR_ID_PATTERN.exec(parsed.familyId)
+    if (!match) return null
+
+    const slot = match[1]
+    const material = match[2]
+    if (!slot || !material) return null
+
+    const slotName =
+      slot === 'HEAD' ? 'helmet' : slot === 'ARMOR' ? 'armor' : 'shoes'
+    const materialName = material.toLowerCase()
+
+    return `${materialName}_${slotName}` as CraftingSpecialtyCategory
+  }
+
+  if (item.category === 'offhand') return 'offhand'
+
+  return null
 }

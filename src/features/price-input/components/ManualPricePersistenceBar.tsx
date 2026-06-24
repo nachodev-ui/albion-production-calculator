@@ -57,7 +57,7 @@ export function ManualPricePersistenceBar() {
 
           <InfoHint
             label="Guardado local de precios"
-            text="Los precios editados manualmente se guardan en este navegador y tienen prioridad sobre AODP. Al borrarlos, la calculadora vuelve a usar el precio automático disponible. No se envían a ningún servidor."
+            text="Los precios editados manualmente se guardan en este navegador y tienen prioridad sobre el servicio local. Al borrarlos, la calculadora vuelve a usar el precio automático disponible. No se envían a ningún servidor."
             align="left"
           />
         </div>

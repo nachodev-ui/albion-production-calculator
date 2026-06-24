@@ -33,6 +33,9 @@ export function useCraftCalculation(
     (s) => s.craftingSpecializationConfig,
   )
   const itemValueOverride = useCraftTreeStore((s) => s.itemValueOverride)
+  const stationUsageFeeOverride = useCraftTreeStore(
+    (s) => s.stationUsageFeeOverride,
+  )
   const selectedRecipeOptions = useCraftTreeStore(
     (s) => s.selectedRecipeOptions,
   )
@@ -47,6 +50,7 @@ export function useCraftCalculation(
       stationFeeConfig,
       craftingSpecializationConfig,
       itemValueOverride,
+      stationUsageFeeOverride,
     }
     return calculateCraftCost(itemId, enchantment, quantity, repository, config)
   }, [
@@ -61,6 +65,7 @@ export function useCraftCalculation(
     stationFeeConfig,
     craftingSpecializationConfig,
     itemValueOverride,
+    stationUsageFeeOverride,
     selectedRecipeOptions,
   ])
 }
