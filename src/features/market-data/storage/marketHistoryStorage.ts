@@ -11,7 +11,7 @@ const LEGACY_HISTORY_CACHE_STORAGE_KEYS = [
   'albion-production-calculator.market-history-cache.v2',
 ] as const
 const STORAGE_VERSION = 2
-const MAX_CACHE_ENTRIES = 100
+const MAX_CACHE_ENTRIES = 400
 const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
 interface PersistedMarketHistoryCache {

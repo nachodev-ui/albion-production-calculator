@@ -31,6 +31,10 @@ export interface MarketHistorySnapshot {
 export interface MarketHistorySummary {
   readonly periodDays: MarketHistoryPeriodDays
   readonly averagePrice: number | null
+  /** Mediana de los precios diarios observados; se usa como referencia robusta. */
+  readonly medianPrice: number | null
+  readonly lowerQuartilePrice: number | null
+  readonly upperQuartilePrice: number | null
   readonly minimumPrice: number | null
   readonly maximumPrice: number | null
   readonly totalVolume: number
@@ -44,6 +48,19 @@ export interface MarketHistorySummary {
 export interface MarketHistoryView {
   readonly points: readonly MarketHistoryPoint[]
   readonly summary: MarketHistorySummary
+}
+
+export interface MarketHistoryCandidate {
+  readonly server: AlbionServer
+  readonly itemIdentifier: string
+  readonly city: MarketCityId
+  readonly quality: number
+}
+
+export interface MarketHistoryRefreshProgress {
+  readonly completed: number
+  readonly total: number
+  readonly failed: number
 }
 
 export const MARKET_HISTORY_DAYS = 28
