@@ -120,6 +120,22 @@ export function normalizeDailyMarketHistory(
   return normalized
 }
 
+
+function percentile(sortedValues: readonly number[], percentileValue: number): number | null {
+  if (sortedValues.length === 0) return null
+  if (sortedValues.length === 1) return sortedValues[0] ?? null
+
+  const position = (sortedValues.length - 1) * percentileValue
+  const lowerIndex = Math.floor(position)
+  const upperIndex = Math.ceil(position)
+  const lower = sortedValues[lowerIndex] ?? 0
+  const upper = sortedValues[upperIndex] ?? lower
+
+  if (lowerIndex === upperIndex) return lower
+
+  return lower + (upper - lower) * (position - lowerIndex)
+}
+
 function calculateVolatilityPercent(
   prices: readonly number[],
 ): number | null {
@@ -172,9 +188,14 @@ export function summarizeMarketHistory(
       validPrices.length
   }
 
+  const sortedPrices = [...validPrices].sort((left, right) => left - right)
+
   return {
     periodDays,
     averagePrice,
+    medianPrice: percentile(sortedPrices, 0.5),
+    lowerQuartilePrice: percentile(sortedPrices, 0.25),
+    upperQuartilePrice: percentile(sortedPrices, 0.75),
     minimumPrice:
       validPrices.length > 0 ? Math.min(...validPrices) : null,
     maximumPrice:
