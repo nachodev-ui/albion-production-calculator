@@ -8,6 +8,7 @@ import { calculateCraftEconomicSummary } from '../utils/profitCalculations'
 import type {
   MarketCityId,
   MarketConfig,
+  MarketDataSource,
   MarketDefinition,
   MarketQuality,
   MarketRequestStatus,
@@ -32,6 +33,7 @@ interface ProfitSummaryCardProps {
   readonly isManualSellPrice: boolean
   readonly automaticPriceLabel: string
   readonly automaticPriceUpdatedAt: string | null
+  readonly automaticPriceSource: MarketDataSource | null
   readonly marketStatus: MarketRequestStatus
   readonly refreshResult: MarketRefreshItemReport | null
   readonly marketConfig: MarketConfig
@@ -67,6 +69,7 @@ export function ProfitSummaryCard({
   isManualSellPrice,
   automaticPriceLabel,
   automaticPriceUpdatedAt,
+  automaticPriceSource,
   marketStatus,
   refreshResult,
   marketConfig,
@@ -108,19 +111,15 @@ export function ProfitSummaryCard({
     isPremium,
   })
 
-  const priceDifference =
-    normalizedUnitSellPrice - breakEvenUnitPrice
+  const priceDifference = normalizedUnitSellPrice - breakEvenUnitPrice
 
   const absolutePriceDifference = Math.abs(priceDifference)
 
-  const isAboveBreakEven =
-    canShowEconomicResult && priceDifference > 0
+  const isAboveBreakEven = canShowEconomicResult && priceDifference > 0
 
-  const isBelowBreakEven =
-    canShowEconomicResult && priceDifference < 0
+  const isBelowBreakEven = canShowEconomicResult && priceDifference < 0
 
-  const isAtBreakEven =
-    canShowEconomicResult && priceDifference === 0
+  const isAtBreakEven = canShowEconomicResult && priceDifference === 0
 
   const cashResultClassName = !canShowEconomicResult
     ? 'text-text-faint'
@@ -218,7 +217,8 @@ export function ProfitSummaryCard({
           </div>
 
           <p className="mt-1 text-xs text-text-faint">
-            Separa la plata disponible del valor que conservas en materiales retornados.
+            Separa la plata disponible del valor que conservas en materiales
+            retornados.
           </p>
         </div>
 
@@ -254,7 +254,8 @@ export function ProfitSummaryCard({
               Configuración de venta
             </h4>
             <p className="mt-1 text-[10px] leading-relaxed text-text-faint">
-              Estos controles actualizan el precio y el resultado económico del producto terminado.
+              Estos controles actualizan el precio y el resultado económico del
+              producto terminado.
             </p>
           </div>
 
@@ -387,9 +388,7 @@ export function ProfitSummaryCard({
                     if (event.key === 'Escape') {
                       event.preventDefault()
                       setSellPriceText(
-                        unitSellPrice !== null
-                          ? String(unitSellPrice)
-                          : '',
+                        unitSellPrice !== null ? String(unitSellPrice) : '',
                       )
                     }
                   }}
@@ -405,18 +404,19 @@ export function ProfitSummaryCard({
                       onClick={onUseAutomaticSellPrice}
                       className="text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
                     >
-                      Usar precio local ({formatSilver(automaticUnitSellPrice)})
+                      Usar precio automático (
+                      {formatSilver(automaticUnitSellPrice)})
                     </button>
                   ) : (
                     <span className="text-text-faint">Precio manual</span>
                   )
                 ) : automaticUnitSellPrice !== null ? (
                   <span className="text-positive">
-                    Servicio local · {automaticPriceLabel}
+                    Precio automático · {automaticPriceLabel}
                   </span>
                 ) : marketStatus === 'loading' ? (
                   <span className="text-text-faint">
-                    Consultando servicio local…
+                    Consultando fuentes de mercado…
                   </span>
                 ) : (
                   <span className="text-text-faint">
@@ -441,9 +441,13 @@ export function ProfitSummaryCard({
                         ? automaticPriceUpdatedAt
                         : null
                     }
+                    source={
+                      automaticUnitSellPrice !== null
+                        ? automaticPriceSource
+                        : null
+                    }
                     isActive={
-                      automaticUnitSellPrice !== null &&
-                      !isManualSellPrice
+                      automaticUnitSellPrice !== null && !isManualSellPrice
                     }
                   />
                 </div>
@@ -452,9 +456,16 @@ export function ProfitSummaryCard({
 
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="text-sm text-text-muted">
-                  Cuenta Premium
-                </span>
+                <img
+                  src="/assets/ui/premium-crown.png"
+                  alt=""
+                  aria-hidden="true"
+                  className={`h-5 w-5 shrink-0 object-contain transition-all ${
+                    isPremium ? '' : 'grayscale opacity-40'
+                  }`}
+                />
+
+                <span className="text-sm text-text-muted">Cuenta Premium</span>
 
                 <InfoHint
                   label="Cuenta Premium"
@@ -466,18 +477,14 @@ export function ProfitSummaryCard({
               <input
                 type="checkbox"
                 checked={isPremium}
-                onChange={(event) =>
-                  onPremiumChange(event.target.checked)
-                }
+                onChange={(event) => onPremiumChange(event.target.checked)}
                 className="shrink-0 accent-accent"
               />
             </label>
 
             <div className="flex items-center justify-between gap-4 text-sm">
               <div className="flex min-w-0 items-center gap-1.5">
-                <span className="text-text-faint">
-                  Comisiones totales
-                </span>
+                <span className="text-text-faint">Comisiones totales</span>
 
                 <InfoHint
                   label="Comisiones totales"
@@ -578,9 +585,7 @@ export function ProfitSummaryCard({
                     </span>
 
                     <span className="mt-1 block truncate text-sm font-semibold tabular text-text">
-                      {isCalculationComplete
-                        ? formatSilver(unitPrice)
-                        : '—'}
+                      {isCalculationComplete ? formatSilver(unitPrice) : '—'}
                     </span>
 
                     <span className="block text-[10px] text-text-faint">
@@ -785,9 +790,7 @@ export function ProfitSummaryCard({
               </div>
 
               <span className="shrink-0 tabular text-negative">
-                {hasSellPrice
-                  ? `-${formatSilver(setupFeeAmount)} plata`
-                  : '—'}
+                {hasSellPrice ? `-${formatSilver(setupFeeAmount)} plata` : '—'}
               </span>
             </div>
 

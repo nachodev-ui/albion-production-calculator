@@ -13,7 +13,9 @@ function build(category: BranchCategory) {
 }
 
 function getBranch(category: BranchCategory, id: string) {
-  const branch = build(category).branches.find((candidate) => candidate.id === id)
+  const branch = build(category).branches.find(
+    (candidate) => candidate.id === id,
+  )
   if (!branch) throw new Error(`No se encontró la rama ${id}`)
   return branch
 }
@@ -37,9 +39,15 @@ describe('ramas de armas', () => {
 
   it('separa T2 y T3 de las especializaciones T4 a T8', () => {
     expect(getBranch('weapon', 'weapon_trainee_crafter').itemCount).toBe(3)
-    expect(getBranch('weapon', 'weapon_journeyman_warrior_forge').itemCount).toBe(6)
-    expect(getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount).toBe(5)
-    expect(getBranch('weapon', 'weapon_journeyman_mage_tower').itemCount).toBe(5)
+    expect(
+      getBranch('weapon', 'weapon_journeyman_warrior_forge').itemCount,
+    ).toBe(6)
+    expect(
+      getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,
+    ).toBe(5)
+    expect(getBranch('weapon', 'weapon_journeyman_mage_tower').itemCount).toBe(
+      5,
+    )
   })
 
   it('agrupa Sword Crafter en ocho familias completas', () => {
@@ -49,7 +57,8 @@ describe('ramas de armas', () => {
     expect(swords.families).toHaveLength(8)
     expect(
       swords.families.every(
-        (family) => family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
+        (family) =>
+          family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
       ),
     ).toBe(true)
   })
@@ -64,7 +73,9 @@ describe('ramas de armas', () => {
       .find((item) => item.id.startsWith('T4_ARTEFACT_'))
 
     expect(ids.some((id) => id.includes('ARTEFACT_'))).toBe(false)
-    expect(artifact ? isGroupedCraftingItem('weapon', artifact) : true).toBe(false)
+    expect(artifact ? isGroupedCraftingItem('weapon', artifact) : true).toBe(
+      false,
+    )
   })
 })
 
@@ -81,17 +92,21 @@ describe('ramas de offhands', () => {
     ['offhand_shield', 6],
     ['offhand_tome', 6],
     ['offhand_torch', 6],
-  ])('agrupa %s en %i familias T4 a T8', (branchId, familyCount) => {
-    const branch = getBranch('offhand', branchId)
+  ])(
+    'agrupa %s en %i familias T4 a T8',
+    (branchId: string, familyCount: number) => {
+      const branch = getBranch('offhand', branchId)
 
-    expect(branch.itemCount).toBe(30)
-    expect(branch.families).toHaveLength(familyCount)
-    expect(
-      branch.families.every(
-        (family) => family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
-      ),
-    ).toBe(true)
-  })
+      expect(branch.itemCount).toBe(30)
+      expect(branch.families).toHaveLength(familyCount)
+      expect(
+        branch.families.every(
+          (family) =>
+            family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
+        ),
+      ).toBe(true)
+    },
+  )
 })
 
 describe('ramas de accesorios', () => {
@@ -110,7 +125,8 @@ describe('ramas de accesorios', () => {
     expect(cityCapes.families).toHaveLength(7)
     expect(
       cityCapes.families.every(
-        (family) => family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
+        (family) =>
+          family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
       ),
     ).toBe(true)
   })
@@ -120,6 +136,8 @@ describe('ramas de accesorios', () => {
 
     expect(decorative.itemCount).toBe(9)
     expect(decorative.families).toHaveLength(9)
-    expect(decorative.families.every((family) => family.items[0]?.tier === 6)).toBe(true)
+    expect(
+      decorative.families.every((family) => family.items[0]?.tier === 6),
+    ).toBe(true)
   })
 })

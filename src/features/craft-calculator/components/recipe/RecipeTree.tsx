@@ -38,7 +38,10 @@ interface RecipeTreeNodeProps {
   readonly repository: ItemRepository
   readonly depth: number
   readonly automaticPrices: ReadonlyMap<string, number>
-  readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
+  readonly automaticPriceDetails: ReadonlyMap<
+    string,
+    AutomaticMarketPriceDetail
+  >
   readonly automaticPriceLabel: string
   readonly refreshResults: ReadonlyMap<string, MarketRefreshItemReport>
   readonly marketStatus: MarketRequestStatus
@@ -79,32 +82,19 @@ function RecipeTreeNode({
   materialPurchaseCityOverrides,
   onMaterialPurchaseCityChange,
 }: RecipeTreeNodeProps) {
-  const isExpanded = useCraftTreeStore((state) =>
-    state.expandedPaths.has(path),
-  )
+  const isExpanded = useCraftTreeStore((state) => state.expandedPaths.has(path))
 
   const rootKey = useCraftTreeStore((state) => state.rootKey)
 
-  const toggleExpanded = useCraftTreeStore(
-    (state) => state.toggleExpanded,
-  )
+  const toggleExpanded = useCraftTreeStore((state) => state.toggleExpanded)
 
-  const setManualPrice = useCraftTreeStore(
-    (state) => state.setManualPrice,
-  )
+  const setManualPrice = useCraftTreeStore((state) => state.setManualPrice)
 
-  const clearManualPrice = useCraftTreeStore(
-    (state) => state.clearManualPrice,
-  )
+  const clearManualPrice = useCraftTreeStore((state) => state.clearManualPrice)
 
-  const manualPrice = useCraftTreeStore(
-    (state) => state.manualPrices.get(path),
-  )
+  const manualPrice = useCraftTreeStore((state) => state.manualPrices.get(path))
 
-  const itemPriceKey = buildItemPriceKey(
-    node.itemId,
-    node.enchantment,
-  )
+  const itemPriceKey = buildItemPriceKey(node.itemId, node.enchantment)
   const automaticPrice = automaticPrices.get(itemPriceKey)
   const automaticPriceDetail = automaticPriceDetails.get(itemPriceKey)
   const refreshResult = refreshResults.get(itemPriceKey)
@@ -126,9 +116,7 @@ function RecipeTreeNode({
   const enchantmentColor = getEnchantmentColor(node.enchantment)
   const displayName = item?.name ?? (node.itemId as unknown as string)
   const hasMissingPrice =
-    !isExpanded &&
-    manualPrice === undefined &&
-    automaticPrice === undefined
+    !isExpanded && manualPrice === undefined && automaticPrice === undefined
 
   return (
     <div className="flex flex-col items-center">
@@ -155,9 +143,7 @@ function RecipeTreeNode({
           }}
           aria-expanded={isExpandable ? isExpanded : undefined}
           className={`flex h-12 w-full items-center gap-3 text-left ${
-            isExpandable
-              ? 'cursor-pointer'
-              : 'cursor-default'
+            isExpandable ? 'cursor-pointer' : 'cursor-default'
           }`}
         >
           <ItemIcon
@@ -235,12 +221,11 @@ function RecipeTreeNode({
                 automaticValue={automaticPrice}
                 automaticLabel={`${getMarketName(markets, materialPurchaseCity)} · ${automaticPriceLabel}`}
                 automaticUpdatedAt={automaticPriceDetail?.updatedAt ?? null}
+                automaticSource={automaticPriceDetail?.source ?? null}
                 isAutomaticLoading={marketStatus === 'loading'}
                 refreshResult={refreshResult}
                 quantity={node.quantity}
-                onChange={(unitPrice) =>
-                  setManualPrice(path, unitPrice)
-                }
+                onChange={(unitPrice) => setManualPrice(path, unitPrice)}
                 onClear={() => clearManualPrice(path)}
                 placeholder="0"
               />
@@ -289,9 +274,7 @@ function RecipeTreeNode({
                     materialPurchaseCityOverrides={
                       materialPurchaseCityOverrides
                     }
-                    onMaterialPurchaseCityChange={
-                      onMaterialPurchaseCityChange
-                    }
+                    onMaterialPurchaseCityChange={onMaterialPurchaseCityChange}
                   />
                 </div>
               )
@@ -307,7 +290,10 @@ interface RecipeTreeProps {
   readonly rootNode: CraftCostNode
   readonly repository: ItemRepository
   readonly automaticPrices: ReadonlyMap<string, number>
-  readonly automaticPriceDetails: ReadonlyMap<string, AutomaticMarketPriceDetail>
+  readonly automaticPriceDetails: ReadonlyMap<
+    string,
+    AutomaticMarketPriceDetail
+  >
   readonly automaticPriceLabel: string
   readonly refreshResults: ReadonlyMap<string, MarketRefreshItemReport>
   readonly marketStatus: MarketRequestStatus
@@ -377,9 +363,7 @@ export function RecipeTree({
             marketStatus={marketStatus}
             defaultPurchaseCity={defaultPurchaseCity}
             markets={markets}
-            materialMarketPriceComparisons={
-              materialMarketPriceComparisons
-            }
+            materialMarketPriceComparisons={materialMarketPriceComparisons}
             materialPurchaseCityOverrides={materialPurchaseCityOverrides}
             onMaterialPurchaseCityChange={onMaterialPurchaseCityChange}
           />
@@ -388,4 +372,3 @@ export function RecipeTree({
     </div>
   )
 }
-

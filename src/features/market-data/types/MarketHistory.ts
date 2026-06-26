@@ -1,16 +1,17 @@
 import type {
   AlbionServer,
   MarketCityId,
+  MarketDataSource,
 } from './MarketPrice'
 
 export type MarketHistoryPeriodDays = 7 | 28
 
 export interface MarketHistoryPoint {
-  /** Timestamp UTC entregado por el servicio local para el intervalo agregado. */
+  /** Timestamp UTC del bucket agregado por la fuente de mercado. */
   readonly timestamp: string
   /** Precio promedio de órdenes de venta dentro del intervalo. */
   readonly averagePrice: number | null
-  /** Cantidad de ítems registrada por el servicio local dentro del intervalo. */
+  /** Cantidad de ítems registrada por la fuente dentro del intervalo. */
   readonly itemCount: number
 }
 
@@ -24,7 +25,9 @@ export interface MarketHistorySnapshot {
   /** Último día UTC solicitado, en formato YYYY-MM-DD. */
   readonly rangeEnd: string
   readonly points: readonly MarketHistoryPoint[]
-  /** Momento en que la aplicación consultó el servicio local. */
+  /** Fuente efectiva utilizada por esta serie. */
+  readonly source: MarketDataSource
+  /** Momento en que la aplicación consultó o restauró esta serie. */
   readonly fetchedAt: string
 }
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   useCallback,
   useEffect,
@@ -10,8 +11,14 @@ import { createPortal } from 'react-dom'
 
 interface InfoHintProps {
   readonly label: string
-  readonly text: string
+  readonly text?: string
+  readonly content?: ReactNode
   readonly align?: 'left' | 'center' | 'right'
+  readonly openOnHover?: boolean
+  readonly width?: number
+  readonly trigger?: ReactNode
+  readonly triggerClassName?: string
+  readonly tooltipClassName?: string
 }
 
 interface TooltipPosition {
@@ -19,14 +26,23 @@ interface TooltipPosition {
   readonly left: number
 }
 
-const TOOLTIP_WIDTH = 256
+const DEFAULT_TOOLTIP_WIDTH = 256
 const VIEWPORT_MARGIN = 12
 const TOOLTIP_GAP = 8
+
+const DEFAULT_TRIGGER_CLASS_NAME =
+  'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-semibold leading-none text-text-faint transition-colors hover:border-border-strong hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border'
 
 export function InfoHint({
   label,
   text,
+  content,
   align = 'center',
+  openOnHover = false,
+  width = DEFAULT_TOOLTIP_WIDTH,
+  trigger,
+  triggerClassName,
+  tooltipClassName = '',
 }: InfoHintProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [position, setPosition] = useState<TooltipPosition>({
@@ -47,6 +63,11 @@ export function InfoHint({
     const buttonRect = button.getBoundingClientRect()
     const tooltipHeight = tooltip?.offsetHeight ?? 0
 
+    const resolvedWidth = Math.min(
+      width,
+      window.innerWidth - VIEWPORT_MARGIN * 2,
+    )
+
     let left: number
 
     switch (align) {
@@ -55,14 +76,12 @@ export function InfoHint({
         break
 
       case 'right':
-        left = buttonRect.right - TOOLTIP_WIDTH
+        left = buttonRect.right - resolvedWidth
         break
 
       default:
         left =
-          buttonRect.left +
-          buttonRect.width / 2 -
-          TOOLTIP_WIDTH / 2
+          buttonRect.left + buttonRect.width / 2 - resolvedWidth / 2
         break
     }
 
@@ -70,7 +89,7 @@ export function InfoHint({
       VIEWPORT_MARGIN,
       Math.min(
         left,
-        window.innerWidth - TOOLTIP_WIDTH - VIEWPORT_MARGIN,
+        window.innerWidth - resolvedWidth - VIEWPORT_MARGIN,
       ),
     )
 
@@ -87,7 +106,7 @@ export function InfoHint({
     top = Math.max(VIEWPORT_MARGIN, top)
 
     setPosition({ top, left })
-  }, [align])
+  }, [align, width])
 
   useLayoutEffect(() => {
     if (!isOpen) return
@@ -99,7 +118,7 @@ export function InfoHint({
     return () => {
       window.cancelAnimationFrame(animationFrame)
     }
-  }, [isOpen, text, updatePosition])
+  }, [content, isOpen, text, updatePosition])
 
   useEffect(() => {
     if (!isOpen) return
@@ -146,9 +165,15 @@ export function InfoHint({
         aria-expanded={isOpen}
         aria-describedby={isOpen ? tooltipId : undefined}
         onClick={() => setIsOpen((current) => !current)}
-        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-semibold leading-none text-text-faint transition-colors hover:border-border-strong hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+        onMouseEnter={() => {
+          if (openOnHover) setIsOpen(true)
+        }}
+        onMouseLeave={() => {
+          if (openOnHover) setIsOpen(false)
+        }}
+        className={triggerClassName ?? DEFAULT_TRIGGER_CLASS_NAME}
       >
-        i
+        {trigger ?? 'i'}
       </button>
 
       {isOpen &&
@@ -162,15 +187,17 @@ export function InfoHint({
               position: 'fixed',
               top: position.top,
               left: position.left,
-              width: TOOLTIP_WIDTH,
+              width,
+              maxWidth: `calc(100vw - ${VIEWPORT_MARGIN * 2}px)`,
             }}
-            className="z-[9999] rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-left text-xs font-normal leading-relaxed text-text-muted shadow-xl"
+            className={`z-[9999] rounded-lg border border-border bg-surface-raised px-3 py-2.5 text-left text-xs font-normal leading-relaxed text-text-muted shadow-xl ${tooltipClassName}`}
           >
-            <p className="mb-1 font-medium text-text">
-              {label}
-            </p>
-
-            <p>{text}</p>
+            {content ?? (
+              <>
+                <p className="mb-1 font-medium text-text">{label}</p>
+                <p className="whitespace-pre-line">{text}</p>
+              </>
+            )}
           </div>,
           document.body,
         )}

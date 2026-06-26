@@ -35,6 +35,7 @@ export function useProfitabilityLiquidity({
   const snapshots = useMarketHistoryStore((state) => state.snapshots)
   const status = useMarketHistoryStore((state) => state.optimizerStatus)
   const error = useMarketHistoryStore((state) => state.optimizerError)
+  const warnings = useMarketHistoryStore((state) => state.optimizerWarnings)
   const progress = useMarketHistoryStore((state) => state.optimizerProgress)
   const refreshCandidates = useMarketHistoryStore(
     (state) => state.refreshCandidates,
@@ -132,6 +133,7 @@ export function useProfitabilityLiquidity({
     snapshots,
     status,
     error,
+    warnings,
     progress,
     refresh,
     candidateCount: candidates.length,

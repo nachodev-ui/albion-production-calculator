@@ -6,11 +6,13 @@ import type {
 import type {
   MarketConfig,
   MarketCityId,
+  MarketDataSource,
   MarketDefinition,
   MarketQuality,
   MarketRequestStatus,
 } from '../types/MarketPrice'
 import {
+  MARKET_DATA_SOURCE_LABELS,
   MARKET_QUALITIES,
   MARKET_QUALITY_LABELS,
   MARKET_SERVER_LABELS,
@@ -28,6 +30,7 @@ interface MarketHistoryCardProps {
   readonly snapshot: MarketHistorySnapshot | null
   readonly status: MarketRequestStatus
   readonly error: string | null
+  readonly warnings: readonly string[]
   readonly hasCachedHistory: boolean
   readonly isComparing: boolean
   readonly onComparisonChange: (patch: Partial<MarketConfig>) => void
@@ -63,14 +66,50 @@ function formatFetchedAt(value: string | null): string {
   }).format(new Date(timestamp))
 }
 
+function formatLastBucket(value: string | null): string {
+  if (!value) return 'Sin buckets disponibles'
+
+  const timestamp = Date.parse(value)
+  if (!Number.isFinite(timestamp)) return 'Fecha no disponible'
+
+  const date = new Intl.DateTimeFormat('es-CL', {
+    dateStyle: 'medium',
+    timeZone: 'UTC',
+  }).format(new Date(timestamp))
+  const ageDays = Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000))
+  const relative = new Intl.RelativeTimeFormat('es-CL', {
+    numeric: 'auto',
+  }).format(-ageDays, 'day')
+
+  return `${date} (${relative})`
+}
+
+function getSourceClassName(source: MarketDataSource): string {
+  if (source === 'central-api') {
+    return 'border-positive bg-positive-muted text-positive'
+  }
+  if (source === 'local-receiver') {
+    return 'border-border-strong bg-surface text-text-muted'
+  }
+  return 'border-accent-border bg-accent-muted text-accent'
+}
+
 function getStatusLabel(
   status: MarketRequestStatus,
   hasCachedHistory: boolean,
+  source: MarketDataSource | null,
 ): { readonly label: string; readonly className: string } {
   if (status === 'loading') {
     return {
       label: 'Consultando historial…',
       className: 'border-border bg-surface text-text-muted',
+    }
+  }
+
+  if (source === 'browser-cache') {
+    return {
+      label: 'Usando historial guardado',
+      className: 'border-accent-border bg-accent-muted text-accent',
     }
   }
 
@@ -107,6 +146,7 @@ export function MarketHistoryCard({
   snapshot,
   status,
   error,
+  warnings,
   hasCachedHistory,
   isComparing,
   onComparisonChange,
@@ -120,8 +160,13 @@ export function MarketHistoryCard({
     () => buildMarketHistoryView(snapshot, periodDays),
     [periodDays, snapshot],
   )
-  const statusLabel = getStatusLabel(status, hasCachedHistory)
+  const statusLabel = getStatusLabel(
+    status,
+    hasCachedHistory,
+    snapshot?.source ?? null,
+  )
   const summary = view.summary
+  const lastBucketAt = snapshot?.points.at(-1)?.timestamp ?? null
   const comparisonMatchesSale =
     historyConfig.saleCity === saleConfig.saleCity &&
     historyConfig.quality === saleConfig.quality
@@ -146,6 +191,14 @@ export function MarketHistoryCard({
           >
             {statusLabel.label}
           </span>
+
+          {snapshot && (
+            <span
+              className={`rounded-md border px-2.5 py-1 text-xs font-medium ${getSourceClassName(snapshot.source)}`}
+            >
+              Origen: {MARKET_DATA_SOURCE_LABELS[snapshot.source]}
+            </span>
+          )}
 
           <button
             type="button"
@@ -272,10 +325,22 @@ export function MarketHistoryCard({
           ))}
         </div>
 
-        <p className="text-[11px] text-text-faint">
-          Última consulta: {formatFetchedAt(snapshot?.fetchedAt ?? null)}
-        </p>
+        <div className="text-right text-[11px] leading-relaxed text-text-faint">
+          <p>Último bucket: {formatLastBucket(lastBucketAt)}</p>
+          <p>Última consulta: {formatFetchedAt(snapshot?.fetchedAt ?? null)}</p>
+        </div>
       </div>
+
+      {warnings.length > 0 && (
+        <div className="mt-3 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">
+          <p className="font-medium text-text">Degradación de fuentes</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {error && (
         <p className="mt-3 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">

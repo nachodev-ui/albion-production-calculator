@@ -40,6 +40,7 @@ export function buildSaleMarketPriceOptions({
       value: detail.value,
       updatedAt: detail.updatedAt,
       freshness: detail.freshness,
+      source: detail.source,
     }
   })
 }
