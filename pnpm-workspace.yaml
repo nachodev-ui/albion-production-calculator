@@ -1,2 +1,8 @@
-allowBuilds:
-  esbuild: false
+﻿overrides:
+  preact: 10.29.2
+
+peerDependencyRules:
+  allowedVersions:
+    "@docsearch/react@3.8.2>react": "19"
+    "@docsearch/react@3.8.2>react-dom": "19"
+    "@docsearch/react@3.8.2>@types/react": "19"
