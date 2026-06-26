@@ -1,4 +1,7 @@
-﻿overrides:
+allowBuilds:
+  esbuild: true
+
+overrides:
   preact: 10.29.2
 
 peerDependencyRules:

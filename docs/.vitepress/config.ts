@@ -45,6 +45,10 @@ export default defineConfig({
           },
           { text: 'Pruebas y calidad', link: '/operations/testing' },
           {
+            text: 'Prueba end-to-end',
+            link: '/operations/end-to-end',
+          },
+          {
             text: 'Política de documentación',
             link: '/operations/documentation',
           },
