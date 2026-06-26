@@ -1,5 +1,9 @@
-import type { MarketPriceFreshness } from '../types/MarketPrice'
+import type {
+  MarketDataSource,
+  MarketPriceFreshness,
+} from '../types/MarketPrice'
 import {
+  MARKET_DATA_SOURCE_LABELS,
   classifyMarketPriceFreshness,
   formatMarketPriceExactDate,
   formatMarketPriceRelativeAge,
@@ -7,6 +11,7 @@ import {
 
 interface MarketPriceFreshnessStatusProps {
   readonly updatedAt: string | null
+  readonly source: MarketDataSource | null
   readonly isActive: boolean
   readonly compact?: boolean
 }
@@ -35,12 +40,14 @@ const PRESENTATION: Record<
 
 export function MarketPriceFreshnessStatus({
   updatedAt,
+  source,
   isActive,
   compact = false,
 }: MarketPriceFreshnessStatusProps) {
   const freshness = classifyMarketPriceFreshness(updatedAt)
   const presentation = PRESENTATION[freshness]
   const isStaleAndActive = freshness === 'stale' && isActive
+  const sourceLabel = source ? MARKET_DATA_SOURCE_LABELS[source] : 'Sin origen'
 
   return (
     <div
@@ -49,11 +56,19 @@ export function MarketPriceFreshnessStatus({
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <span
-          className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${presentation.className}`}
-        >
-          {presentation.label}
-        </span>
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span
+            className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${presentation.className}`}
+          >
+            {presentation.label}
+          </span>
+          <span
+            className="truncate rounded border border-border bg-surface-raised px-1.5 py-0.5 text-[10px] text-text-muted"
+            title={`Origen del precio: ${sourceLabel}`}
+          >
+            {sourceLabel}
+          </span>
+        </div>
 
         <span className="truncate text-right text-[10px] text-text-muted">
           {formatMarketPriceRelativeAge(updatedAt)}
@@ -70,9 +85,7 @@ export function MarketPriceFreshnessStatus({
         </time>
 
         {isStaleAndActive && (
-          <span className="shrink-0 font-medium text-negative">
-            ⚠ En uso
-          </span>
+          <span className="shrink-0 font-medium text-negative">⚠ En uso</span>
         )}
       </div>
 

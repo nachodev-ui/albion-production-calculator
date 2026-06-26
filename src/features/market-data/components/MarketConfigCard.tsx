@@ -41,7 +41,7 @@ function getStatusPresentation(
 ): { label: string; className: string } {
   if (status === 'loading') {
     return {
-      label: 'Consultando servicio local…',
+      label: 'Consultando fuentes de mercado…',
       className: 'border-border bg-surface text-text-muted',
     }
   }
@@ -53,20 +53,20 @@ function getStatusPresentation(
           className: 'border-accent-border bg-accent-muted text-accent',
         }
       : {
-          label: 'Servicio local desconectado',
+          label: 'Fuentes automáticas no disponibles',
           className: 'border-border bg-surface text-negative',
         }
   }
 
   if (status === 'success') {
     return {
-      label: 'Servicio local conectado',
+      label: 'Datos automáticos disponibles',
       className: 'border-positive bg-positive-muted text-positive',
     }
   }
 
   return {
-    label: 'Listo para consultar localmente',
+    label: 'Listo para consultar mercados',
     className: 'border-border bg-surface text-text-faint',
   }
 }
@@ -98,9 +98,10 @@ export function MarketConfigCard({
           </h3>
 
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-faint">
-            Consulta los datos persistidos por el receptor local. Debe estar
-            ejecutándose en el puerto 8787; los precios manuales conservan la
-            prioridad sobre cualquier valor automático.
+            Consulta primero la API central y usa el receiver local como
+            respaldo. Si ambos fallan, conserva la caché del navegador; los
+            precios manuales mantienen prioridad sobre cualquier valor
+            automático.
           </p>
         </div>
 
@@ -113,7 +114,11 @@ export function MarketConfigCard({
 
           <button
             type="button"
-            disabled={status === 'loading' || catalogStatus === 'loading' || markets.length === 0}
+            disabled={
+              status === 'loading' ||
+              catalogStatus === 'loading' ||
+              markets.length === 0
+            }
             onClick={onRefresh}
             className="rounded-md border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
@@ -232,7 +237,9 @@ export function MarketConfigCard({
 
         <label className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-raised p-3">
           <div>
-            <span className="text-sm text-text-muted">Calidad del producto</span>
+            <span className="text-sm text-text-muted">
+              Calidad del producto
+            </span>
             <p className="mt-0.5 text-[10px] text-text-faint">
               Se aplica al objeto vendido y a su historial
             </p>
@@ -289,8 +296,8 @@ export function MarketConfigCard({
             <p className="mt-1 text-[10px] leading-relaxed text-text-faint">
               {freshnessSummary.recent} recientes ·{' '}
               {freshnessSummary.acceptable} aceptables ·{' '}
-              {freshnessSummary.stale} antiguos ·{' '}
-              {freshnessSummary.missing} sin datos
+              {freshnessSummary.stale} antiguos · {freshnessSummary.missing} sin
+              datos
             </p>
           </div>
 
@@ -303,7 +310,6 @@ export function MarketConfigCard({
           </button>
         </div>
       </div>
-
 
       {catalogError && (
         <p className="mt-3 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs leading-relaxed text-negative">
@@ -323,8 +329,10 @@ export function MarketConfigCard({
       {freshnessSummary.stale > 0 && (
         <p className="mt-3 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs leading-relaxed text-negative">
           Hay {freshnessSummary.stale}{' '}
-          {freshnessSummary.stale === 1 ? 'precio automático antiguo' : 'precios automáticos antiguos'}.
-          Las hojas sin override manual seguirán utilizándolos, así que revisa
+          {freshnessSummary.stale === 1
+            ? 'precio automático antiguo'
+            : 'precios automáticos antiguos'}
+          . Las hojas sin override manual seguirán utilizándolos, así que revisa
           la fecha mostrada junto a cada precio antes de decidir.
         </p>
       )}

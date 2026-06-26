@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { fetchLocalMarketHistory } from '../api/localHistoryClient'
+import { fetchMarketHistoryWithFallback } from '../api/historyReadService'
 import {
   clearStoredMarketHistoryCache,
   loadMarketHistoryCache,
@@ -38,9 +38,11 @@ interface MarketHistoryState {
   readonly snapshots: ReadonlyMap<string, MarketHistorySnapshot>
   readonly status: MarketRequestStatus
   readonly error: string | null
+  readonly warnings: readonly string[]
   readonly lastSuccessfulFetchAt: string | null
   readonly optimizerStatus: MarketRequestStatus
   readonly optimizerError: string | null
+  readonly optimizerWarnings: readonly string[]
   readonly optimizerProgress: MarketHistoryRefreshProgress | null
 
   refreshHistory: (params: RefreshMarketHistoryParams) => Promise<void>
@@ -52,14 +54,18 @@ interface MarketHistoryState {
 
 let latestChartRequestId = 0
 let latestOptimizerRequestId = 0
-const inFlightRequests = new Map<string, Promise<MarketHistorySnapshot>>()
-const OPTIMIZER_HISTORY_CONCURRENCY = 4
 
 function isSnapshotFresh(
   snapshot: MarketHistorySnapshot | undefined,
   expectedRangeEnd: string,
 ): boolean {
-  if (!snapshot || snapshot.rangeEnd !== expectedRangeEnd) return false
+  if (
+    !snapshot ||
+    snapshot.source === 'browser-cache' ||
+    snapshot.rangeEnd !== expectedRangeEnd
+  ) {
+    return false
+  }
 
   return (
     Date.now() - Date.parse(snapshot.fetchedAt) <
@@ -87,55 +93,18 @@ function dedupeCandidates(
   return Array.from(unique.values())
 }
 
-function fetchCandidate(
-  candidate: MarketHistoryCandidate,
-  range: { readonly start: string; readonly end: string },
-): Promise<MarketHistorySnapshot> {
-  const cacheKey = buildMarketHistoryCacheKey(
-    candidate.server,
-    candidate.city,
-    candidate.itemIdentifier,
-    candidate.quality,
-  )
-  const existing = inFlightRequests.get(cacheKey)
-  if (existing) return existing
+function latestFetchedAt(
+  snapshots: Iterable<MarketHistorySnapshot>,
+): string | null {
+  let latest: string | null = null
 
-  const request = fetchLocalMarketHistory({
-    ...candidate,
-    rangeStart: range.start,
-    rangeEnd: range.end,
-  }).finally(() => {
-    inFlightRequests.delete(cacheKey)
-  })
-
-  inFlightRequests.set(cacheKey, request)
-  return request
-}
-
-async function runWithConcurrency<T>(
-  values: readonly T[],
-  concurrency: number,
-  worker: (value: T) => Promise<void>,
-): Promise<void> {
-  let nextIndex = 0
-
-  async function runWorker(): Promise<void> {
-    while (nextIndex < values.length) {
-      const index = nextIndex
-      nextIndex += 1
-      const value = values[index]
-      if (value !== undefined) {
-        await worker(value)
-      }
+  for (const snapshot of snapshots) {
+    if (!latest || Date.parse(snapshot.fetchedAt) > Date.parse(latest)) {
+      latest = snapshot.fetchedAt
     }
   }
 
-  await Promise.all(
-    Array.from(
-      { length: Math.min(concurrency, values.length) },
-      () => runWorker(),
-    ),
-  )
+  return latest
 }
 
 const initialSnapshots = loadMarketHistoryCache()
@@ -144,14 +113,16 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
   snapshots: initialSnapshots,
   status: 'idle',
   error: null,
+  warnings: [],
   lastSuccessfulFetchAt: null,
   optimizerStatus: 'idle',
   optimizerError: null,
+  optimizerWarnings: [],
   optimizerProgress: null,
 
   refreshHistory: async ({ target, config, force = false }) => {
     if (!target) {
-      set({ status: 'idle', error: null })
+      set({ status: 'idle', error: null, warnings: [] })
       return
     }
 
@@ -175,17 +146,30 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
     const cached = get().snapshots.get(cacheKey)
 
     if (!force && isSnapshotFresh(cached, range.end)) {
-      set({ status: 'success', error: null })
+      set({ status: 'success', error: null, warnings: [] })
       return
     }
 
     const requestId = ++latestChartRequestId
-    set({ status: 'loading', error: null })
+    set({ status: 'loading', error: null, warnings: [] })
 
     try {
-      const snapshot = await fetchCandidate(candidate, range)
+      const result = await fetchMarketHistoryWithFallback({
+        candidates: [candidate],
+        rangeStart: range.start,
+        rangeEnd: range.end,
+        cachedSnapshots: get().snapshots,
+      })
 
       if (requestId !== latestChartRequestId) return
+
+      const snapshot = result.snapshots.get(cacheKey)
+      if (!snapshot) {
+        throw new Error(
+          result.warnings.join('. ') ||
+            'No fue posible consultar el historial en ninguna fuente',
+        )
+      }
 
       const nextSnapshots = new Map(get().snapshots)
       nextSnapshots.set(cacheKey, snapshot)
@@ -195,6 +179,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
         snapshots: nextSnapshots,
         status: 'success',
         error: null,
+        warnings: result.warnings,
         lastSuccessfulFetchAt: snapshot.fetchedAt,
       })
     } catch (error) {
@@ -202,10 +187,11 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
 
       set({
         status: 'error',
+        warnings: [],
         error:
           error instanceof Error
             ? error.message
-            : 'No fue posible consultar el historial del servicio local',
+            : 'No fue posible consultar el historial de mercado',
       })
     }
   },
@@ -217,6 +203,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       set({
         optimizerStatus: 'idle',
         optimizerError: null,
+        optimizerWarnings: [],
         optimizerProgress: null,
       })
       return
@@ -241,6 +228,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       set({
         optimizerStatus: 'success',
         optimizerError: null,
+        optimizerWarnings: [],
         optimizerProgress: {
           completed: uniqueCandidates.length,
           total: uniqueCandidates.length,
@@ -252,87 +240,76 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
 
     const requestId = ++latestOptimizerRequestId
     const cachedCount = uniqueCandidates.length - pending.length
-    let completed = cachedCount
-    let failed = 0
-    const fetchedSnapshots: MarketHistorySnapshot[] = []
 
     set({
       optimizerStatus: 'loading',
       optimizerError: null,
+      optimizerWarnings: [],
       optimizerProgress: {
-        completed,
+        completed: cachedCount,
         total: uniqueCandidates.length,
-        failed,
+        failed: 0,
       },
     })
 
-    await runWithConcurrency(
-      pending,
-      OPTIMIZER_HISTORY_CONCURRENCY,
-      async (candidate) => {
-        try {
-          fetchedSnapshots.push(await fetchCandidate(candidate, range))
-        } catch {
-          failed += 1
-        } finally {
-          completed += 1
+    try {
+      const result = await fetchMarketHistoryWithFallback({
+        candidates: pending,
+        rangeStart: range.start,
+        rangeEnd: range.end,
+        cachedSnapshots: currentSnapshots,
+      })
 
-          if (requestId === latestOptimizerRequestId) {
-            set({
-              optimizerProgress: {
-                completed,
-                total: uniqueCandidates.length,
-                failed,
-              },
-            })
-          }
-        }
-      },
-    )
-
-    const nextSnapshots = new Map(get().snapshots)
-    for (const snapshot of fetchedSnapshots) {
-      nextSnapshots.set(
-        buildMarketHistoryCacheKey(
-          snapshot.server,
-          snapshot.city,
-          snapshot.itemIdentifier,
-          snapshot.quality,
-        ),
-        snapshot,
-      )
-    }
-
-    if (fetchedSnapshots.length > 0) {
-      saveMarketHistoryCache(nextSnapshots)
-    }
-
-    if (requestId !== latestOptimizerRequestId) {
-      if (fetchedSnapshots.length > 0) {
-        set({ snapshots: nextSnapshots })
+      const nextSnapshots = new Map(get().snapshots)
+      for (const [key, snapshot] of result.snapshots) {
+        nextSnapshots.set(key, snapshot)
       }
-      return
+
+      if (result.snapshots.size > 0) saveMarketHistoryCache(nextSnapshots)
+
+      if (requestId !== latestOptimizerRequestId) {
+        if (result.snapshots.size > 0) set({ snapshots: nextSnapshots })
+        return
+      }
+
+      const failed = result.failedKeys.length
+      const allRequestsFailed =
+        failed === pending.length && cachedCount === 0
+
+      set({
+        snapshots: nextSnapshots,
+        optimizerStatus: allRequestsFailed ? 'error' : 'success',
+        optimizerError:
+          failed > 0
+            ? `No se pudo obtener el historial de ${failed} de ${pending.length} combinaciones pendientes.`
+            : null,
+        optimizerWarnings: result.warnings,
+        optimizerProgress: {
+          completed: uniqueCandidates.length,
+          total: uniqueCandidates.length,
+          failed,
+        },
+        lastSuccessfulFetchAt:
+          latestFetchedAt(result.snapshots.values()) ??
+          get().lastSuccessfulFetchAt,
+      })
+    } catch (error) {
+      if (requestId !== latestOptimizerRequestId) return
+
+      set({
+        optimizerStatus: 'error',
+        optimizerWarnings: [],
+        optimizerError:
+          error instanceof Error
+            ? error.message
+            : 'No fue posible consultar el historial para el optimizador',
+        optimizerProgress: {
+          completed: uniqueCandidates.length,
+          total: uniqueCandidates.length,
+          failed: pending.length,
+        },
+      })
     }
-
-    const allRequestsFailed =
-      failed === pending.length && cachedCount === 0
-    const error =
-      failed > 0
-        ? `No se pudo consultar el historial de ${failed} de ${pending.length} mercados pendientes.`
-        : null
-
-    set({
-      snapshots: nextSnapshots,
-      optimizerStatus: allRequestsFailed ? 'error' : 'success',
-      optimizerError: error,
-      optimizerProgress: {
-        completed: uniqueCandidates.length,
-        total: uniqueCandidates.length,
-        failed,
-      },
-      lastSuccessfulFetchAt:
-        fetchedSnapshots.at(-1)?.fetchedAt ?? get().lastSuccessfulFetchAt,
-    })
   },
 
   clearCache: () => {
@@ -341,9 +318,11 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       snapshots: new Map(),
       status: 'idle',
       error: null,
+      warnings: [],
       lastSuccessfulFetchAt: null,
       optimizerStatus: 'idle',
       optimizerError: null,
+      optimizerWarnings: [],
       optimizerProgress: null,
     })
   },

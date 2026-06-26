@@ -83,7 +83,6 @@ describe('calculateCraftingFame', () => {
     expect(result?.totalFame).toBe(33.75)
   })
 
-
   it.each([
     ['T2_ARMOR_CLOTH_SET1', 0, 24],
     ['T3_ARMOR_CLOTH_SET1', 0, 120],
@@ -102,7 +101,7 @@ describe('calculateCraftingFame', () => {
     ['T8_ARMOR_CLOTH_SET1', 4, 357120],
   ] as const)(
     'cubre la progresión de tier y encantamiento para %s@%s',
-    (itemId, enchantment, expectedFame) => {
+    (itemId: string, enchantment: 0 | 1 | 2 | 3 | 4, expectedFame: number) => {
       const result = calculateCraftingFame({
         itemId: asBaseItemId(itemId),
         enchantment,

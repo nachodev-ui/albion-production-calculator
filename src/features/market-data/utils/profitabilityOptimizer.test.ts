@@ -15,6 +15,7 @@ const MATERIALS: MaterialMarketPriceComparisons = new Map([
         value: 120,
         updatedAt: '2026-06-24T12:00:00Z',
         freshness: 'recent',
+        source: 'central-api',
         badge: null,
       },
       {
@@ -22,6 +23,7 @@ const MATERIALS: MaterialMarketPriceComparisons = new Map([
         value: 90,
         updatedAt: '2026-06-24T12:00:00Z',
         freshness: 'recent',
+        source: 'central-api',
         badge: 'best',
       },
     ],
@@ -34,6 +36,7 @@ const MATERIALS: MaterialMarketPriceComparisons = new Map([
         value: 75,
         updatedAt: '2026-06-24T12:00:00Z',
         freshness: 'recent',
+        source: 'central-api',
         badge: 'same',
       },
       {
@@ -41,6 +44,7 @@ const MATERIALS: MaterialMarketPriceComparisons = new Map([
         value: 75,
         updatedAt: '2026-06-24T12:00:00Z',
         freshness: 'recent',
+        source: 'central-api',
         badge: 'same',
       },
     ],
@@ -53,19 +57,18 @@ const SALES: readonly SaleMarketPriceOption[] = [
     value: 1_000,
     updatedAt: '2026-06-24T12:00:00Z',
     freshness: 'recent',
+    source: 'central-api',
   },
   {
     city: 'thetford',
     value: 1_250,
     updatedAt: '2026-06-24T12:00:00Z',
     freshness: 'recent',
+    source: 'central-api',
   },
 ]
 
-function liquidity(
-  city: string,
-  eligible = true,
-): MarketLiquidityAssessment {
+function liquidity(city: string, eligible = true): MarketLiquidityAssessment {
   return {
     city,
     side: 'purchase',
@@ -207,6 +210,7 @@ describe('buildProfitabilityMarketRecommendation', () => {
               value: 198_270,
               updatedAt: '2026-06-24T12:00:00Z',
               freshness: 'recent',
+              source: 'central-api',
               badge: null,
             },
             {
@@ -214,6 +218,7 @@ describe('buildProfitabilityMarketRecommendation', () => {
               value: 5,
               updatedAt: null,
               freshness: 'missing',
+              source: null,
               badge: 'best',
             },
           ],
@@ -228,12 +233,8 @@ describe('buildProfitabilityMarketRecommendation', () => {
           ]),
         ],
       ]),
-      resolvedMaterialCities: new Map([
-        ['T5_PLANKS@0', 'fort_sterling'],
-      ]),
-      currentAutomaticPurchasePrices: new Map([
-        ['T5_PLANKS@0', 198_270],
-      ]),
+      resolvedMaterialCities: new Map([['T5_PLANKS@0', 'fort_sterling']]),
+      currentAutomaticPurchasePrices: new Map([['T5_PLANKS@0', 198_270]]),
       targetKeys: new Set(['T5_PLANKS@0']),
       saleOptions: SALES,
       defaultPurchaseCity: 'fort_sterling',
@@ -261,6 +262,7 @@ describe('buildProfitabilityMarketRecommendation', () => {
               value: 100,
               updatedAt: '2026-06-24T12:00:00Z',
               freshness: 'recent',
+              source: 'central-api',
               badge: 'same',
             },
             {
@@ -268,6 +270,7 @@ describe('buildProfitabilityMarketRecommendation', () => {
               value: 100,
               updatedAt: '2026-06-24T12:00:00Z',
               freshness: 'recent',
+              source: 'central-api',
               badge: 'same',
             },
           ],
@@ -282,12 +285,14 @@ describe('buildProfitabilityMarketRecommendation', () => {
           value: 1_000,
           updatedAt: '2026-06-24T12:00:00Z',
           freshness: 'recent',
+          source: 'central-api',
         },
         {
           city: 'thetford',
           value: 1_000,
           updatedAt: '2026-06-24T12:00:00Z',
           freshness: 'recent',
+          source: 'central-api',
         },
       ],
       defaultPurchaseCity: 'martlock',

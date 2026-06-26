@@ -1,110 +1,63 @@
 # Albion Production Calculator
 
-Calculadora React de producción para Albion Online. Analiza crafteo, retorno de
-recursos, costos, tarifas, punto de equilibrio y rentabilidad usando precios
-manuales o datos capturados por `albion-market-data-platform`.
+Calculadora React para crafteo, refinamiento y análisis económico en Albion
+Online. Integra precios actuales, historial, retorno de recursos, tarifas,
+fama, liquidez y optimización de mercados.
 
-Desde el Hito 4, el navegador **no consulta directamente la API pública de
-AODP**. Los precios e historiales se obtienen del servicio local:
+## Mercado resiliente
+
+Precios e historial siguen la misma prioridad:
 
 ```text
-http://127.0.0.1:8787/api/v1
+albion-market-api (:8080)
+          ↓ si falla o falta una combinación
+receiver de albion-market-data-platform (:8787)
+          ↓ si tampoco hay una respuesta útil
+caché persistente del navegador
 ```
 
-## Requisitos
+El frontend utiliza `marketKey` y nunca conoce `location_id`. La interfaz muestra
+el origen efectivo, la última consulta y, para historial, el bucket más reciente.
 
-- Node.js 22 o posterior.
-- pnpm.
-- `albion-market-data-platform` ejecutándose en el puerto `8787`.
-
-## Ejecutar
-
-Primero inicia el receptor desde el proyecto de mercado:
-
-```powershell
-./scripts/receiver.ps1
-```
-
-Luego, en este proyecto:
+## Inicio rápido
 
 ```powershell
 pnpm install
+Copy-Item .env.example .env.local
 pnpm dev
 ```
 
-También puedes comprobar la conexión y arrancar Vite con:
+Variables principales:
 
-```powershell
-./scripts/dev-local.ps1
+```dotenv
+VITE_CENTRAL_MARKET_API_URL=http://127.0.0.1:8080/api/v1
+VITE_LOCAL_MARKET_API_URL=http://127.0.0.1:8787/api/v1
 ```
 
-## Configuración
-
-La URL predeterminada es `http://127.0.0.1:8787/api/v1`. Para modificarla,
-copia `.env.example` a `.env.local`:
-
-```env
-VITE_MARKET_API_URL=http://127.0.0.1:8787/api/v1
-```
-
-## Datos de mercado
-
-La calculadora solicita al servicio local:
-
-- precios actuales batch mediante `/prices`;
-- ciudad de compra individual por material, con una ciudad predeterminada como fallback;
-- comparación de cada material entre todos los mercados publicados, indicando
-  el mejor precio, el precio más alto y las ciudades sin datos;
-- optimización automática de la ciudad de compra por material y la ciudad de
-  venta del producto terminado;
-- historial normalizado mediante `/history`;
-- ciudad, servidor y calidad seleccionados en la interfaz. La ciudad y la
-  calidad del producto también pueden cambiarse directamente desde la tarjeta
-  de historial.
-
-Los valores manuales conservan prioridad. Si la base local no contiene una
-combinación, la interfaz muestra “sin datos” y no recurre silenciosamente a
-Internet. Los snapshots del navegador usan nuevas claves de caché para no
-mezclarse con datos guardados por la integración pública anterior.
-
-Consulta `SERVICIO_MERCADO_LOCAL.md` para el contrato y el flujo completo, y
-`MEJORAS_ACTUALIZACION_PRECIOS.md` para los estados de actualización visibles y
-`MEJORA_CIUDAD_RECOMENDADA.md` para la detección automática del bono local.
-
-## Comandos
+## Validación
 
 ```bash
-pnpm dev
-pnpm build
-pnpm lint
 pnpm test
-pnpm generate:dataset
+pnpm lint
+pnpm build
+pnpm docs:build
 ```
 
-## Funciones principales
+## Documentación
 
-- Navegación por ramas y familias T4–T8.
-- Tres variantes de receta en equipo real.
-- Configuración global de retorno de recursos.
-- Ciudad de producción recomendada automáticamente según el objeto, sin bloquear otras ciudades.
-- Tarifas de estación, nutrición, foco y especialización.
-- Precios manuales persistentes.
-- Progreso, resumen y trazabilidad contextual al actualizar precios.
-- Comparación de recetas y cálculo de rentabilidad.
-- Estimación de fama de crafteo por cantidad, con detalle de fama base, Premium, total y progreso válido para diarios.
-- Optimizador de mercados con ahorro frente a la configuración actual, mejor
-  ciudad de venta y combinación completa de mayor resultado económico.
-- Separación entre inversión inicial, resultado en plata, valor recuperado y resultado económico total.
-- Historial de 7 y 28 días desde el servicio local.
-- Exportación de resumen e impresión en PDF desde el navegador.
+La documentación vigente vive en `docs/` y se publica como sitio VitePress:
 
-La documentación funcional adicional se conserva en los archivos Markdown de
-la raíz del proyecto. Consulta `OPTIMIZADOR_RENTABILIDAD.md` para el alcance,
-las fórmulas y los límites de la recomendación automática, y
-`FAMA_CRAFTEO.md` para el cálculo y los límites de la fama estimada.
+```bash
+pnpm docs:dev
+```
 
-## Catálogo de mercados del servicio local
+Empieza por:
 
-La aplicación obtiene los mercados mediante `GET /api/v1/markets`. Los
-selectores no poseen una lista estática y las consultas usan `marketKey`, por
-ejemplo `lymhurst` o `brecilien`. Consulta `CATALOGO_MERCADOS.md`.
+- [Primeros pasos](docs/getting-started.md)
+- [Arquitectura de la aplicación](docs/architecture/overview.md)
+- [Arquitectura de mercado](docs/architecture/market-data.md)
+- [Política de documentación](docs/operations/documentation.md)
+
+Las notas antiguas se consolidaron en
+`docs/archive/legacy-implementation-notes.md`; no son la fuente de verdad del
+comportamiento actual.

@@ -6,9 +6,7 @@ export function ManualPricePersistenceBar() {
   const currentPriceCount = useCraftTreeStore(
     (state) => state.manualPrices.size,
   )
-  const pricesByRoot = useCraftTreeStore(
-    (state) => state.manualPricesByRoot,
-  )
+  const pricesByRoot = useCraftTreeStore((state) => state.manualPricesByRoot)
   const clearCurrentManualPrices = useCraftTreeStore(
     (state) => state.clearCurrentManualPrices,
   )
@@ -57,7 +55,7 @@ export function ManualPricePersistenceBar() {
 
           <InfoHint
             label="Guardado local de precios"
-            text="Los precios editados manualmente se guardan en este navegador y tienen prioridad sobre el servicio local. Al borrarlos, la calculadora vuelve a usar el precio automático disponible. No se envían a ningún servidor."
+            text="Los precios editados manualmente se guardan en este navegador y tienen prioridad sobre todas las fuentes automáticas. Al borrarlos, la calculadora vuelve a usar el mejor precio disponible: API central, receiver local o caché. No se envían a ningún servidor."
             align="left"
           />
         </div>
@@ -66,13 +64,12 @@ export function ManualPricePersistenceBar() {
           {currentPriceCount === 0
             ? 'Esta receta todavía no tiene overrides manuales.'
             : `${currentPriceCount} ${
-                currentPriceCount === 1 ? 'override manual' : 'overrides manuales'
+                currentPriceCount === 1
+                  ? 'override manual'
+                  : 'overrides manuales'
               } para esta receta.`}
           {totalSavedPriceCount > currentPriceCount && (
-            <>
-              {' '}
-              {totalSavedPriceCount} en total en este navegador.
-            </>
+            <> {totalSavedPriceCount} en total en este navegador.</>
           )}
         </p>
       </div>

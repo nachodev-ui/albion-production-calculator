@@ -23,7 +23,8 @@ function buildSnapshot({
       averagePrice: price,
       itemCount: dailyVolume,
     })),
-    fetchedAt: '2026-06-24T12:00:00Z',
+    source: 'central-api',
+  fetchedAt: '2026-06-24T12:00:00Z',
   }
 }
 

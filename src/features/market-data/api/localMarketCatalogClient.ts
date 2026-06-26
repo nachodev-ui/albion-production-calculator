@@ -1,7 +1,4 @@
-import type {
-  MarketDefinition,
-  MarketType,
-} from '../types/MarketPrice'
+import type { MarketDefinition, MarketType } from '../types/MarketPrice'
 import { LOCAL_MARKET_API_URL } from './localMarketApi'
 
 interface LocalMarketEnvelope {
@@ -22,14 +19,8 @@ function mapMarket(value: unknown): MarketDefinition | null {
     typeof candidate['name'] !== 'string' ||
     candidate['name'].trim().length === 0 ||
     !isMarketType(candidate['type']) ||
-    typeof candidate['cityLocationId'] !== 'string' ||
     typeof candidate['enabled'] !== 'boolean'
   ) {
-    return null
-  }
-
-  const marketLocationId = candidate['marketLocationId']
-  if (marketLocationId !== null && typeof marketLocationId !== 'string') {
     return null
   }
 
@@ -37,8 +28,6 @@ function mapMarket(value: unknown): MarketDefinition | null {
     key: candidate['key'].trim(),
     name: candidate['name'].trim(),
     type: candidate['type'],
-    cityLocationId: candidate['cityLocationId'],
-    marketLocationId,
     enabled: candidate['enabled'],
   }
 }
@@ -52,28 +41,28 @@ export async function fetchLocalMarkets(
   })
 
   if (!response.ok) {
-    throw new Error(`El catálogo local respondió con estado ${response.status}`)
+    throw new Error(
+      `El catálogo del receiver respondió con estado ${response.status}`,
+    )
   }
 
   const payload: unknown = await response.json()
   if (!payload || typeof payload !== 'object') {
-    throw new Error('El servicio local devolvió un catálogo inesperado')
+    throw new Error('El receiver local devolvió un catálogo inesperado')
   }
 
   const data = (payload as LocalMarketEnvelope).data
   if (!Array.isArray(data)) {
-    throw new Error('El servicio local no devolvió la lista de mercados')
+    throw new Error('El receiver local no devolvió la lista de mercados')
   }
 
   const markets = data.flatMap((entry) => {
     const market = mapMarket(entry)
-    return market && market.enabled && market.marketLocationId !== null
-      ? [market]
-      : []
+    return market?.enabled ? [market] : []
   })
 
   if (markets.length === 0) {
-    throw new Error('El servicio local no tiene mercados habilitados')
+    throw new Error('El receiver local no tiene mercados habilitados')
   }
 
   return markets

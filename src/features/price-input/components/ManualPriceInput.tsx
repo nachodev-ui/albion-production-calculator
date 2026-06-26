@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
 import { MarketRefreshItemFeedback } from '@features/market-data/components/MarketRefreshFeedback'
 import type { MarketRefreshItemReport } from '@features/market-data/types/MarketRefresh'
+import type { MarketDataSource } from '@features/market-data/types/MarketPrice'
 
 function formatSilver(amount: number): string {
   return new Intl.NumberFormat('es-CL', {
@@ -10,11 +11,12 @@ function formatSilver(amount: number): string {
 }
 
 interface ManualPriceInputProps {
-  /** Override manual. `undefined` significa que puede usarse el servicio local. */
+  /** Override manual. `undefined` permite usar la mejor fuente automática disponible. */
   readonly value: number | undefined
   readonly automaticValue?: number
   readonly automaticLabel?: string
   readonly automaticUpdatedAt?: string | null
+  readonly automaticSource?: MarketDataSource | null
   readonly isAutomaticLoading?: boolean
   readonly refreshResult?: MarketRefreshItemReport | null
   readonly quantity: number
@@ -33,8 +35,9 @@ interface ManualPriceInputProps {
 export function ManualPriceInput({
   value,
   automaticValue,
-  automaticLabel = 'Servicio local',
+  automaticLabel = 'Precio automático',
   automaticUpdatedAt = null,
+  automaticSource = null,
   isAutomaticLoading = false,
   refreshResult = null,
   quantity,
@@ -55,18 +58,14 @@ export function ManualPriceInput({
 
     if (trimmed === '') {
       onClear()
-      setText(
-        automaticValue !== undefined ? String(automaticValue) : '',
-      )
+      setText(automaticValue !== undefined ? String(automaticValue) : '')
       return
     }
 
     const parsed = Number(trimmed.replace(',', '.'))
 
     if (!Number.isFinite(parsed) || parsed < 0) {
-      setText(
-        committedValue !== undefined ? String(committedValue) : '',
-      )
+      setText(committedValue !== undefined ? String(committedValue) : '')
       return
     }
 
@@ -103,9 +102,7 @@ export function ManualPriceInput({
             if (event.key === 'Escape') {
               event.preventDefault()
               setText(
-                committedValue !== undefined
-                  ? String(committedValue)
-                  : '',
+                committedValue !== undefined ? String(committedValue) : '',
               )
             }
           }}
@@ -114,9 +111,7 @@ export function ManualPriceInput({
             placeholder:text-text-faint placeholder:text-sm placeholder:font-normal
             hover:border-border-strong
             focus-visible:border-accent-border focus-visible:ring-2 focus-visible:ring-accent-border ${
-              hasInvalidPreview
-                ? 'border-negative'
-                : 'border-border'
+              hasInvalidPreview ? 'border-negative' : 'border-border'
             }`}
         />
       </div>
@@ -133,7 +128,7 @@ export function ManualPriceInput({
                 }}
                 className="truncate text-accent underline decoration-accent/40 underline-offset-2 hover:text-text"
               >
-                Usar precio local
+                Usar precio automático
               </button>
             ) : (
               <span className="text-text-faint">Precio manual</span>
@@ -146,9 +141,11 @@ export function ManualPriceInput({
               {automaticLabel}
             </span>
           ) : isAutomaticLoading ? (
-            <span className="text-text-faint">Consultando servicio local…</span>
+            <span className="text-text-faint">
+              Consultando fuentes de mercado…
+            </span>
           ) : (
-            <span className="text-text-faint">Sin precio local</span>
+            <span className="text-text-faint">Sin precio automático</span>
           )}
         </div>
 
@@ -160,9 +157,7 @@ export function ManualPriceInput({
           ) : quantity > 1 ? (
             <span className="tabular text-text-faint">
               ×{quantity} ={' '}
-              <span className="text-text-muted">
-                {formatSilver(subtotal)}
-              </span>
+              <span className="text-text-muted">{formatSilver(subtotal)}</span>
             </span>
           ) : (
             <span aria-hidden="true" className="invisible">
@@ -180,6 +175,7 @@ export function ManualPriceInput({
       {(!isAutomaticLoading || hasAutomaticValue) && (
         <MarketPriceFreshnessStatus
           updatedAt={hasAutomaticValue ? automaticUpdatedAt : null}
+          source={hasAutomaticValue ? automaticSource : null}
           isActive={hasAutomaticValue && !isManualOverride}
           compact
         />
