@@ -3,6 +3,7 @@ import type {
   MarketCityId,
   MarketFreshnessSummary,
   MarketPriceTarget,
+  MarketSourceSummary,
   MaterialMarketPriceComparisons,
   MaterialPurchaseCityOverrides,
 } from '../types/MarketPrice'
@@ -46,10 +47,13 @@ export function useCurrentMarketPrices({
   const markets = useMarketDataStore((state) => state.markets)
   const catalogStatus = useMarketDataStore((state) => state.catalogStatus)
   const catalogError = useMarketDataStore((state) => state.catalogError)
+  const catalogSource = useMarketDataStore((state) => state.catalogSource)
+  const catalogWarnings = useMarketDataStore((state) => state.catalogWarnings)
   const loadMarkets = useMarketDataStore((state) => state.loadMarkets)
   const snapshots = useMarketDataStore((state) => state.snapshots)
   const status = useMarketDataStore((state) => state.status)
   const error = useMarketDataStore((state) => state.error)
+  const refreshWarnings = useMarketDataStore((state) => state.refreshWarnings)
   const setConfig = useMarketDataStore((state) => state.setConfig)
   const refreshPrices = useMarketDataStore((state) => state.refreshPrices)
   const clearCache = useMarketDataStore((state) => state.clearCache)
@@ -103,10 +107,7 @@ export function useCurrentMarketPrices({
 
     if (saleTarget) {
       identifiers.push(
-        buildMarketItemIdentifier(
-          saleTarget.itemId,
-          saleTarget.enchantment,
-        ),
+        buildMarketItemIdentifier(saleTarget.itemId, saleTarget.enchantment),
       )
     }
 
@@ -117,10 +118,7 @@ export function useCurrentMarketPrices({
     const cities = new Map<string, MarketCityId>()
 
     for (const target of materialTargets) {
-      const itemPriceKey = buildItemPriceKey(
-        target.itemId,
-        target.enchantment,
-      )
+      const itemPriceKey = buildItemPriceKey(target.itemId, target.enchantment)
 
       cities.set(
         itemPriceKey,
@@ -133,11 +131,7 @@ export function useCurrentMarketPrices({
     }
 
     return cities
-  }, [
-    config.purchaseCity,
-    materialPurchaseCityOverrides,
-    materialTargets,
-  ])
+  }, [config.purchaseCity, materialPurchaseCityOverrides, materialTargets])
 
   const materialCitySignature = useMemo(
     () =>
@@ -174,17 +168,13 @@ export function useCurrentMarketPrices({
     >()
 
     for (const target of materialTargets) {
-      const itemPriceKey = buildItemPriceKey(
-        target.itemId,
-        target.enchantment,
-      )
+      const itemPriceKey = buildItemPriceKey(target.itemId, target.enchantment)
       const itemIdentifier = buildMarketItemIdentifier(
         target.itemId,
         target.enchantment,
       )
       const city =
-        resolvedMaterialPurchaseCities.get(itemPriceKey) ??
-        config.purchaseCity
+        resolvedMaterialPurchaseCities.get(itemPriceKey) ?? config.purchaseCity
       const snapshot = snapshots.get(
         buildMarketCacheKey(
           config.server,
@@ -196,11 +186,7 @@ export function useCurrentMarketPrices({
 
       details.set(
         itemPriceKey,
-        resolvePurchasePriceDetail(
-          snapshot,
-          config.purchaseStrategy,
-          now,
-        ),
+        resolvePurchasePriceDetail(snapshot, config.purchaseStrategy, now),
       )
     }
 
@@ -347,6 +333,30 @@ export function useCurrentMarketPrices({
     saleTarget,
   ])
 
+  const sourceSummary = useMemo<MarketSourceSummary>(() => {
+    const summary: MarketSourceSummary = {
+      centralApi: 0,
+      localReceiver: 0,
+      browserCache: 0,
+      missing: 0,
+    }
+
+    const countSource = (source: typeof automaticSalePriceDetail.source) => {
+      if (source === 'central-api') summary.centralApi += 1
+      else if (source === 'local-receiver') summary.localReceiver += 1
+      else if (source === 'browser-cache') summary.browserCache += 1
+      else summary.missing += 1
+    }
+
+    for (const detail of automaticPurchasePriceDetails.values()) {
+      countSource(detail.source)
+    }
+
+    if (saleTarget) countSource(automaticSalePriceDetail.source)
+
+    return summary
+  }, [automaticPurchasePriceDetails, automaticSalePriceDetail, saleTarget])
+
   const refresh = useCallback(
     () =>
       refreshPrices({
@@ -371,10 +381,7 @@ export function useCurrentMarketPrices({
   )
 
   const scopedRefreshReport = useMemo(
-    () =>
-      lastRefreshReport?.rootKey === rootKey
-        ? lastRefreshReport
-        : null,
+    () => (lastRefreshReport?.rootKey === rootKey ? lastRefreshReport : null),
     [lastRefreshReport, rootKey],
   )
 
@@ -409,12 +416,7 @@ export function useCurrentMarketPrices({
           item.quality === config.quality &&
           item.strategy === config.saleStrategy,
       ) ?? null,
-    [
-      config.quality,
-      config.saleCity,
-      config.saleStrategy,
-      scopedRefreshReport,
-    ],
+    [config.quality, config.saleCity, config.saleStrategy, scopedRefreshReport],
   )
 
   const setMaterialPurchaseCity = useCallback(
@@ -443,8 +445,11 @@ export function useCurrentMarketPrices({
     markets,
     catalogStatus,
     catalogError,
+    catalogSource,
+    catalogWarnings,
     status,
     error,
+    refreshWarnings,
     setConfig,
     clearCache,
     refresh,
@@ -460,6 +465,7 @@ export function useCurrentMarketPrices({
     automaticSalePriceDetail,
     saleMarketPriceOptions,
     freshnessSummary,
+    sourceSummary,
     materialPurchaseCityOverrides,
     resolvedMaterialPurchaseCities,
     materialCityOverrideCount: materialPurchaseCityOverrides.size,

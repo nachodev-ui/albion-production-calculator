@@ -37,17 +37,14 @@ export function buildMaterialMarketPriceOptions({
         MATERIAL_MARKET_QUALITY,
       ),
     )
-    const detail = resolvePurchasePriceDetail(
-      snapshot,
-      purchaseStrategy,
-      now,
-    )
+    const detail = resolvePurchasePriceDetail(snapshot, purchaseStrategy, now)
 
     return {
       city: market.key,
       value: detail.value,
       updatedAt: detail.updatedAt,
       freshness: detail.freshness,
+      source: detail.source,
       badge: null,
     } satisfies MaterialMarketPriceOption
   })

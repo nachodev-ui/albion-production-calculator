@@ -1,7 +1,4 @@
-import type {
-  MarketHistoryPoint,
-  MarketHistorySnapshot,
-} from '../types/MarketHistory'
+import type { MarketHistorySnapshot } from '../types/MarketHistory'
 import type {
   AlbionServer,
   MarketCityId,
@@ -10,12 +7,7 @@ import {
   LOCAL_MARKET_API_URL,
   LOCAL_SERVER_IDS,
 } from './localMarketApi'
-
-interface LocalHistoryPoint {
-  readonly timestamp?: unknown
-  readonly itemCount?: unknown
-  readonly averageUnitPrice?: unknown
-}
+import { mapHistoryPoints } from './marketHistoryResponseMapping'
 
 interface LocalHistoryRecord {
   readonly history?: unknown
@@ -33,53 +25,6 @@ interface FetchLocalMarketHistoryParams {
   readonly rangeStart: string
   readonly rangeEnd: string
   readonly signal?: AbortSignal
-}
-
-function normalizeFiniteNumber(value: unknown): number | null {
-  if (typeof value === 'number' && Number.isFinite(value)) return value
-
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-
-  return null
-}
-
-function normalizeTimestamp(value: unknown): string | null {
-  if (typeof value !== 'string' || value.length === 0) return null
-
-  const timestamp = Date.parse(value)
-  return Number.isFinite(timestamp) ? value : null
-}
-
-function mapHistoryPoints(value: unknown): readonly MarketHistoryPoint[] {
-  if (!Array.isArray(value)) return []
-
-  const points: MarketHistoryPoint[] = []
-
-  for (const candidate of value) {
-    if (!candidate || typeof candidate !== 'object') continue
-
-    const point = candidate as LocalHistoryPoint
-    const timestamp = normalizeTimestamp(point.timestamp)
-    if (!timestamp) continue
-
-    const count = normalizeFiniteNumber(point.itemCount)
-    const averagePrice = normalizeFiniteNumber(point.averageUnitPrice)
-
-    points.push({
-      timestamp,
-      averagePrice:
-        averagePrice !== null && averagePrice > 0 ? averagePrice : null,
-      itemCount: count === null ? 0 : Math.max(0, count),
-    })
-  }
-
-  return points.sort(
-    (left, right) =>
-      Date.parse(left.timestamp) - Date.parse(right.timestamp),
-  )
 }
 
 function createHistoryRequestUrl({
@@ -149,6 +94,7 @@ export async function fetchLocalMarketHistory({
     rangeStart,
     rangeEnd,
     points: mapHistoryPoints(history),
+    source: 'local-receiver',
     fetchedAt: new Date().toISOString(),
   }
 }

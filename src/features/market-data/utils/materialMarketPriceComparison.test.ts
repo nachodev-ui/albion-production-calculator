@@ -11,24 +11,18 @@ const MARKETS: readonly MarketDefinition[] = [
     key: 'martlock',
     name: 'Martlock',
     type: 'regular',
-    cityLocationId: '3004',
-    marketLocationId: '3008',
     enabled: true,
   },
   {
     key: 'fort_sterling',
     name: 'Fort Sterling',
     type: 'regular',
-    cityLocationId: '4000',
-    marketLocationId: '4002',
     enabled: true,
   },
   {
     key: 'thetford',
     name: 'Thetford',
     type: 'regular',
-    cityLocationId: '0000',
-    marketLocationId: '0007',
     enabled: true,
   },
 ]
@@ -47,6 +41,7 @@ function snapshot(
     sellPriceMinDate: sellPriceMin === null ? null : '2026-06-23T20:00:00Z',
     buyPriceMax,
     buyPriceMaxDate: buyPriceMax === null ? null : '2026-06-23T20:00:00Z',
+    source: 'central-api',
     fetchedAt: '2026-06-23T20:01:00Z',
   }
 }
@@ -83,7 +78,11 @@ describe('buildMaterialMarketPriceOptions', () => {
     })
 
     expect(options).toEqual([
-      expect.objectContaining({ city: 'martlock', value: 120_000, badge: null }),
+      expect.objectContaining({
+        city: 'martlock',
+        value: 120_000,
+        badge: null,
+      }),
       expect.objectContaining({
         city: 'fort_sterling',
         value: 95_000,

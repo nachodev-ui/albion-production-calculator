@@ -1,7 +1,7 @@
 import type { MarketDefinition, MarketType } from '../types/MarketPrice'
-import { LOCAL_MARKET_API_URL } from './localMarketApi'
+import { CENTRAL_MARKET_API_URL } from './localMarketApi'
 
-interface LocalMarketEnvelope {
+interface MarketEnvelope {
   readonly data?: unknown
 }
 
@@ -32,28 +32,26 @@ function mapMarket(value: unknown): MarketDefinition | null {
   }
 }
 
-export async function fetchLocalMarkets(
+export async function fetchCentralMarkets(
   signal?: AbortSignal,
 ): Promise<readonly MarketDefinition[]> {
-  const response = await fetch(`${LOCAL_MARKET_API_URL}/markets`, {
+  const response = await fetch(`${CENTRAL_MARKET_API_URL}/markets`, {
     signal,
     headers: { Accept: 'application/json' },
   })
 
   if (!response.ok) {
-    throw new Error(
-      `El catálogo del receiver respondió con estado ${response.status}`,
-    )
+    throw new Error(`La API central respondió con estado ${response.status}`)
   }
 
   const payload: unknown = await response.json()
   if (!payload || typeof payload !== 'object') {
-    throw new Error('El receiver local devolvió un catálogo inesperado')
+    throw new Error('La API central devolvió un catálogo inesperado')
   }
 
-  const data = (payload as LocalMarketEnvelope).data
+  const data = (payload as MarketEnvelope).data
   if (!Array.isArray(data)) {
-    throw new Error('El receiver local no devolvió la lista de mercados')
+    throw new Error('La API central no devolvió la lista de mercados')
   }
 
   const markets = data.flatMap((entry) => {
@@ -62,7 +60,7 @@ export async function fetchLocalMarkets(
   })
 
   if (markets.length === 0) {
-    throw new Error('El receiver local no tiene mercados habilitados')
+    throw new Error('La API central no tiene mercados habilitados')
   }
 
   return markets

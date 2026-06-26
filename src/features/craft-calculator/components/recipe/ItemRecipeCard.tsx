@@ -45,6 +45,7 @@ import { calculateCraftEconomicSummary } from '../../utils/profitCalculations'
 import { CalculationReadinessBanner } from '../CalculationReadinessBanner'
 import { CalculationSummaryActions } from '../CalculationSummaryActions'
 import { CraftQuantityInput } from '../CraftQuantityInput'
+import { CraftingProgressCard } from '../CraftingProgressCard'
 import { ProfitSummaryCard } from '../ProfitSummaryCard'
 import { ProfitabilityOptimizerCard } from '../ProfitabilityOptimizerCard'
 import { ReturnRateSavingsCard } from '../ReturnRateSavingsCard'
@@ -199,7 +200,7 @@ export function ItemRecipeCard({
 
   /*
    * El primer cálculo solo descubre la estructura y las hojas que necesitan
-   * precio. El segundo incorpora los valores automáticos recuperados del servicio local.
+   * precio. El segundo incorpora los valores recuperados desde las fuentes automáticas.
    */
   const structureCalculation = useCraftCalculation(
     item.id,
@@ -261,7 +262,8 @@ export function ItemRecipeCard({
       manualMaterialPriceCount + (hasManualSellPrice ? 1 : 0),
   })
   const requiredMaterialQuantities = useMemo(
-    () => collectMarketQuantityRequirements(structureCalculation.root, repository),
+    () =>
+      collectMarketQuantityRequirements(structureCalculation.root, repository),
     [repository, structureCalculation.root],
   )
   const profitabilityLiquidityHistory = useProfitabilityLiquidity({
@@ -373,7 +375,10 @@ export function ItemRecipeCard({
   )
 
   const currentAutomaticEconomicSummary = useMemo(() => {
-    if (calculation.isComplete === false || market.automaticSalePrice === null) {
+    if (
+      calculation.isComplete === false ||
+      market.automaticSalePrice === null
+    ) {
       return null
     }
 
@@ -396,8 +401,7 @@ export function ItemRecipeCard({
 
     return calculateCraftEconomicSummary({
       totalCost: optimizedCalculation.grandTotal,
-      recoveredMaterialValue:
-        optimizedCalculation.totalSilverSavedByReturnRate,
+      recoveredMaterialValue: optimizedCalculation.totalSilverSavedByReturnRate,
       quantity,
       unitSellPrice: profitabilityRecommendation.saleUnitPrice,
       isPremium,
@@ -533,14 +537,18 @@ export function ItemRecipeCard({
             markets={market.markets}
             catalogStatus={market.catalogStatus}
             catalogError={market.catalogError}
+            catalogSource={market.catalogSource}
+            catalogWarnings={market.catalogWarnings}
             status={market.status}
             error={market.error}
+            refreshWarnings={market.refreshWarnings}
             hasCachedPrice={market.hasAnyCachedPrice}
             priceCount={
               market.automaticPurchasePrices.size +
               (market.automaticSalePrice !== null ? 1 : 0)
             }
             freshnessSummary={market.freshnessSummary}
+            sourceSummary={market.sourceSummary}
             refreshProgress={market.refreshProgress}
             refreshReport={market.refreshReport}
             onServerChange={(server) => market.setConfig({ server })}
@@ -586,6 +594,15 @@ export function ItemRecipeCard({
             fame={craftingFame}
           />
 
+          {craftingFame && tier && (
+            <CraftingProgressCard
+              key={item.id}
+              item={item}
+              station={tier.station}
+              fame={craftingFame}
+            />
+          )}
+
           <section className="mt-4 rounded-xl border border-border bg-surface-raised p-4">
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-text">
@@ -594,9 +611,9 @@ export function ItemRecipeCard({
 
               <p className="mt-1 text-xs text-text-faint">
                 Cada material puede usar una ciudad distinta. Los precios del
-                servicio local se comparan entre todos los mercados y se aplican
-                según la ciudad elegida. Cualquier valor manual conserva la
-                prioridad.
+                sistema de mercado se comparan entre todos los mercados y se
+                aplican según la ciudad elegida. Cualquier valor manual conserva
+                la prioridad.
               </p>
             </div>
 
@@ -658,9 +675,9 @@ export function ItemRecipeCard({
             {status === 'partial' && (
               <p className="mt-4 border-t border-border pt-3 text-xs leading-relaxed text-text-faint">
                 Los ingredientes especiales, como artefactos o componentes,
-                también se consultan en el servicio local. Si no existen datos,
-                puedes ingresar el precio manualmente; nunca reciben retorno de
-                recursos.
+                también se consultan en las fuentes de mercado. Si no existen
+                datos, puedes ingresar el precio manualmente; nunca reciben
+                retorno de recursos.
               </p>
             )}
           </section>
@@ -688,6 +705,7 @@ export function ItemRecipeCard({
             marketStatus={market.status}
             liquidityStatus={profitabilityLiquidityHistory.status}
             liquidityError={profitabilityLiquidityHistory.error}
+            liquidityWarnings={profitabilityLiquidityHistory.warnings}
             liquidityProgress={profitabilityLiquidityHistory.progress}
             onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
             currentTotalCost={calculation.grandTotal}
@@ -723,6 +741,7 @@ export function ItemRecipeCard({
             isManualSellPrice={hasManualSellPrice}
             automaticPriceLabel={market.salePriceLabel}
             automaticPriceUpdatedAt={market.automaticSalePriceDetail.updatedAt}
+            automaticPriceSource={market.automaticSalePriceDetail.source}
             marketStatus={market.status}
             refreshResult={market.saleRefreshResult}
             marketConfig={market.config}
@@ -744,6 +763,7 @@ export function ItemRecipeCard({
             snapshot={marketHistory.snapshot}
             status={marketHistory.status}
             error={marketHistory.error}
+            warnings={marketHistory.warnings}
             hasCachedHistory={marketHistory.hasCachedHistory}
             isComparing={historyComparison !== null}
             onComparisonChange={(patch) => {

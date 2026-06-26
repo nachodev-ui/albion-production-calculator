@@ -185,8 +185,8 @@ export function CraftingFameHint({ fame }: CraftingFameHintProps) {
           )}
 
           <p className="border-t border-border bg-surface-raised px-3 py-2.5 text-[10px] leading-relaxed text-text-faint">
-            Solo considera la fabricación del objeto final. No suma refinamiento,
-            ingredientes intermedios ni estudio.
+            Este indicador resume la fabricación. El panel de progreso inferior
+            añade estudio, diarios y proyección de especialización.
           </p>
         </div>
       }

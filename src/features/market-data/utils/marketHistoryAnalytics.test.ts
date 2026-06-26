@@ -31,6 +31,7 @@ const snapshot: MarketHistorySnapshot = {
       itemCount: 0,
     },
   ],
+  source: 'central-api',
   fetchedAt: '2026-06-08T01:00:00Z',
 }
 

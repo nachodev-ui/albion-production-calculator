@@ -11,16 +11,12 @@ const MARKETS: readonly MarketDefinition[] = [
     key: 'martlock',
     name: 'Martlock',
     type: 'regular',
-    cityLocationId: '3004',
-    marketLocationId: '3008',
     enabled: true,
   },
   {
     key: 'thetford',
     name: 'Thetford',
     type: 'regular',
-    cityLocationId: '0000',
-    marketLocationId: '0007',
     enabled: true,
   },
 ]
@@ -39,6 +35,7 @@ function snapshot(
     sellPriceMinDate: sellPriceMin === null ? null : '2026-06-24T12:00:00Z',
     buyPriceMax,
     buyPriceMaxDate: buyPriceMax === null ? null : '2026-06-24T12:00:00Z',
+    source: 'central-api',
     fetchedAt: '2026-06-24T12:01:00Z',
   }
 }

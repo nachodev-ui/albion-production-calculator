@@ -11,12 +11,16 @@ export type MarketQuality = 1 | 2 | 3 | 4 | 5
 export type MarketRequestStatus = 'idle' | 'loading' | 'success' | 'error'
 export type MarketType = 'regular' | 'black-market'
 
+/** Fuente efectiva de un precio automático. */
+export type MarketDataSource =
+  | 'central-api'
+  | 'local-receiver'
+  | 'browser-cache'
+
 export interface MarketDefinition {
   readonly key: MarketKey
   readonly name: string
   readonly type: MarketType
-  readonly cityLocationId: string
-  readonly marketLocationId: string | null
   readonly enabled: boolean
 }
 
@@ -28,11 +32,7 @@ export type MaterialPurchaseCitiesByRoot = ReadonlyMap<
   string,
   MaterialPurchaseCityOverrides
 >
-export type MarketPriceFreshness =
-  | 'recent'
-  | 'acceptable'
-  | 'stale'
-  | 'missing'
+export type MarketPriceFreshness = 'recent' | 'acceptable' | 'stale' | 'missing'
 
 export interface MarketConfig {
   readonly server: AlbionServer
@@ -58,9 +58,15 @@ export interface MarketPriceSnapshot {
   readonly quality: number
   readonly sellPriceMin: number | null
   readonly sellPriceMinDate: string | null
+  /** Fuente del lado de venta; permite mezclar API central y receiver por campo. */
+  readonly sellPriceSource?: MarketDataSource | null
   readonly buyPriceMax: number | null
   readonly buyPriceMaxDate: string | null
-  /** Momento en que nuestra aplicación consultó el servicio local. */
+  /** Fuente del lado de compra; permite mezclar API central y receiver por campo. */
+  readonly buyPriceSource?: MarketDataSource | null
+  /** Fuente efectiva desde la que se obtuvo este snapshot. */
+  readonly source: MarketDataSource
+  /** Momento en que la aplicación obtuvo o restauró este snapshot. */
   readonly fetchedAt: string
 }
 
@@ -72,9 +78,10 @@ export interface ResolvedMarketPrice {
 
 export interface AutomaticMarketPriceDetail {
   readonly value: number | null
-  /** Fecha de captura informada por el servicio local para el precio seleccionado. */
+  /** Fecha de captura informada por el proveedor para el precio seleccionado. */
   readonly updatedAt: string | null
   readonly freshness: MarketPriceFreshness
+  readonly source: MarketDataSource | null
   readonly snapshot: MarketPriceSnapshot | null
 }
 
@@ -90,6 +97,7 @@ export interface MaterialMarketPriceOption {
   readonly value: number | null
   readonly updatedAt: string | null
   readonly freshness: MarketPriceFreshness
+  readonly source: MarketDataSource | null
   readonly badge: MaterialMarketPriceBadge
 }
 
@@ -98,6 +106,7 @@ export interface SaleMarketPriceOption {
   readonly value: number | null
   readonly updatedAt: string | null
   readonly freshness: MarketPriceFreshness
+  readonly source: MarketDataSource | null
 }
 
 export type MaterialMarketPriceComparisons = ReadonlyMap<
@@ -110,6 +119,13 @@ export interface MarketFreshnessSummary {
   readonly acceptable: number
   readonly stale: number
   readonly missing: number
+}
+
+export interface MarketSourceSummary {
+  centralApi: number
+  localReceiver: number
+  browserCache: number
+  missing: number
 }
 
 export const MARKET_RECENT_MAX_AGE_MS = 30 * 60 * 1000
@@ -147,6 +163,12 @@ export const MARKET_SERVER_LABELS: Record<AlbionServer, string> = {
   asia: 'Asia',
 }
 
+export const MARKET_DATA_SOURCE_LABELS: Record<MarketDataSource, string> = {
+  'central-api': 'API central',
+  'local-receiver': 'Receiver local',
+  'browser-cache': 'Caché del navegador',
+}
+
 export const PURCHASE_STRATEGY_LABELS: Record<PurchaseStrategy, string> = {
   'buy-now': 'Comprar inmediatamente',
   'buy-order': 'Colocar orden de compra',
@@ -165,7 +187,7 @@ export function getMarketName(
 }
 
 export function isUsableMarket(market: MarketDefinition): boolean {
-  return market.enabled && market.marketLocationId !== null
+  return market.enabled
 }
 
 export const EMPTY_MARKET_FRESHNESS_SUMMARY: MarketFreshnessSummary = {
@@ -212,9 +234,7 @@ export function resolvePurchasePrice(
 ): number | null {
   if (!snapshot) return null
 
-  return strategy === 'buy-now'
-    ? snapshot.sellPriceMin
-    : snapshot.buyPriceMax
+  return strategy === 'buy-now' ? snapshot.sellPriceMin : snapshot.buyPriceMax
 }
 
 export function resolvePurchasePriceDate(
@@ -317,14 +337,19 @@ export function resolvePurchasePriceDetail(
   now = Date.now(),
 ): AutomaticMarketPriceDetail {
   const value = resolvePurchasePrice(snapshot, strategy)
-  const updatedAt = value === null
-    ? null
-    : resolvePurchasePriceDate(snapshot, strategy)
+  const updatedAt =
+    value === null ? null : resolvePurchasePriceDate(snapshot, strategy)
 
   return {
     value,
     updatedAt,
     freshness: classifyMarketPriceFreshness(updatedAt, now),
+    source:
+      value === null
+        ? null
+        : strategy === 'buy-now'
+          ? (snapshot?.sellPriceSource ?? snapshot?.source ?? null)
+          : (snapshot?.buyPriceSource ?? snapshot?.source ?? null),
     snapshot: snapshot ?? null,
   }
 }
@@ -335,14 +360,19 @@ export function resolveSalePriceDetail(
   now = Date.now(),
 ): AutomaticMarketPriceDetail {
   const value = resolveSalePrice(snapshot, strategy)
-  const updatedAt = value === null
-    ? null
-    : resolveSalePriceDate(snapshot, strategy)
+  const updatedAt =
+    value === null ? null : resolveSalePriceDate(snapshot, strategy)
 
   return {
     value,
     updatedAt,
     freshness: classifyMarketPriceFreshness(updatedAt, now),
+    source:
+      value === null
+        ? null
+        : strategy === 'sell-order'
+          ? (snapshot?.sellPriceSource ?? snapshot?.source ?? null)
+          : (snapshot?.buyPriceSource ?? snapshot?.source ?? null),
     snapshot: snapshot ?? null,
   }
 }

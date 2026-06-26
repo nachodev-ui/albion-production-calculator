@@ -24,6 +24,7 @@ const snapshot: MarketPriceSnapshot = {
   sellPriceMinDate: '2026-06-22T10:00:00Z',
   buyPriceMax: 950,
   buyPriceMaxDate: '2026-06-22T09:00:00Z',
+  source: 'central-api',
   fetchedAt: '2026-06-22T10:05:00Z',
 }
 
@@ -59,15 +60,15 @@ describe('MarketPrice', () => {
   it('clasifica la antigüedad del precio con límites transparentes', () => {
     const now = Date.parse('2026-06-22T12:00:00Z')
 
-    expect(
-      classifyMarketPriceFreshness('2026-06-22T11:40:00Z', now),
-    ).toBe('recent')
-    expect(
-      classifyMarketPriceFreshness('2026-06-22T10:00:00Z', now),
-    ).toBe('acceptable')
-    expect(
-      classifyMarketPriceFreshness('2026-06-22T04:00:00Z', now),
-    ).toBe('stale')
+    expect(classifyMarketPriceFreshness('2026-06-22T11:40:00Z', now)).toBe(
+      'recent',
+    )
+    expect(classifyMarketPriceFreshness('2026-06-22T10:00:00Z', now)).toBe(
+      'acceptable',
+    )
+    expect(classifyMarketPriceFreshness('2026-06-22T04:00:00Z', now)).toBe(
+      'stale',
+    )
     expect(classifyMarketPriceFreshness(null, now)).toBe('missing')
   })
 
@@ -105,8 +106,8 @@ describe('MarketPrice', () => {
   })
 
   it('separa la caché por servidor, ciudad, objeto y calidad', () => {
-    expect(
-      buildMarketCacheKey('europe', 'caerleon', 'T4_SWORD@2', 1),
-    ).toBe('europe|caerleon|T4_SWORD@2|1')
+    expect(buildMarketCacheKey('europe', 'caerleon', 'T4_SWORD@2', 1)).toBe(
+      'europe|caerleon|T4_SWORD@2|1',
+    )
   })
 })

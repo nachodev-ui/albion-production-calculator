@@ -18,6 +18,7 @@ interface ProfitabilityOptimizerCardProps {
   readonly marketStatus: MarketRequestStatus
   readonly liquidityStatus: MarketRequestStatus
   readonly liquidityError: string | null
+  readonly liquidityWarnings: readonly string[]
   readonly liquidityProgress: MarketHistoryRefreshProgress | null
   readonly currentTotalCost: number
   readonly optimizedTotalCost: number
@@ -171,6 +172,7 @@ export function ProfitabilityOptimizerCard({
   marketStatus,
   liquidityStatus,
   liquidityError,
+  liquidityWarnings,
   liquidityProgress,
   currentTotalCost,
   optimizedTotalCost,
@@ -266,6 +268,17 @@ export function ProfitabilityOptimizerCard({
                   ? ` (${liquidityProgress.completed}/${liquidityProgress.total})`
                   : '…'
               }`}
+        </div>
+      )}
+
+      {liquidityWarnings.length > 0 && liquidityStatus !== 'loading' && (
+        <div className="mt-4 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">
+          <p className="font-semibold text-text">Fuentes históricas degradadas</p>
+          <ul className="mt-1 list-disc space-y-1 pl-4">
+            {liquidityWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
         </div>
       )}
 

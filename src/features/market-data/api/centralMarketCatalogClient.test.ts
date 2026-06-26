@@ -1,34 +1,31 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchLocalMarkets } from './localMarketCatalogClient'
+import { fetchCentralMarkets } from './centralMarketCatalogClient'
 
-describe('fetchLocalMarkets', () => {
+describe('fetchCentralMarkets', () => {
   afterEach(() => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
 
-  it('carga únicamente mercados habilitados con ubicación observada', async () => {
+  it('consume el catálogo público sin ids internos', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn<typeof fetch>(
         async () =>
           new Response(
             JSON.stringify({
+              schemaVersion: 1,
               data: [
                 {
-                  key: 'thetford',
-                  name: 'Thetford',
+                  key: 'martlock',
+                  name: 'Martlock',
                   type: 'regular',
-                  cityLocationId: '0000',
-                  marketLocationId: '0007',
                   enabled: true,
                 },
                 {
                   key: 'black_market',
                   name: 'Black Market',
                   type: 'black-market',
-                  cityLocationId: '3003',
-                  marketLocationId: null,
                   enabled: false,
                 },
               ],
@@ -38,10 +35,10 @@ describe('fetchLocalMarkets', () => {
       ),
     )
 
-    await expect(fetchLocalMarkets()).resolves.toEqual([
+    await expect(fetchCentralMarkets()).resolves.toEqual([
       {
-        key: 'thetford',
-        name: 'Thetford',
+        key: 'martlock',
+        name: 'Martlock',
         type: 'regular',
         enabled: true,
       },

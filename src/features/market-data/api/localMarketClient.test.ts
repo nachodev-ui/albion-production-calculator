@@ -9,26 +9,27 @@ describe('fetchCurrentLocalPrices', () => {
   })
 
   it('mapea venta mínima y compra máxima desde la API batch local', async () => {
-    const fetchMock = vi.fn<typeof fetch>(async () =>
-      new Response(
-        JSON.stringify({
-          count: 1,
-          source: 'local-market-service',
-          data: [
-            {
-              server: 'west',
-              itemIdentifier: 'T6_MAIN_CURSEDSTAFF_CRYSTAL@3',
-              location: { id: '5003', name: 'Brecilien' },
-              quality: 4,
-              sellPriceMin: 2_899_978,
-              sellPriceMinDate: '2026-06-22T20:17:30Z',
-              buyPriceMax: 1_901_190,
-              buyPriceMaxDate: '2026-06-22T20:17:34Z',
-            },
-          ],
-        }),
-        { status: 200 },
-      ),
+    const fetchMock = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          JSON.stringify({
+            count: 1,
+            source: 'local-market-service',
+            data: [
+              {
+                server: 'west',
+                itemIdentifier: 'T6_MAIN_CURSEDSTAFF_CRYSTAL@3',
+                location: { id: '5003', name: 'Brecilien' },
+                quality: 4,
+                sellPriceMin: 2_899_978,
+                sellPriceMinDate: '2026-06-22T20:17:30Z',
+                buyPriceMax: 1_901_190,
+                buyPriceMaxDate: '2026-06-22T20:17:34Z',
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
     )
 
     vi.stubGlobal('fetch', fetchMock)
@@ -52,6 +53,7 @@ describe('fetchCurrentLocalPrices', () => {
       buyPriceMax: 1_901_190,
       city: 'brecilien',
       quality: 4,
+      source: 'local-receiver',
     })
 
     const request = fetchMock.mock.calls.at(0)?.[0]

@@ -1,16 +1,24 @@
 import { create } from 'zustand'
-import { fetchCurrentLocalPrices } from '../api/localMarketClient'
-import { fetchLocalMarkets } from '../api/localMarketCatalogClient'
+import {
+  fetchCurrentPricesWithFallback,
+  fetchMarketsWithFallback,
+} from '../api/marketReadService'
+import type {
+  MarketCatalogResult,
+  MarketPriceReadResult,
+} from '../api/marketReadService'
 import {
   loadMaterialPurchaseCities,
   saveMaterialPurchaseCities,
 } from '../storage/materialPurchaseCityStorage'
 import {
   clearStoredMarketCache,
+  loadMarketCatalog,
   loadManualSellPrices,
   loadMarketCache,
   loadMarketConfig,
   saveManualSellPrices,
+  saveMarketCatalog,
   saveMarketCache,
   saveMarketConfig,
 } from '../storage/marketPriceStorage'
@@ -18,6 +26,7 @@ import type {
   MarketCatalogStatus,
   MarketCityId,
   MarketConfig,
+  MarketDataSource,
   MarketDefinition,
   MarketPriceSnapshot,
   MarketPriceTarget,
@@ -47,7 +56,7 @@ import type {
 const MARKET_CACHE_TTL_MS = 5 * 60 * 1000
 let latestRequestId = 0
 let latestReportId = 0
-let marketCatalogPromise: Promise<readonly MarketDefinition[]> | null = null
+let marketCatalogPromise: Promise<MarketCatalogResult> | null = null
 
 interface RefreshMarketPricesParams {
   readonly rootKey: string
@@ -74,7 +83,7 @@ interface ActiveRefreshTarget {
 
 interface RefreshRequestPlan {
   readonly combinationCount: number
-  readonly execute: () => Promise<ReadonlyMap<string, MarketPriceSnapshot>>
+  readonly execute: () => Promise<MarketPriceReadResult>
 }
 
 interface MarketDataState {
@@ -82,11 +91,14 @@ interface MarketDataState {
   readonly markets: readonly MarketDefinition[]
   readonly catalogStatus: MarketCatalogStatus
   readonly catalogError: string | null
+  readonly catalogSource: MarketDataSource | null
+  readonly catalogWarnings: readonly string[]
   readonly snapshots: ReadonlyMap<string, MarketPriceSnapshot>
   readonly manualSellPrices: ReadonlyMap<string, number>
   readonly materialPurchaseCitiesByRoot: MaterialPurchaseCitiesByRoot
   readonly status: MarketRequestStatus
   readonly error: string | null
+  readonly refreshWarnings: readonly string[]
   readonly lastSuccessfulFetchAt: string | null
   readonly refreshProgress: MarketRefreshProgress | null
   readonly lastRefreshReport: MarketRefreshReport | null
@@ -110,7 +122,7 @@ interface MarketDataState {
 }
 
 function isSnapshotFresh(snapshot: MarketPriceSnapshot | undefined): boolean {
-  if (!snapshot) return false
+  if (!snapshot || snapshot.source === 'browser-cache') return false
   return Date.now() - Date.parse(snapshot.fetchedAt) < MARKET_CACHE_TTL_MS
 }
 
@@ -122,9 +134,7 @@ function buildActiveRefreshTargets(
   const targets = new Map<string, ActiveRefreshTarget>()
   const overrides = materialPurchaseCitiesByRoot.get(params.rootKey)
 
-  for (const target of (
-    params.reportMaterialTargets ?? params.materialTargets
-  )) {
+  for (const target of params.reportMaterialTargets ?? params.materialTargets) {
     const targetKey = buildItemPriceKey(target.itemId, target.enchantment)
     const itemIdentifier = buildMarketItemIdentifier(
       target.itemId,
@@ -222,10 +232,7 @@ function buildRefreshReport({
     const afterSnapshot = afterSnapshots.get(cacheKey)
     const previousValue = resolveTargetValue(target, beforeSnapshot, config)
     const currentValue = resolveTargetValue(target, afterSnapshot, config)
-    const outcome = classifyMarketRefreshOutcome(
-      previousValue,
-      currentValue,
-    )
+    const outcome = classifyMarketRefreshOutcome(previousValue, currentValue)
 
     return {
       targetKey: target.targetKey,
@@ -259,34 +266,43 @@ function buildRefreshReport({
 }
 
 const initialSnapshots = loadMarketCache()
+const initialMarkets = loadMarketCatalog()
 const initialConfig = loadMarketConfig()
 const initialSellPrices = loadManualSellPrices()
 const initialMaterialPurchaseCities = loadMaterialPurchaseCities()
 
 export const useMarketDataStore = create<MarketDataState>((set, get) => ({
   config: initialConfig,
-  markets: [],
+  markets: initialMarkets,
   catalogStatus: 'idle',
   catalogError: null,
+  catalogSource: initialMarkets.length > 0 ? 'browser-cache' : null,
+  catalogWarnings: [],
   snapshots: initialSnapshots,
   manualSellPrices: initialSellPrices,
   materialPurchaseCitiesByRoot: initialMaterialPurchaseCities,
   status: 'idle',
   error: null,
+  refreshWarnings: [],
   lastSuccessfulFetchAt: null,
   refreshProgress: null,
   lastRefreshReport: null,
 
   loadMarkets: async () => {
-    if (get().markets.length > 0) return get().markets
+    if (get().markets.length > 0 && get().catalogSource !== 'browser-cache') {
+      return get().markets
+    }
 
     set({ catalogStatus: 'loading', catalogError: null })
-    marketCatalogPromise ??= fetchLocalMarkets().finally(() => {
-      marketCatalogPromise = null
-    })
+    marketCatalogPromise ??= fetchMarketsWithFallback(get().markets).finally(
+      () => {
+        marketCatalogPromise = null
+      },
+    )
 
     try {
-      const markets = await marketCatalogPromise
+      const catalogResult = await marketCatalogPromise
+      const markets = catalogResult.markets
       const validKeys = new Set(markets.map((market) => market.key))
       const current = get().config
       const fallback = markets[0]?.key
@@ -321,20 +337,30 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
 
       saveMarketConfig(config)
       saveMaterialPurchaseCities(sanitizedMaterialCities)
+      if (catalogResult.source !== 'browser-cache') {
+        saveMarketCatalog(markets)
+      }
       set({
         markets,
         config,
         materialPurchaseCitiesByRoot: sanitizedMaterialCities,
         catalogStatus: 'success',
         catalogError: null,
+        catalogSource: catalogResult.source,
+        catalogWarnings: catalogResult.warnings,
       })
       return markets
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'No fue posible cargar el catálogo local de mercados'
-      set({ catalogStatus: 'error', catalogError: message })
+          : 'No fue posible cargar el catálogo de mercados'
+      set({
+        catalogStatus: 'error',
+        catalogError: message,
+        catalogSource: null,
+        catalogWarnings: [],
+      })
       throw error
     }
   },
@@ -346,7 +372,12 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     }
 
     saveMarketConfig(config)
-    set({ config, error: null, lastRefreshReport: null })
+    set({
+      config,
+      error: null,
+      refreshWarnings: [],
+      lastRefreshReport: null,
+    })
   },
 
   refreshPrices: async (params) => {
@@ -369,7 +400,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
           error:
             error instanceof Error
               ? error.message
-              : 'No fue posible cargar el catálogo local de mercados',
+              : 'No fue posible cargar el catálogo de mercados',
         })
         return
       }
@@ -393,20 +424,18 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     )
 
     for (const market of markets) {
-      const identifiersToRefresh = materialIdentifiers.filter(
-        (identifier) => {
-          if (force) return true
+      const identifiersToRefresh = materialIdentifiers.filter((identifier) => {
+        if (force) return true
 
-          const cacheKey = buildMarketCacheKey(
-            config.server,
-            market.key,
-            identifier,
-            MATERIAL_MARKET_QUALITY,
-          )
+        const cacheKey = buildMarketCacheKey(
+          config.server,
+          market.key,
+          identifier,
+          MATERIAL_MARKET_QUALITY,
+        )
 
-          return !isSnapshotFresh(snapshots.get(cacheKey))
-        },
-      )
+        return !isSnapshotFresh(snapshots.get(cacheKey))
+      })
 
       if (identifiersToRefresh.length > 0) {
         materialIdentifiersByCity.set(market.key, identifiersToRefresh)
@@ -439,7 +468,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       plans.push({
         combinationCount: identifiers.length,
         execute: () =>
-          fetchCurrentLocalPrices({
+          fetchCurrentPricesWithFallback({
             server: config.server,
             itemIdentifiers: identifiers,
             cities: [city],
@@ -453,7 +482,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
         plans.push({
           combinationCount: 1,
           execute: () =>
-            fetchCurrentLocalPrices({
+            fetchCurrentPricesWithFallback({
               server: config.server,
               itemIdentifiers: [saleIdentifier],
               cities: [market.key],
@@ -480,6 +509,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     set({
       status: 'loading',
       error: null,
+      refreshWarnings: [],
       refreshProgress: {
         origin,
         completedRequests: 0,
@@ -489,10 +519,16 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       },
     })
 
-    try {
-      const fetchedGroups = await Promise.all(
-        plans.map(async (plan) => {
-          const fetched = await plan.execute()
+    const settledGroups = await Promise.all(
+      plans.map(async (plan) => {
+        try {
+          return {
+            status: 'fulfilled' as const,
+            result: await plan.execute(),
+          }
+        } catch (error) {
+          return { status: 'rejected' as const, error }
+        } finally {
           completedRequests += 1
           completedCombinations += plan.combinationCount
 
@@ -507,59 +543,94 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
               },
             })
           }
-
-          return fetched
-        }),
-      )
-
-      if (requestId !== latestRequestId) return
-
-      const nextSnapshots = new Map(get().snapshots)
-      for (const fetched of fetchedGroups) {
-        for (const [key, snapshot] of fetched) {
-          nextSnapshots.set(key, snapshot)
         }
+      }),
+    )
+
+    if (requestId !== latestRequestId) return
+
+    const nextSnapshots = new Map(get().snapshots)
+    const warnings: string[] = []
+    let successfulPlans = 0
+
+    for (const settled of settledGroups) {
+      if (settled.status === 'rejected') {
+        warnings.push(
+          settled.error instanceof Error
+            ? settled.error.message
+            : 'Una consulta de precios no pudo completarse',
+        )
+        continue
       }
 
-      const completedAt = new Date().toISOString()
-      const report =
-        origin === 'manual'
-          ? buildRefreshReport({
-              rootKey,
-              activeTargets,
-              beforeSnapshots: snapshots,
-              afterSnapshots: nextSnapshots,
-              config,
-              markets,
-              startedAt,
-              completedAt,
-              requestedCombinations: totalCombinations,
-              requestCount: plans.length,
-              manualOverrideCount,
-            })
-          : get().lastRefreshReport
+      successfulPlans += 1
+      warnings.push(...settled.result.warnings)
 
-      saveMarketCache(nextSnapshots)
-      set({
-        snapshots: nextSnapshots,
-        status: 'success',
-        error: null,
-        refreshProgress: null,
-        lastRefreshReport: report,
-        lastSuccessfulFetchAt: completedAt,
-      })
-    } catch (error) {
-      if (requestId !== latestRequestId) return
+      for (const [key, snapshot] of settled.result.snapshots) {
+        nextSnapshots.set(key, snapshot)
+      }
+    }
 
+    const uniqueWarnings = Array.from(new Set(warnings))
+
+    if (successfulPlans === 0) {
+      const cachedSnapshots = new Map(
+        Array.from(nextSnapshots.entries()).map(([key, snapshot]) => [
+          key,
+          {
+            ...snapshot,
+            source: 'browser-cache' as const,
+            sellPriceSource:
+              snapshot.sellPriceMin === null
+                ? null
+                : ('browser-cache' as const),
+            buyPriceSource:
+              snapshot.buyPriceMax === null ? null : ('browser-cache' as const),
+          },
+        ]),
+      )
+
+      saveMarketCache(cachedSnapshots)
       set({
+        snapshots: cachedSnapshots,
         status: 'error',
         refreshProgress: null,
+        refreshWarnings: uniqueWarnings,
         error:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible consultar el servicio local de mercado',
+          uniqueWarnings.join(' · ') ||
+          'No fue posible consultar la API central ni el receiver local',
       })
+      return
     }
+
+    const completedAt = new Date().toISOString()
+    const report =
+      origin === 'manual'
+        ? buildRefreshReport({
+            rootKey,
+            activeTargets,
+            beforeSnapshots: snapshots,
+            afterSnapshots: nextSnapshots,
+            config,
+            markets,
+            startedAt,
+            completedAt,
+            requestedCombinations: totalCombinations,
+            requestCount: plans.length,
+            manualOverrideCount,
+          })
+        : get().lastRefreshReport
+
+    saveMarketCache(nextSnapshots)
+    set({
+      snapshots: nextSnapshots,
+      status: 'success',
+      error: null,
+      refreshWarnings: uniqueWarnings,
+      refreshProgress: null,
+      lastRefreshReport: report,
+      lastSuccessfulFetchAt: completedAt,
+    })
   },
 
   dismissRefreshReport: () => {
@@ -572,6 +643,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       snapshots: new Map(),
       status: 'idle',
       error: null,
+      refreshWarnings: [],
       refreshProgress: null,
       lastRefreshReport: null,
       lastSuccessfulFetchAt: null,
@@ -645,9 +717,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       nextByRoot.delete(rootKey)
     }
 
-    const config = saleCity
-      ? { ...get().config, saleCity }
-      : get().config
+    const config = saleCity ? { ...get().config, saleCity } : get().config
 
     saveMaterialPurchaseCities(nextByRoot)
     saveMarketConfig(config)
