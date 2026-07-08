@@ -1,3 +1,7 @@
+import type {
+  LocalHistoryEnvelope,
+  LocalHistoryRecord,
+} from '@shared/contracts/market-api-payloads'
 import type { MarketHistorySnapshot } from '../types/MarketHistory'
 import type {
   AlbionServer,
@@ -8,14 +12,6 @@ import {
   LOCAL_SERVER_IDS,
 } from './localMarketApi'
 import { mapHistoryPoints } from './marketHistoryResponseMapping'
-
-interface LocalHistoryRecord {
-  readonly history?: unknown
-}
-
-interface LocalHistoryEnvelope {
-  readonly data?: unknown
-}
 
 interface FetchLocalMarketHistoryParams {
   readonly server: AlbionServer

@@ -1,4 +1,8 @@
 import type {
+  CentralHistoryEnvelope,
+  CentralHistorySeriesPayload,
+} from '@shared/contracts/market-api-payloads'
+import type {
   MarketHistoryCandidate,
   MarketHistorySnapshot,
 } from '../types/MarketHistory'
@@ -9,19 +13,6 @@ import {
   mapHistoryPoints,
   normalizeHistoryTimestamp,
 } from './marketHistoryResponseMapping'
-
-interface CentralHistorySeriesPayload {
-  readonly server?: unknown
-  readonly marketKey?: unknown
-  readonly itemIdentifier?: unknown
-  readonly quality?: unknown
-  readonly history?: unknown
-}
-
-interface CentralHistoryEnvelope {
-  readonly requestedAt?: unknown
-  readonly data?: unknown
-}
 
 interface FetchCentralHistoryParams {
   readonly server: AlbionServer

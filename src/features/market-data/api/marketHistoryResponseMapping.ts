@@ -1,9 +1,8 @@
+import type { MarketHistoryPointPayload } from '@shared/contracts/market-api-payloads'
 import type { MarketHistoryPoint } from '../types/MarketHistory'
 
-interface MarketHistoryPointPayload {
-  readonly timestamp?: unknown
-  readonly itemCount?: unknown
-  readonly averageUnitPrice?: unknown
+function readField(point: MarketHistoryPointPayload, key: string): unknown {
+  return (point as Record<string, unknown>)[key]
 }
 
 export function normalizeHistoryTimestamp(value: unknown): string | null {
@@ -35,11 +34,14 @@ export function mapHistoryPoints(
     if (!candidate || typeof candidate !== 'object') continue
 
     const point = candidate as MarketHistoryPointPayload
-    const timestamp = normalizeHistoryTimestamp(point.timestamp)
+    const timestamp = normalizeHistoryTimestamp(readField(point, 'timestamp'))
+
     if (!timestamp) continue
 
-    const count = normalizeFiniteNumber(point.itemCount)
-    const averagePrice = normalizeFiniteNumber(point.averageUnitPrice)
+    const count = normalizeFiniteNumber(readField(point, 'itemCount'))
+    const averagePrice = normalizeFiniteNumber(
+      readField(point, 'averageUnitPrice'),
+    )
 
     pointsByTimestamp.set(timestamp, {
       timestamp,
@@ -50,7 +52,6 @@ export function mapHistoryPoints(
   }
 
   return Array.from(pointsByTimestamp.values()).sort(
-    (left, right) =>
-      Date.parse(left.timestamp) - Date.parse(right.timestamp),
+    (left, right) => Date.parse(left.timestamp) - Date.parse(right.timestamp),
   )
 }
