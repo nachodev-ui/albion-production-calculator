@@ -12,7 +12,11 @@
     "generate:dataset": "tsx scripts/generate-dataset.ts",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "contracts:lint": "redocly lint contracts/central-api/openapi.yaml contracts/local-receiver/openapi.json",
+    "contracts:generate": "openapi-typescript contracts/central-api/openapi.yaml -o src/shared/contracts/central-api.generated.ts && openapi-typescript contracts/local-receiver/openapi.json -o src/shared/contracts/local-receiver.generated.ts",
+    "contracts:compat": "tsx scripts/check-market-contracts.ts",
+    "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && pnpm contracts:compat && git diff --exit-code -- src/shared/contracts"
   },
   "dependencies": {
     "react": "^19.2.6",
@@ -21,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@redocly/cli": "2.36.0",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^24.13.2",
     "@types/react": "^19.2.14",
@@ -34,6 +39,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "fast-xml-parser": "^5.9.3",
     "globals": "^17.6.0",
+    "openapi-typescript": "^7.13.0",
     "prettier": "^3.8.4",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
@@ -41,6 +47,7 @@
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vitepress": "^1.6.4",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.9",
+    "yaml": "^2.9.0"
   }
 }

@@ -1,9 +1,6 @@
+import type { LocalMarketCatalogEnvelope } from '@shared/contracts/market-api-payloads'
 import type { MarketDefinition, MarketType } from '../types/MarketPrice'
 import { LOCAL_MARKET_API_URL } from './localMarketApi'
-
-interface LocalMarketEnvelope {
-  readonly data?: unknown
-}
 
 function isMarketType(value: unknown): value is MarketType {
   return value === 'regular' || value === 'black-market'
@@ -51,7 +48,7 @@ export async function fetchLocalMarkets(
     throw new Error('El receiver local devolvió un catálogo inesperado')
   }
 
-  const data = (payload as LocalMarketEnvelope).data
+  const data = (payload as LocalMarketCatalogEnvelope).data
   if (!Array.isArray(data)) {
     throw new Error('El receiver local no devolvió la lista de mercados')
   }

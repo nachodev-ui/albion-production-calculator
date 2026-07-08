@@ -1,9 +1,6 @@
+import type { CentralMarketCatalogEnvelope } from '@shared/contracts/market-api-payloads'
 import type { MarketDefinition, MarketType } from '../types/MarketPrice'
 import { CENTRAL_MARKET_API_URL } from './localMarketApi'
-
-interface MarketEnvelope {
-  readonly data?: unknown
-}
 
 function isMarketType(value: unknown): value is MarketType {
   return value === 'regular' || value === 'black-market'
@@ -49,7 +46,7 @@ export async function fetchCentralMarkets(
     throw new Error('La API central devolvió un catálogo inesperado')
   }
 
-  const data = (payload as MarketEnvelope).data
+  const data = (payload as CentralMarketCatalogEnvelope).data
   if (!Array.isArray(data)) {
     throw new Error('La API central no devolvió la lista de mercados')
   }

@@ -1,3 +1,4 @@
+import type { MarketPriceEnvelope, MarketPriceRow } from '@shared/contracts/market-api-payloads'
 import type {
   AlbionServer,
   MarketCityId,
@@ -5,20 +6,8 @@ import type {
   MarketPriceSnapshot,
 } from '../types/MarketPrice'
 
-export interface MarketPriceRow {
-  readonly server?: unknown
-  readonly itemIdentifier?: unknown
-  readonly marketKey?: unknown
-  readonly location?: unknown
-  readonly quality?: unknown
-  readonly sellPriceMin?: unknown
-  readonly sellPriceMinDate?: unknown
-  readonly buyPriceMax?: unknown
-  readonly buyPriceMaxDate?: unknown
-}
-
-export interface MarketPriceEnvelope {
-  readonly data?: unknown
+function readField(row: MarketPriceRow, key: string): unknown {
+  return (row as Record<string, unknown>)[key]
 }
 
 function normalizePrice(value: unknown): number | null {
@@ -55,29 +44,32 @@ export function mapMarketPriceRow({
   readonly source: MarketDataSource
   readonly fetchedAt: string
 }): MarketPriceSnapshot | null {
-  if (typeof row.itemIdentifier !== 'string') return null
+  const itemIdentifier = readField(row, 'itemIdentifier')
+  if (typeof itemIdentifier !== 'string') return null
 
+  const marketKeyValue = readField(row, 'marketKey')
   const marketKey =
-    typeof row.marketKey === 'string' && row.marketKey.trim().length > 0
-      ? row.marketKey.trim()
+    typeof marketKeyValue === 'string' && marketKeyValue.trim().length > 0
+      ? marketKeyValue.trim()
       : fallbackCity
 
   if (!marketKey) return null
 
-  const sellPriceMin = normalizePrice(row.sellPriceMin)
-  const buyPriceMax = normalizePrice(row.buyPriceMax)
+  const sellPriceMin = normalizePrice(readField(row, 'sellPriceMin'))
+  const buyPriceMax = normalizePrice(readField(row, 'buyPriceMax'))
+
   if (sellPriceMin === null && buyPriceMax === null) return null
 
   return {
     server,
-    itemIdentifier: row.itemIdentifier,
+    itemIdentifier,
     city: marketKey,
-    quality: normalizeQuality(row.quality, fallbackQuality),
+    quality: normalizeQuality(readField(row, 'quality'), fallbackQuality),
     sellPriceMin,
-    sellPriceMinDate: normalizeDate(row.sellPriceMinDate),
+    sellPriceMinDate: normalizeDate(readField(row, 'sellPriceMinDate')),
     sellPriceSource: sellPriceMin === null ? null : source,
     buyPriceMax,
-    buyPriceMaxDate: normalizeDate(row.buyPriceMaxDate),
+    buyPriceMaxDate: normalizeDate(readField(row, 'buyPriceMaxDate')),
     buyPriceSource: buyPriceMax === null ? null : source,
     source,
     fetchedAt,
@@ -90,6 +82,7 @@ export function parsePriceRows(payload: unknown): readonly MarketPriceRow[] {
   }
 
   const rows = (payload as MarketPriceEnvelope).data
+
   if (!Array.isArray(rows)) {
     throw new Error(
       'El servicio de mercado no devolvió la lista de precios esperada',
