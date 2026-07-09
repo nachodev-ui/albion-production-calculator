@@ -31,14 +31,14 @@ La configuración vive en `quality/bundle-budget.json`.
 
 | Métrica | Presupuesto inicial |
 | --- | ---: |
-| Total raw | 1.500.000 bytes |
-| Total gzip | 450.000 bytes |
+| Total aplicación raw | 1.500.000 bytes |
+| Total aplicación gzip | 450.000 bytes |
 | JavaScript raw | 900.000 bytes |
 | JavaScript gzip | 300.000 bytes |
 | CSS raw | 250.000 bytes |
 | CSS gzip | 70.000 bytes |
-| Archivo más grande raw | 600.000 bytes |
-| Archivo más grande gzip | 200.000 bytes |
+| Archivo de aplicación más grande raw | 600.000 bytes |
+| Archivo de aplicación más grande gzip | 200.000 bytes |
 
 Estos límites son una barrera inicial de regresión, no el objetivo final de rendimiento. Deben ajustarse hacia abajo después de completar lazy loading y cualquier extracción del optimizador fuera del render crítico.
 
@@ -46,13 +46,16 @@ Estos límites son una barrera inicial de regresión, no el objetivo final de re
 
 El script recorre `dist`, ignora sourcemaps y calcula:
 
-- tamaño total raw y gzip;
+- tamaño total de aplicación raw y gzip, excluyendo media estática;
 - tamaño JavaScript raw y gzip;
 - tamaño CSS raw y gzip;
-- archivo más grande;
+- archivo de aplicación más grande;
+- media estática como dato informativo, sin presupuesto bloqueante;
 - lista de assets más pesados.
 
-Si una métrica supera el presupuesto configurado, el comando falla con código distinto de cero.
+La separación entre bundle de aplicación y media estática evita que imágenes, íconos u otros archivos copiados desde `public/` distorsionen la línea base del código que vamos a optimizar con lazy loading.
+
+Si una métrica presupuestada supera el límite configurado, el comando falla con código distinto de cero.
 
 ## CI
 
@@ -63,11 +66,11 @@ pnpm build
 pnpm bundle:check
 ```
 
-Esto impide fusionar PRs que aumenten el bundle por encima del presupuesto inicial sin ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
+Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del presupuesto inicial sin ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
 
 ## Cómo interpretar una falla
 
-1. Revisa el asset más grande impreso por `pnpm bundle:check`.
+1. Revisa el asset de aplicación más grande impreso por `pnpm bundle:check`.
 2. Ejecuta `pnpm bundle:analyze` para guardar el reporte JSON.
 3. Decide si corresponde optimizar, aplicar lazy loading o ajustar el presupuesto.
 4. Si se ajusta el presupuesto, explica el motivo en el PR.
