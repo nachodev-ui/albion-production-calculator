@@ -9,7 +9,6 @@ import { buildMarketCacheKey } from '../types/MarketPrice'
 import { fetchCentralMarkets } from './centralMarketCatalogClient'
 import { fetchCurrentCentralPrices } from './centralMarketClient'
 import {
-  describeMarketCacheFallback,
   describeMarketError,
   describeMarketFallbackWarning,
 } from './marketErrorMessages'
@@ -61,7 +60,6 @@ export async function fetchMarketsWithFallback(
           warnings: [
             describeMarketFallbackWarning('central-api', centralError),
             describeMarketFallbackWarning('local-receiver', localError),
-            describeMarketCacheFallback('catalog'),
           ],
         }
       }
