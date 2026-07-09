@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { fetchMarketHistoryWithFallback } from '../api/historyReadService'
 import {
+  describeMarketError,
+  describeNoMarketData,
+  isMarketRequestAbort,
+} from '../api/marketErrorMessages'
+import {
   clearStoredMarketHistoryCache,
   loadMarketHistoryCache,
   saveMarketHistoryCache,
@@ -190,8 +195,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       const snapshot = result.snapshots.get(cacheKey)
       if (!snapshot) {
         throw new Error(
-          result.warnings.join('. ') ||
-            'No fue posible consultar el historial en ninguna fuente',
+          result.warnings.join('. ') || describeNoMarketData('history'),
         )
       }
 
@@ -207,7 +211,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
         lastSuccessfulFetchAt: snapshot.fetchedAt,
       })
     } catch (error) {
-      if (requestId !== latestChartRequestId) return
+      if (requestId !== latestChartRequestId || isMarketRequestAbort(error)) return
       if (activeChartRequestController === requestController) {
         activeChartRequestController = null
       }
@@ -215,10 +219,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       set({
         status: 'error',
         warnings: [],
-        error:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible consultar el historial de mercado',
+        error: describeMarketError(error, {
+          fallback: 'No fue posible consultar el historial de mercado',
+        }),
       })
     }
   },
@@ -316,7 +319,7 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
         optimizerStatus: allRequestsFailed ? 'error' : 'success',
         optimizerError:
           failed > 0
-            ? `No se pudo obtener el historial de ${failed} de ${pending.length} combinaciones pendientes.`
+            ? `No se pudo obtener el historial de ${failed} de ${pending.length} combinaciones pendientes. Puedes reintentar; si existe caché, se mantendrá como reserva.`
             : null,
         optimizerWarnings: result.warnings,
         optimizerProgress: {
@@ -329,7 +332,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
           get().lastSuccessfulFetchAt,
       })
     } catch (error) {
-      if (requestId !== latestOptimizerRequestId) return
+      if (requestId !== latestOptimizerRequestId || isMarketRequestAbort(error)) {
+        return
+      }
       if (activeOptimizerRequestController === requestController) {
         activeOptimizerRequestController = null
       }
@@ -337,10 +342,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       set({
         optimizerStatus: 'error',
         optimizerWarnings: [],
-        optimizerError:
-          error instanceof Error
-            ? error.message
-            : 'No fue posible consultar el historial para el optimizador',
+        optimizerError: describeMarketError(error, {
+          fallback: 'No fue posible consultar el historial para el optimizador',
+        }),
         optimizerProgress: {
           completed: uniqueCandidates.length,
           total: uniqueCandidates.length,

@@ -8,6 +8,11 @@ import type {
   MarketPriceReadResult,
 } from '../api/marketReadService'
 import {
+  describeMarketCacheFallback,
+  describeMarketError,
+  isMarketRequestAbort,
+} from '../api/marketErrorMessages'
+import {
   loadMaterialPurchaseCities,
   saveMaterialPurchaseCities,
 } from '../storage/materialPurchaseCityStorage'
@@ -357,10 +362,9 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       })
       return markets
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'No fue posible cargar el catálogo de mercados'
+      const message = describeMarketError(error, {
+        fallback: 'No fue posible cargar el catálogo de mercados',
+      })
       set({
         catalogStatus: 'error',
         catalogError: message,
@@ -400,13 +404,14 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       try {
         await get().loadMarkets()
       } catch (error) {
+        if (isMarketRequestAbort(error)) return
+
         set({
           status: 'error',
           refreshProgress: null,
-          error:
-            error instanceof Error
-              ? error.message
-              : 'No fue posible cargar el catálogo de mercados',
+          error: describeMarketError(error, {
+            fallback: 'No fue posible cargar el catálogo de mercados',
+          }),
         })
         return
       }
@@ -571,11 +576,13 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
 
     for (const settled of settledGroups) {
       if (settled.status === 'rejected') {
-        warnings.push(
-          settled.error instanceof Error
-            ? settled.error.message
-            : 'Una consulta de precios no pudo completarse',
-        )
+        if (!isMarketRequestAbort(settled.error)) {
+          warnings.push(
+            describeMarketError(settled.error, {
+              fallback: 'Una consulta de precios no pudo completarse',
+            }),
+          )
+        }
         continue
       }
 
@@ -605,16 +612,20 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
           },
         ]),
       )
+      const fallbackWarnings =
+        cachedSnapshots.size > 0
+          ? [...uniqueWarnings, describeMarketCacheFallback('prices')]
+          : uniqueWarnings
 
       saveMarketCache(cachedSnapshots)
       set({
         snapshots: cachedSnapshots,
         status: 'error',
         refreshProgress: null,
-        refreshWarnings: uniqueWarnings,
+        refreshWarnings: fallbackWarnings,
         error:
-          uniqueWarnings.join(' · ') ||
-          'No fue posible consultar la API central ni el receiver local',
+          fallbackWarnings.join(' · ') ||
+          'No fue posible consultar precios. Puedes reintentar o continuar con precios manuales.',
       })
       return
     }
