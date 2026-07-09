@@ -57,7 +57,9 @@ function describeHttpStatus(status: number | undefined): string {
 
 export function isMarketRequestAbort(error: unknown): boolean {
   if (error instanceof FetchJsonError) return error.category === 'abort'
-  if (error instanceof DOMException) return error.name === 'AbortError'
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException) {
+    return error.name === 'AbortError'
+  }
   return error instanceof Error && error.name === 'AbortError'
 }
 
