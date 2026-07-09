@@ -23,6 +23,7 @@ import {
   type MarketNetworkSource,
   type MarketSourceRuntimeStatus,
 } from '../api/marketSourceCooldown'
+import { useMarketDataStore } from '../store/marketDataStore'
 import type {
   MarketRefreshProgress,
   MarketRefreshReport,
@@ -37,11 +38,9 @@ interface MarketConnectionBarProps {
   readonly catalogError: string | null
   readonly catalogSource: MarketDataSource | null
   readonly catalogWarnings: readonly string[]
-  readonly catalogLastAttempt: MarketLastAttempt | null
   readonly status: MarketRequestStatus
   readonly error: string | null
   readonly refreshWarnings: readonly string[]
-  readonly priceLastAttempt: MarketLastAttempt | null
   readonly hasCachedPrice: boolean
   readonly priceCount: number
   readonly freshnessSummary: MarketFreshnessSummary
@@ -228,17 +227,21 @@ function getRefreshButtonLabel(
   return 'Actualizar todos los precios'
 }
 
+function isVisibleAttempt(
+  attempt: MarketLastAttempt | null,
+): attempt is MarketLastAttempt {
+  return attempt !== null
+}
+
 export function MarketConnectionBar({
   config,
   catalogStatus,
   catalogError,
   catalogSource,
   catalogWarnings,
-  catalogLastAttempt,
   status,
   error,
   refreshWarnings,
-  priceLastAttempt,
   hasCachedPrice,
   priceCount,
   freshnessSummary,
@@ -251,6 +254,13 @@ export function MarketConnectionBar({
   onDismissRefreshReport,
 }: MarketConnectionBarProps) {
   const [sourceStatusNow, setSourceStatusNow] = useState(() => Date.now())
+  const catalogLastAttempt = useMarketDataStore(
+    (state) => state.catalogLastAttempt,
+  )
+  const priceLastAttempt = useMarketDataStore((state) => state.priceLastAttempt)
+  const visibleAttempts = [catalogLastAttempt, priceLastAttempt].filter(
+    isVisibleAttempt,
+  )
   const statusPresentation = getStatusPresentation(
     status,
     hasCachedPrice,
@@ -435,21 +445,23 @@ export function MarketConnectionBar({
             </div>
           </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {[catalogLastAttempt, priceLastAttempt].filter(Boolean).map((attempt) => (
-              <div
-                key={`${attempt.kind}:${attempt.startedAt}`}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted"
-              >
-                <p className="font-medium text-text">
-                  {attempt.kind === 'catalog'
-                    ? 'Último intento de catálogo'
-                    : 'Último intento de precios'}
-                </p>
-                <p className="mt-1">{attempt.message}</p>
-              </div>
-            ))}
-          </div>
+          {visibleAttempts.length > 0 && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {visibleAttempts.map((attempt) => (
+                <div
+                  key={`${attempt.kind}:${attempt.startedAt}`}
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted"
+                >
+                  <p className="font-medium text-text">
+                    {attempt.kind === 'catalog'
+                      ? 'Último intento de catálogo'
+                      : 'Último intento de precios'}
+                  </p>
+                  <p className="mt-1">{attempt.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {warnings.length > 0 && (
             <div className="mt-3 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">
