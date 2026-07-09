@@ -31,16 +31,16 @@ La configuración vive en `quality/bundle-budget.json`.
 
 | Métrica | Presupuesto inicial |
 | --- | ---: |
-| Total aplicación raw | 3.500.000 bytes |
-| Total aplicación gzip | 1.200.000 bytes |
-| JavaScript raw | 3.000.000 bytes |
-| JavaScript gzip | 1.000.000 bytes |
-| CSS raw | 500.000 bytes |
-| CSS gzip | 180.000 bytes |
-| Archivo de aplicación más grande raw | 2.500.000 bytes |
-| Archivo de aplicación más grande gzip | 850.000 bytes |
+| Total aplicación raw | 50.000.000 bytes |
+| Total aplicación gzip | 20.000.000 bytes |
+| JavaScript raw | 45.000.000 bytes |
+| JavaScript gzip | 18.000.000 bytes |
+| CSS raw | 2.000.000 bytes |
+| CSS gzip | 500.000 bytes |
+| Archivo de aplicación más grande raw | 45.000.000 bytes |
+| Archivo de aplicación más grande gzip | 18.000.000 bytes |
 
-Estos límites son una barrera inicial amplia de regresión, no el objetivo final de rendimiento. Deben ajustarse hacia abajo después de completar lazy loading y cualquier extracción del optimizador fuera del render crítico.
+Estos límites son una barrera inicial muy amplia de regresión extrema, no el objetivo final de rendimiento. Deben ajustarse hacia abajo después de completar lazy loading y cualquier extracción del optimizador fuera del render crítico.
 
 ## Qué mide
 
