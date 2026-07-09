@@ -1,3 +1,13 @@
+import {
+  getBrowserLocalStorage,
+  isFreshTimestamp,
+  isObject,
+  newestEntries,
+  readStorageJson,
+  removeStorageKeys,
+  writeStorageJson,
+  type StoragePolicy,
+} from '@shared/storage/browserStoragePolicy'
 import type {
   MarketConfig,
   MarketDefinition,
@@ -23,6 +33,28 @@ const CATALOG_STORAGE_VERSION = 1
 const MAX_CACHE_ENTRIES = 1500
 const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
+export const MARKET_PRICE_STORAGE_POLICY = {
+  config: {
+    currentKey: CONFIG_STORAGE_KEY,
+    version: STORAGE_VERSION,
+  },
+  cache: {
+    currentKey: CACHE_STORAGE_KEY,
+    legacyKeys: LEGACY_CACHE_STORAGE_KEYS,
+    version: CACHE_STORAGE_VERSION,
+    maxEntries: MAX_CACHE_ENTRIES,
+    maxAgeMs: MAX_CACHE_AGE_MS,
+  },
+  catalog: {
+    currentKey: CATALOG_STORAGE_KEY,
+    version: CATALOG_STORAGE_VERSION,
+  },
+  manualSellPrices: {
+    currentKey: SELL_OVERRIDES_STORAGE_KEY,
+    version: STORAGE_VERSION,
+  },
+} as const satisfies Record<string, StoragePolicy>
+
 interface PersistedMarketConfig {
   readonly version: number
   readonly config: MarketConfig
@@ -43,18 +75,10 @@ interface PersistedSellOverrides {
   readonly prices: readonly (readonly [string, number])[]
 }
 
-function getLocalStorage(): Storage | null {
-  if (typeof window === 'undefined') return null
-
-  try {
-    return window.localStorage
-  } catch {
-    return null
-  }
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object'
+interface LoadedMarketCache {
+  readonly storageKey: string
+  readonly version: number
+  readonly snapshots: readonly (readonly [string, unknown])[]
 }
 
 function isValidMarketKey(value: unknown): value is string {
@@ -160,15 +184,46 @@ function normalizeStoredSnapshot(value: unknown): MarketPriceSnapshot | null {
   }
 }
 
+function readPersistedMarketCache(
+  storage: Storage,
+  storageKey: string,
+): LoadedMarketCache | null {
+  const parsed = readStorageJson(storage, storageKey)
+  if (!isObject(parsed)) return null
+
+  const candidate = parsed as Partial<PersistedMarketCache>
+  if (!Array.isArray(candidate.snapshots)) return null
+
+  return {
+    storageKey,
+    version:
+      typeof candidate.version === 'number' ? candidate.version : 1,
+    snapshots: candidate.snapshots,
+  }
+}
+
+function persistMigratedMarketCache(
+  storage: Storage,
+  loaded: LoadedMarketCache,
+  snapshots: ReadonlyMap<string, MarketPriceSnapshot>,
+): void {
+  if (
+    loaded.storageKey === CACHE_STORAGE_KEY &&
+    loaded.version === CACHE_STORAGE_VERSION
+  ) {
+    return
+  }
+
+  saveMarketCache(snapshots)
+  removeStorageKeys(storage, LEGACY_CACHE_STORAGE_KEYS)
+}
+
 export function loadMarketConfig(): MarketConfig {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return DEFAULT_MARKET_CONFIG
 
   try {
-    const raw = storage.getItem(CONFIG_STORAGE_KEY)
-    if (!raw) return DEFAULT_MARKET_CONFIG
-
-    const parsed: unknown = JSON.parse(raw)
+    const parsed = readStorageJson(storage, CONFIG_STORAGE_KEY)
     if (!isObject(parsed)) return DEFAULT_MARKET_CONFIG
 
     const candidate = parsed as Partial<PersistedMarketConfig>
@@ -182,7 +237,7 @@ export function loadMarketConfig(): MarketConfig {
 }
 
 export function saveMarketConfig(config: MarketConfig): void {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return
 
   try {
@@ -191,21 +246,18 @@ export function saveMarketConfig(config: MarketConfig): void {
       config,
     }
 
-    storage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(payload))
+    writeStorageJson(storage, CONFIG_STORAGE_KEY, payload)
   } catch {
     // El cálculo sigue funcionando aunque el navegador bloquee storage.
   }
 }
 
 export function loadMarketCatalog(): readonly MarketDefinition[] {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return []
 
   try {
-    const raw = storage.getItem(CATALOG_STORAGE_KEY)
-    if (!raw) return []
-
-    const parsed: unknown = JSON.parse(raw)
+    const parsed = readStorageJson(storage, CATALOG_STORAGE_KEY)
     if (!isObject(parsed)) return []
 
     const candidate = parsed as Partial<PersistedMarketCatalog>
@@ -230,7 +282,7 @@ export function loadMarketCatalog(): readonly MarketDefinition[] {
 }
 
 export function saveMarketCatalog(markets: readonly MarketDefinition[]): void {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return
 
   try {
@@ -239,43 +291,39 @@ export function saveMarketCatalog(markets: readonly MarketDefinition[]): void {
       markets: markets.filter((market) => market.enabled),
     }
 
-    storage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(payload))
+    writeStorageJson(storage, CATALOG_STORAGE_KEY, payload)
   } catch {
     // El catálogo remoto puede seguir utilizándose aunque falle localStorage.
   }
 }
 
 export function loadMarketCache(): Map<string, MarketPriceSnapshot> {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   const result = new Map<string, MarketPriceSnapshot>()
   if (!storage) return result
 
-  const oldestAllowed = Date.now() - MAX_CACHE_AGE_MS
   const keys = [CACHE_STORAGE_KEY, ...LEGACY_CACHE_STORAGE_KEYS]
 
   for (const storageKey of keys) {
     try {
-      const raw = storage.getItem(storageKey)
-      if (!raw) continue
+      const loaded = readPersistedMarketCache(storage, storageKey)
+      if (!loaded) continue
 
-      const parsed: unknown = JSON.parse(raw)
-      if (!isObject(parsed)) continue
-
-      const candidate = parsed as Partial<PersistedMarketCache>
-      if (!Array.isArray(candidate.snapshots)) continue
-
-      for (const entry of candidate.snapshots) {
+      for (const entry of loaded.snapshots) {
         if (!Array.isArray(entry) || entry.length !== 2) continue
 
         const [key, storedSnapshot] = entry
         const snapshot = normalizeStoredSnapshot(storedSnapshot)
         if (typeof key !== 'string' || !snapshot) continue
-        if (Date.parse(snapshot.fetchedAt) < oldestAllowed) continue
+        if (!isFreshTimestamp(snapshot.fetchedAt, MAX_CACHE_AGE_MS)) continue
 
         result.set(key, snapshot)
       }
 
-      if (result.size > 0) break
+      if (result.size > 0) {
+        persistMigratedMarketCache(storage, loaded, result)
+        break
+      }
     } catch {
       // Intenta con la siguiente versión legado.
     }
@@ -287,50 +335,45 @@ export function loadMarketCache(): Map<string, MarketPriceSnapshot> {
 export function saveMarketCache(
   snapshots: ReadonlyMap<string, MarketPriceSnapshot>,
 ): void {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return
 
   try {
-    const recentEntries = Array.from(snapshots.entries())
-      .sort(
-        (left, right) =>
-          Date.parse(right[1].fetchedAt) - Date.parse(left[1].fetchedAt),
-      )
-      .slice(0, MAX_CACHE_ENTRIES)
+    const recentEntries = newestEntries(
+      Array.from(snapshots.entries()),
+      MAX_CACHE_ENTRIES,
+      (snapshot) => snapshot.fetchedAt,
+    )
 
     const payload: PersistedMarketCache = {
       version: CACHE_STORAGE_VERSION,
       snapshots: recentEntries,
     }
 
-    storage.setItem(CACHE_STORAGE_KEY, JSON.stringify(payload))
+    writeStorageJson(storage, CACHE_STORAGE_KEY, payload)
   } catch {
     // Una cuota de almacenamiento llena no debe romper el cálculo.
   }
 }
 
 export function clearStoredMarketCache(): void {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return
 
   try {
-    storage.removeItem(CACHE_STORAGE_KEY)
-    for (const key of LEGACY_CACHE_STORAGE_KEYS) storage.removeItem(key)
+    removeStorageKeys(storage, [CACHE_STORAGE_KEY, ...LEGACY_CACHE_STORAGE_KEYS])
   } catch {
     // Sin acción.
   }
 }
 
 export function loadManualSellPrices(): Map<string, number> {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   const result = new Map<string, number>()
   if (!storage) return result
 
   try {
-    const raw = storage.getItem(SELL_OVERRIDES_STORAGE_KEY)
-    if (!raw) return result
-
-    const parsed: unknown = JSON.parse(raw)
+    const parsed = readStorageJson(storage, SELL_OVERRIDES_STORAGE_KEY)
     if (!isObject(parsed)) return result
 
     const candidate = parsed as Partial<PersistedSellOverrides>
@@ -366,7 +409,7 @@ export function loadManualSellPrices(): Map<string, number> {
 export function saveManualSellPrices(
   prices: ReadonlyMap<string, number>,
 ): void {
-  const storage = getLocalStorage()
+  const storage = getBrowserLocalStorage()
   if (!storage) return
 
   try {
@@ -375,7 +418,7 @@ export function saveManualSellPrices(
       prices: Array.from(prices.entries()),
     }
 
-    storage.setItem(SELL_OVERRIDES_STORAGE_KEY, JSON.stringify(payload))
+    writeStorageJson(storage, SELL_OVERRIDES_STORAGE_KEY, payload)
   } catch {
     // Sin acción.
   }
