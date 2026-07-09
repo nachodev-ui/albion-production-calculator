@@ -5,6 +5,7 @@ import {
   CENTRAL_MARKET_API_URL,
   MARKET_REQUEST_TIMEOUT_MS,
 } from './localMarketApi'
+import { runWithMarketSourceCooldown } from './marketSourceCooldown'
 
 function isMarketType(value: unknown): value is MarketType {
   return value === 'regular' || value === 'black-market'
@@ -37,29 +38,32 @@ function mapMarket(value: unknown): MarketDefinition | null {
 export async function fetchCentralMarkets(
   signal?: AbortSignal,
 ): Promise<readonly MarketDefinition[]> {
-  const payload = await fetchJson<CentralMarketCatalogEnvelope>(
-    `${CENTRAL_MARKET_API_URL}/markets`,
-    {
-      signal,
-      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
-      headers: { Accept: 'application/json' },
-    },
-  )
+  return runWithMarketSourceCooldown('central-api', async () => {
+    const payload = await fetchJson<CentralMarketCatalogEnvelope>(
+      `${CENTRAL_MARKET_API_URL}/markets`,
+      {
+        signal,
+        timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+        retryAttempts: 1,
+        headers: { Accept: 'application/json' },
+      },
+    )
 
-  const data = payload.data
+    const data = payload.data
 
-  if (!Array.isArray(data)) {
-    throw new Error('La API central no devolvió la lista de mercados')
-  }
+    if (!Array.isArray(data)) {
+      throw new Error('La API central no devolvió la lista de mercados')
+    }
 
-  const markets = data.flatMap((entry) => {
-    const market = mapMarket(entry)
-    return market?.enabled ? [market] : []
+    const markets = data.flatMap((entry) => {
+      const market = mapMarket(entry)
+      return market?.enabled ? [market] : []
+    })
+
+    if (markets.length === 0) {
+      throw new Error('La API central no tiene mercados habilitados')
+    }
+
+    return markets
   })
-
-  if (markets.length === 0) {
-    throw new Error('La API central no tiene mercados habilitados')
-  }
-
-  return markets
 }
