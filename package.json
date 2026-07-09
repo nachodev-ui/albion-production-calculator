@@ -16,7 +16,8 @@
     "contracts:lint": "redocly lint contracts/central-api/openapi.yaml contracts/local-receiver/openapi.json",
     "contracts:generate": "openapi-typescript contracts/central-api/openapi.yaml -o src/shared/contracts/central-api.generated.ts && openapi-typescript contracts/local-receiver/openapi.json -o src/shared/contracts/local-receiver.generated.ts",
     "contracts:compat": "tsx scripts/check-market-contracts.ts",
-    "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && pnpm contracts:compat && git diff --exit-code -- src/shared/contracts"
+    "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && pnpm contracts:compat && git diff --exit-code -- src/shared/contracts",
+    "security:check": "tsx scripts/check-public-security.ts"
   },
   "dependencies": {
     "react": "^19.2.6",

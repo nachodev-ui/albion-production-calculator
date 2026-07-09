@@ -46,6 +46,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate API contracts
+        run: pnpm contracts:check
+
+      - name: Validate public security config
+        run: pnpm security:check
+
       - name: Run lint
         run: pnpm lint
 

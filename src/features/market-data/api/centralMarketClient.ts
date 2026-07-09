@@ -1,10 +1,15 @@
+import { fetchJson } from '@shared/http/fetchJson'
 import type {
   AlbionServer,
   MarketCityId,
   MarketPriceSnapshot,
 } from '../types/MarketPrice'
 import { buildMarketCacheKey } from '../types/MarketPrice'
-import { CENTRAL_MARKET_API_URL, MARKET_SERVER_IDS } from './localMarketApi'
+import {
+  CENTRAL_MARKET_API_URL,
+  MARKET_REQUEST_TIMEOUT_MS,
+  MARKET_SERVER_IDS,
+} from './localMarketApi'
 import { mapMarketPriceRow, parsePriceRows } from './marketResponseMapping'
 
 interface FetchCurrentCentralPricesParams {
@@ -31,28 +36,28 @@ export async function fetchCurrentCentralPrices({
     return new Map()
   }
 
-  const response = await fetch(`${CENTRAL_MARKET_API_URL}/prices/query`, {
-    method: 'POST',
-    signal,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  const payload = await fetchJson<unknown>(
+    `${CENTRAL_MARKET_API_URL}/prices/query`,
+    {
+      method: 'POST',
+      signal,
+      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        server: MARKET_SERVER_IDS[server],
+        marketKeys: uniqueCities,
+        entries: uniqueItems.map((itemIdentifier) => ({
+          itemIdentifier,
+          quality,
+        })),
+      }),
     },
-    body: JSON.stringify({
-      server: MARKET_SERVER_IDS[server],
-      marketKeys: uniqueCities,
-      entries: uniqueItems.map((itemIdentifier) => ({
-        itemIdentifier,
-        quality,
-      })),
-    }),
-  })
+  )
 
-  if (!response.ok) {
-    throw new Error(`La API central respondió con estado ${response.status}`)
-  }
-
-  const rows = parsePriceRows(await response.json())
+  const rows = parsePriceRows(payload)
   const fetchedAt = new Date().toISOString()
   const result = new Map<string, MarketPriceSnapshot>()
 
