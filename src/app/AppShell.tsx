@@ -67,7 +67,10 @@ export function AppShell({
           </div>
         )}
 
-        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <main
+          aria-label="Contenido principal"
+          className="relative min-h-0 min-w-0 flex-1 overflow-y-auto"
+        >
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 overflow-hidden"
