@@ -62,4 +62,11 @@ jobs:
         run: pnpm build
 
       - name: Check bundle budget
-        run: pnpm bundle:check
+        run: pnpm bundle:check -- --write-report
+
+      - name: Upload bundle report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: artifacts/performance/bundle-report.json
+          if-no-files-found: error
