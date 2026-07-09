@@ -57,6 +57,17 @@ La separación entre bundle de aplicación y media estática evita que imágenes
 
 Si una métrica presupuestada supera el límite configurado, el comando falla con código distinto de cero.
 
+## Lazy loading aplicado
+
+El primer corte de lazy loading mantiene el shell, encabezado, estado vacío y controles básicos en el render inicial. Se difieren los bloques que no son necesarios antes de interactuar:
+
+- catálogo lateral de crafteo;
+- panel completo de receta, incluyendo historial, gráficos, optimizador, comparación de recetas y acciones de resumen;
+- módulo de presets;
+- módulo de refinamiento en estado próximamente.
+
+Cada bloque lazy usa `Suspense` con fallback visual para evitar pantallas en blanco mientras Vite descarga el chunk correspondiente.
+
 ## CI
 
 El workflow principal ejecuta:
@@ -77,10 +88,10 @@ Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del pr
 
 ## Próximos pasos del Paso 4
 
-Después de esta línea base, el orden recomendado es:
+Después de este primer lazy loading, el orden recomendado es:
 
-1. lazy loading de componentes no críticos;
-2. revisión del optimizador fuera del render crítico si la medición lo justifica;
-3. pruebas de accesibilidad;
-4. pruebas de integración de UI;
-5. documentación adicional en CI.
+1. medir el reporte generado por `pnpm bundle:analyze`;
+2. revisar si el optimizador debe moverse a un chunk propio más granular;
+3. endurecer `quality/bundle-budget.json` contra la nueva línea base;
+4. agregar pruebas de accesibilidad;
+5. agregar pruebas de integración de UI.
