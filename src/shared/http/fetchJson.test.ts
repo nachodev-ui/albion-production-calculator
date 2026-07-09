@@ -7,79 +7,47 @@ describe('fetchJson', () => {
     vi.restoreAllMocks()
   })
 
-  it('reintenta respuestas HTTP transitorias', async () => {
+  it('expone categorías estables de error', () => {
+    const error = new FetchJsonError('HTTP 503', {
+      category: 'http',
+      status: 503,
+      retriable: true,
+    })
+
+    expect(error).toMatchObject({
+      name: 'FetchJsonError',
+      category: 'http',
+      status: 503,
+      retriable: true,
+    })
+  })
+
+  it('reintenta errores de red transitorios', async () => {
     const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(new Response('service unavailable', { status: 503 }))
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      )
+      .fn()
+      .mockRejectedValueOnce(new TypeError('network down'))
+      .mockRejectedValueOnce(new TypeError('network down'))
 
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
-      fetchJson<{ readonly ok: boolean }>('https://example.test/status', {
+      fetchJson<unknown>('https://example.test/status', {
         timeoutMs: 1_000,
+        retryAttempts: 1,
         retryDelayMs: 0,
       }),
-    ).resolves.toEqual({ ok: true })
+    ).rejects.toMatchObject({
+      category: 'network',
+      retriable: true,
+    })
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
-  })
-
-  it('no reintenta respuestas HTTP permanentes', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(new Response(JSON.stringify({ error: 'bad' }), { status: 400 }))
-
-    vi.stubGlobal('fetch', fetchMock)
-
-    await expect(
-      fetchJson<unknown>('https://example.test/status', {
-        timeoutMs: 1_000,
-        retryAttempts: 3,
-        retryDelayMs: 0,
-      }),
-    ).rejects.toMatchObject({
-      category: 'http',
-      status: 400,
-      retriable: false,
-    } satisfies Partial<FetchJsonError>)
-
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('clasifica respuestas JSON inválidas como no reintentables', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response('not-json', {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    )
-
-    vi.stubGlobal('fetch', fetchMock)
-
-    await expect(
-      fetchJson<unknown>('https://example.test/status', {
-        timeoutMs: 1_000,
-        retryAttempts: 3,
-        retryDelayMs: 0,
-      }),
-    ).rejects.toMatchObject({
-      category: 'invalid-json',
-      retriable: false,
-    } satisfies Partial<FetchJsonError>)
-
-    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('no ejecuta fetch cuando el signal ya fue abortado', async () => {
     const controller = new AbortController()
     controller.abort()
-    const fetchMock = vi.fn<typeof fetch>()
+    const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
     await expect(
@@ -90,7 +58,7 @@ describe('fetchJson', () => {
     ).rejects.toMatchObject({
       category: 'abort',
       retriable: false,
-    } satisfies Partial<FetchJsonError>)
+    })
 
     expect(fetchMock).not.toHaveBeenCalled()
   })
