@@ -1,6 +1,6 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import type { Item } from '@core/domain/entities/Item'
-import { JsonItemRepository } from '@data/repositories/JsonItemRepository'
+import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { AppHeader } from './app/AppHeader'
 import { AppShell } from './app/AppShell'
 import { CatalogIcon } from './app/AppIcons'
@@ -27,7 +27,13 @@ const RefiningComingSoonPage = lazy(() =>
   ),
 )
 
-const repository = new JsonItemRepository()
+async function loadItemRepository(): Promise<ItemRepository> {
+  const { JsonItemRepository } = await import(
+    '@data/repositories/JsonItemRepository'
+  )
+
+  return new JsonItemRepository()
+}
 
 function SidebarFallback() {
   return (
@@ -59,7 +65,31 @@ function ModuleFallback({ label }: { readonly label: string }) {
 function App() {
   const [activeModule, setActiveModule] = useState<AppModule>('crafting')
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
+  const [repository, setRepository] = useState<ItemRepository | null>(null)
+  const [repositoryError, setRepositoryError] = useState<string | null>(null)
   const [isCatalogOpen, setIsCatalogOpen] = useState(false)
+
+  useEffect(() => {
+    let isActive = true
+
+    void loadItemRepository()
+      .then((nextRepository) => {
+        if (!isActive) return
+        setRepository(nextRepository)
+      })
+      .catch((error: unknown) => {
+        if (!isActive) return
+        setRepositoryError(
+          error instanceof Error
+            ? error.message
+            : 'No fue posible cargar el catálogo de ítems.',
+        )
+      })
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   function navigate(module: AppModule) {
     setActiveModule(module)
@@ -74,20 +104,24 @@ function App() {
   const header = (
     <AppHeader
       activeModule={activeModule}
-      itemCount={repository.getAll().length}
+      itemCount={repository?.getAll().length ?? 0}
       onNavigate={navigate}
       onOpenCatalog={() => setIsCatalogOpen(true)}
     />
   )
 
   const catalog = activeModule === 'crafting' ? (
-    <Suspense fallback={<SidebarFallback />}>
-      <ItemBrowserPanel
-        repository={repository}
-        selectedId={selectedItem?.id ?? null}
-        onSelect={selectItem}
-      />
-    </Suspense>
+    repository ? (
+      <Suspense fallback={<SidebarFallback />}>
+        <ItemBrowserPanel
+          repository={repository}
+          selectedId={selectedItem?.id ?? null}
+          onSelect={selectItem}
+        />
+      </Suspense>
+    ) : (
+      <SidebarFallback />
+    )
   ) : undefined
 
   return (
@@ -116,12 +150,22 @@ function App() {
             }
           />
 
-          {selectedItem ? (
+          {repositoryError ? (
+            <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
+              <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+                {repositoryError}
+              </p>
+            </div>
+          ) : selectedItem && repository ? (
             <ItemDetailPanel
               key={selectedItem.id}
               item={selectedItem}
               repository={repository}
             />
+          ) : selectedItem ? (
+            <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
+              <ModuleFallback label="calculadora de producción" />
+            </div>
           ) : (
             <EmptyDetailState onBrowseCatalog={() => setIsCatalogOpen(true)} />
           )}
