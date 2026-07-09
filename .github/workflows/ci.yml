@@ -62,9 +62,10 @@ jobs:
         run: pnpm build
 
       - name: Check bundle budget
-        run: pnpm bundle:check -- --write-report
+        run: pnpm exec tsx scripts/check-bundle-budget.ts --write-report
 
       - name: Upload bundle report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bundle-report
