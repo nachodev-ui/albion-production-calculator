@@ -17,6 +17,7 @@ export function useMarketHistory({
   const status = useMarketHistoryStore((state) => state.status)
   const error = useMarketHistoryStore((state) => state.error)
   const warnings = useMarketHistoryStore((state) => state.warnings)
+  const lastAttempt = useMarketHistoryStore((state) => state.lastAttempt)
   const refreshHistory = useMarketHistoryStore(
     (state) => state.refreshHistory,
   )
@@ -60,6 +61,7 @@ export function useMarketHistory({
     status,
     error,
     warnings,
+    lastAttempt,
     refresh,
     clearCache,
     hasCachedHistory: cacheKey ? snapshots.has(cacheKey) : false,
