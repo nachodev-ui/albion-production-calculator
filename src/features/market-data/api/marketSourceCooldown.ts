@@ -29,6 +29,8 @@ const sourceCooldowns = new Map<
   MarketSourceCooldownState
 >()
 
+let forceEnabledForTests = false
+
 export class MarketSourceCooldownError extends Error {
   readonly source: MarketNetworkSource
   readonly blockedUntil: number
@@ -47,6 +49,10 @@ export class MarketSourceCooldownError extends Error {
     this.remainingMs = snapshot.remainingMs
     this.reason = snapshot.reason
   }
+}
+
+function isCooldownRuntimeEnabled(): boolean {
+  return import.meta.env.MODE !== 'test' || forceEnabledForTests
 }
 
 function calculateCooldownMs(failureCount: number): number {
@@ -135,6 +141,10 @@ export async function runWithMarketSourceCooldown<T>(
   operation: () => Promise<T>,
   now: () => number = Date.now,
 ): Promise<T> {
+  if (!isCooldownRuntimeEnabled()) {
+    return operation()
+  }
+
   const cooldown = getMarketSourceCooldown(source, now())
   if (cooldown) throw new MarketSourceCooldownError(cooldown)
 
@@ -148,6 +158,11 @@ export async function runWithMarketSourceCooldown<T>(
   }
 }
 
+export function enableMarketSourceCooldownForTests(): void {
+  forceEnabledForTests = true
+}
+
 export function resetMarketSourceCooldownForTests(): void {
   sourceCooldowns.clear()
+  forceEnabledForTests = false
 }
