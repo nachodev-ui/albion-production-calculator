@@ -8,6 +8,7 @@ import type {
   MarketCityId,
   MarketDataSource,
   MarketDefinition,
+  MarketLastAttempt,
   MarketQuality,
   MarketRequestStatus,
 } from '../types/MarketPrice'
@@ -23,8 +24,10 @@ import {
   getMarketSourceStatuses,
   type MarketSourceRuntimeStatus,
 } from '../api/marketSourceCooldown'
+import { useMarketHistoryStore } from '../store/marketHistoryStore'
 import { buildMarketHistoryView } from '../utils/marketHistoryAnalytics'
 import { MarketHistoryChart } from './MarketHistoryChart'
+import { MarketLastAttemptBadge } from './MarketLastAttemptBadge'
 
 interface MarketHistoryCardProps {
   readonly itemName: string
@@ -35,6 +38,7 @@ interface MarketHistoryCardProps {
   readonly status: MarketRequestStatus
   readonly error: string | null
   readonly warnings: readonly string[]
+  readonly lastAttempt?: MarketLastAttempt | null
   readonly hasCachedHistory: boolean
   readonly isComparing: boolean
   readonly onComparisonChange: (patch: Partial<MarketConfig>) => void
@@ -208,6 +212,12 @@ function getHistoryCacheBadge(
   }
 }
 
+function getHistoryRefreshButtonLabel(status: MarketRequestStatus): string {
+  if (status === 'loading') return 'Actualizando…'
+  if (status === 'error') return 'Reintentar historial'
+  return 'Actualizar historial'
+}
+
 export function MarketHistoryCard({
   itemName,
   historyConfig,
@@ -217,6 +227,7 @@ export function MarketHistoryCard({
   status,
   error,
   warnings,
+  lastAttempt,
   hasCachedHistory,
   isComparing,
   onComparisonChange,
@@ -227,6 +238,8 @@ export function MarketHistoryCard({
 }: MarketHistoryCardProps) {
   const [periodDays, setPeriodDays] = useState<MarketHistoryPeriodDays>(7)
   const [sourceStatusNow, setSourceStatusNow] = useState(() => Date.now())
+  const storedLastAttempt = useMarketHistoryStore((state) => state.lastAttempt)
+  const visibleLastAttempt = lastAttempt ?? storedLastAttempt
   const view = useMemo(
     () => buildMarketHistoryView(snapshot, periodDays),
     [periodDays, snapshot],
@@ -292,6 +305,11 @@ export function MarketHistoryCard({
             >
               {cacheBadge.label}
             </span>
+
+            <MarketLastAttemptBadge
+              label="Último historial"
+              attempt={visibleLastAttempt}
+            />
           </div>
         </div>
 
@@ -316,10 +334,17 @@ export function MarketHistoryCard({
             onClick={onRefresh}
             className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
-            Actualizar historial
+            {getHistoryRefreshButtonLabel(status)}
           </button>
         </div>
       </div>
+
+      {visibleLastAttempt && (
+        <div className="mt-3 rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted">
+          <p className="font-medium text-text">Último intento de historial</p>
+          <p className="mt-1">{visibleLastAttempt.message}</p>
+        </div>
+      )}
 
       <div className="mt-4 rounded-lg border border-border bg-surface p-3">
         {!isComparing ? (
