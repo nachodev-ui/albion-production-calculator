@@ -24,6 +24,7 @@ import {
   getMarketSourceStatuses,
   type MarketSourceRuntimeStatus,
 } from '../api/marketSourceCooldown'
+import { useMarketHistoryStore } from '../store/marketHistoryStore'
 import { buildMarketHistoryView } from '../utils/marketHistoryAnalytics'
 import { MarketHistoryChart } from './MarketHistoryChart'
 import { MarketLastAttemptBadge } from './MarketLastAttemptBadge'
@@ -237,6 +238,8 @@ export function MarketHistoryCard({
 }: MarketHistoryCardProps) {
   const [periodDays, setPeriodDays] = useState<MarketHistoryPeriodDays>(7)
   const [sourceStatusNow, setSourceStatusNow] = useState(() => Date.now())
+  const storedLastAttempt = useMarketHistoryStore((state) => state.lastAttempt)
+  const visibleLastAttempt = lastAttempt ?? storedLastAttempt
   const view = useMemo(
     () => buildMarketHistoryView(snapshot, periodDays),
     [periodDays, snapshot],
@@ -305,7 +308,7 @@ export function MarketHistoryCard({
 
             <MarketLastAttemptBadge
               label="Último historial"
-              attempt={lastAttempt ?? null}
+              attempt={visibleLastAttempt}
             />
           </div>
         </div>
@@ -336,10 +339,10 @@ export function MarketHistoryCard({
         </div>
       </div>
 
-      {lastAttempt && (
+      {visibleLastAttempt && (
         <div className="mt-3 rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted">
           <p className="font-medium text-text">Último intento de historial</p>
-          <p className="mt-1">{lastAttempt.message}</p>
+          <p className="mt-1">{visibleLastAttempt.message}</p>
         </div>
       )}
 
