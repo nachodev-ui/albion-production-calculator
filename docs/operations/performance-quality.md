@@ -92,11 +92,23 @@ El primer corte de lazy loading mantiene el shell, encabezado, estado vacío y c
 
 Cada bloque lazy usa `Suspense` o carga dinámica con fallback visual para evitar pantallas en blanco mientras Vite descarga el chunk correspondiente.
 
+## Pruebas de accesibilidad
+
+Las pruebas de accesibilidad actuales se ejecutan con Vitest en entorno Node usando `react-dom/server`. No reemplazan una auditoría con navegador real, pero sí protegen regresiones básicas sin añadir dependencias nuevas:
+
+- navegación principal con `aria-label`, `aria-current` y botones nativos;
+- acciones del header con nombres accesibles;
+- drawer móvil del catálogo con `role="dialog"`, `aria-modal` y botones de cierre etiquetados;
+- landmark principal con nombre accesible;
+- estados de carga lazy visibles;
+- selector de encantamiento como grupo etiquetado, con botones nativos, `aria-pressed` y niveles no soportados deshabilitados sin ocultarlos.
+
 ## CI
 
 El workflow principal ejecuta:
 
 ```text
+pnpm test
 pnpm build
 pnpm exec tsx scripts/check-bundle-budget.ts --write-report
 ```
@@ -114,9 +126,8 @@ Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del pr
 
 ## Próximos pasos del Paso 4
 
-Después de esta medición, el orden recomendado es:
+Después de esta medición y las pruebas de accesibilidad, el orden recomendado es:
 
-1. pruebas de accesibilidad;
-2. pruebas de integración de UI;
-3. si esas pruebas detectan lentitud real, mover optimizador/historial a chunks más granulares;
-4. endurecer nuevamente `quality/bundle-budget.json` cuando el producto se estabilice.
+1. pruebas de integración de UI;
+2. si esas pruebas detectan lentitud real, mover optimizador/historial a chunks más granulares;
+3. endurecer nuevamente `quality/bundle-budget.json` cuando el producto se estabilice.
