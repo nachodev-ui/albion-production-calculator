@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type {
   MarketHistoryPeriodDays,
   MarketHistorySnapshot,
@@ -8,6 +8,7 @@ import type {
   MarketCityId,
   MarketDataSource,
   MarketDefinition,
+  MarketLastAttempt,
   MarketQuality,
   MarketRequestStatus,
 } from '../types/MarketPrice'
@@ -19,8 +20,14 @@ import {
   formatMarketQuality,
   getMarketName,
 } from '../types/MarketPrice'
+import {
+  getMarketSourceStatuses,
+  type MarketSourceRuntimeStatus,
+} from '../api/marketSourceCooldown'
+import { useMarketHistoryStore } from '../store/marketHistoryStore'
 import { buildMarketHistoryView } from '../utils/marketHistoryAnalytics'
 import { MarketHistoryChart } from './MarketHistoryChart'
+import { MarketLastAttemptBadge } from './MarketLastAttemptBadge'
 
 interface MarketHistoryCardProps {
   readonly itemName: string
@@ -31,6 +38,7 @@ interface MarketHistoryCardProps {
   readonly status: MarketRequestStatus
   readonly error: string | null
   readonly warnings: readonly string[]
+  readonly lastAttempt?: MarketLastAttempt | null
   readonly hasCachedHistory: boolean
   readonly isComparing: boolean
   readonly onComparisonChange: (patch: Partial<MarketConfig>) => void
@@ -138,6 +146,78 @@ function getStatusLabel(
   }
 }
 
+function formatCooldownRemaining(remainingMs: number): string {
+  const seconds = Math.max(1, Math.ceil(remainingMs / 1000))
+  if (seconds < 60) return `${seconds}s`
+
+  return `${Math.ceil(seconds / 60)}min`
+}
+
+function getHistoryNetworkSourceBadge(
+  status: MarketSourceRuntimeStatus,
+  snapshot: MarketHistorySnapshot | null,
+): { readonly label: string; readonly className: string; readonly title: string } {
+  const sourceLabel = MARKET_DATA_SOURCE_LABELS[status.source]
+  const isActive = snapshot?.source === status.source
+
+  if (status.cooldown) {
+    const remaining = formatCooldownRemaining(status.cooldown.remainingMs)
+
+    return {
+      label: `${sourceLabel}: cooldown ${remaining}`,
+      className: 'border-accent-border bg-accent-muted text-accent',
+      title: `${sourceLabel} está temporalmente en cooldown para historial. Motivo: ${status.cooldown.reason}. Fallos consecutivos: ${status.cooldown.failureCount}.`,
+    }
+  }
+
+  if (isActive) {
+    return {
+      label: `${sourceLabel}: historial activo`,
+      className: getSourceClassName(status.source),
+      title: `${sourceLabel} aportó el historial mostrado en el gráfico.`,
+    }
+  }
+
+  return {
+    label: `${sourceLabel}: disponible`,
+    className: 'border-border bg-surface-raised text-text-faint',
+    title: `${sourceLabel} no está en cooldown y queda disponible para el próximo intento de historial.`,
+  }
+}
+
+function getHistoryCacheBadge(
+  snapshot: MarketHistorySnapshot | null,
+  hasCachedHistory: boolean,
+): { readonly label: string; readonly className: string; readonly title: string } {
+  if (snapshot?.source === 'browser-cache') {
+    return {
+      label: 'Caché histórica: en uso',
+      className: getSourceClassName('browser-cache'),
+      title: 'El gráfico usa historial restaurado desde el caché del navegador.',
+    }
+  }
+
+  if (hasCachedHistory) {
+    return {
+      label: 'Caché histórica: reserva disponible',
+      className: 'border-border bg-surface-raised text-text-faint',
+      title: 'Hay historial guardado para esta combinación y puede mantenerse si las fuentes de red fallan.',
+    }
+  }
+
+  return {
+    label: 'Caché histórica: sin datos',
+    className: 'border-border bg-surface-raised text-text-faint',
+    title: 'Todavía no hay historial guardado para esta combinación en este navegador.',
+  }
+}
+
+function getHistoryRefreshButtonLabel(status: MarketRequestStatus): string {
+  if (status === 'loading') return 'Actualizando…'
+  if (status === 'error') return 'Reintentar historial'
+  return 'Actualizar historial'
+}
+
 export function MarketHistoryCard({
   itemName,
   historyConfig,
@@ -147,6 +227,7 @@ export function MarketHistoryCard({
   status,
   error,
   warnings,
+  lastAttempt,
   hasCachedHistory,
   isComparing,
   onComparisonChange,
@@ -156,20 +237,36 @@ export function MarketHistoryCard({
   onRefresh,
 }: MarketHistoryCardProps) {
   const [periodDays, setPeriodDays] = useState<MarketHistoryPeriodDays>(7)
+  const [sourceStatusNow, setSourceStatusNow] = useState(() => Date.now())
+  const storedLastAttempt = useMarketHistoryStore((state) => state.lastAttempt)
+  const visibleLastAttempt = lastAttempt ?? storedLastAttempt
   const view = useMemo(
     () => buildMarketHistoryView(snapshot, periodDays),
     [periodDays, snapshot],
+  )
+  const sourceStatuses = useMemo(
+    () => getMarketSourceStatuses(sourceStatusNow),
+    [sourceStatusNow, status],
   )
   const statusLabel = getStatusLabel(
     status,
     hasCachedHistory,
     snapshot?.source ?? null,
   )
+  const cacheBadge = getHistoryCacheBadge(snapshot, hasCachedHistory)
   const summary = view.summary
   const lastBucketAt = snapshot?.points.at(-1)?.timestamp ?? null
   const comparisonMatchesSale =
     historyConfig.saleCity === saleConfig.saleCity &&
     historyConfig.quality === saleConfig.quality
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setSourceStatusNow(Date.now())
+    }, 5 * 1000)
+
+    return () => window.clearInterval(interval)
+  }, [])
 
   return (
     <section className="mt-4 rounded-xl border border-border bg-surface-raised p-4">
@@ -183,6 +280,37 @@ export function MarketHistoryCard({
             {MARKET_SERVER_LABELS[historyConfig.server]} · calidad{' '}
             {formatMarketQuality(historyConfig.quality)}
           </p>
+
+          <div
+            className="mt-3 flex flex-wrap gap-2"
+            aria-label="Estado de fuentes de historial"
+          >
+            {sourceStatuses.map((sourceStatus) => {
+              const badge = getHistoryNetworkSourceBadge(sourceStatus, snapshot)
+
+              return (
+                <span
+                  key={sourceStatus.source}
+                  title={badge.title}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${badge.className}`}
+                >
+                  {badge.label}
+                </span>
+              )
+            })}
+
+            <span
+              title={cacheBadge.title}
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${cacheBadge.className}`}
+            >
+              {cacheBadge.label}
+            </span>
+
+            <MarketLastAttemptBadge
+              label="Último historial"
+              attempt={visibleLastAttempt}
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -206,10 +334,17 @@ export function MarketHistoryCard({
             onClick={onRefresh}
             className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
-            Actualizar historial
+            {getHistoryRefreshButtonLabel(status)}
           </button>
         </div>
       </div>
+
+      {visibleLastAttempt && (
+        <div className="mt-3 rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted">
+          <p className="font-medium text-text">Último intento de historial</p>
+          <p className="mt-1">{visibleLastAttempt.message}</p>
+        </div>
+      )}
 
       <div className="mt-4 rounded-lg border border-border bg-surface p-3">
         {!isComparing ? (
@@ -300,8 +435,8 @@ export function MarketHistoryCard({
             </div>
 
             <p className="mt-3 border-t border-border pt-2 text-[11px] leading-relaxed text-text-faint">
-              Esta comparación solo modifica el gráfico. El precio de venta y
-              la rentabilidad no cambian hasta que pulses “Aplicar como configuración de venta”.
+              Esta comparación solo modifica el gráfico. El precio de venta y la
+              rentabilidad no cambian hasta que pulses “Aplicar como configuración de venta”.
             </p>
           </div>
         )}
@@ -414,21 +549,21 @@ export function MarketHistoryCard({
       <div className="mt-4 space-y-1 border-t border-border pt-3 text-[11px] leading-relaxed text-text-faint">
         <p>
           El precio promedio está ponderado por las unidades registradas. La
-          volatilidad corresponde a la desviación estándar de los promedios
-          diarios dividida por su media.
+          volatilidad corresponde a la desviación estándar de los promedios diarios
+          dividida por su media.
         </p>
         <p>
-          El cliente de Albion entrega este historial como datos agregados de
-          ventas. Por eso cambiar entre “Vender mediante orden” y “Vender inmediatamente” no
+          El cliente de Albion entrega este historial como datos agregados de ventas.
+          Por eso cambiar entre “Vender mediante orden” y “Vender inmediatamente” no
           modifica el gráfico; sí lo hacen la ciudad y la calidad del producto.
         </p>
         <p>
-          El volumen no representa todas las órdenes de compra ni garantiza
-          que esa cantidad se venda nuevamente en el mismo plazo.
+          El volumen no representa todas las órdenes de compra ni garantiza que esa
+          cantidad se venda nuevamente en el mismo plazo.
         </p>
         <p>
-          Se muestran días UTC completos para evitar que el día actual,
-          todavía incompleto, reduzca artificialmente el volumen promedio.
+          Se muestran días UTC completos para evitar que el día actual, todavía
+          incompleto, reduzca artificialmente el volumen promedio.
         </p>
       </div>
     </section>

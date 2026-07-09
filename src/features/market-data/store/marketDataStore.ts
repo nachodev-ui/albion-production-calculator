@@ -8,6 +8,11 @@ import type {
   MarketPriceReadResult,
 } from '../api/marketReadService'
 import {
+  describeMarketCacheFallback,
+  describeMarketError,
+  isMarketRequestAbort,
+} from '../api/marketErrorMessages'
+import {
   loadMaterialPurchaseCities,
   saveMaterialPurchaseCities,
 } from '../storage/materialPurchaseCityStorage'
@@ -28,12 +33,15 @@ import type {
   MarketConfig,
   MarketDataSource,
   MarketDefinition,
+  MarketLastAttempt,
+  MarketLastAttemptKind,
   MarketPriceSnapshot,
   MarketPriceTarget,
   MarketRequestStatus,
   MaterialPurchaseCitiesByRoot,
 } from '../types/MarketPrice'
 import {
+  MARKET_DATA_SOURCE_LABELS,
   MATERIAL_MARKET_QUALITY,
   buildItemPriceKey,
   buildMarketCacheKey,
@@ -57,6 +65,7 @@ const MARKET_CACHE_TTL_MS = 5 * 60 * 1000
 let latestRequestId = 0
 let latestReportId = 0
 let marketCatalogPromise: Promise<MarketCatalogResult> | null = null
+let activePriceRefreshController: AbortController | null = null
 
 interface RefreshMarketPricesParams {
   readonly rootKey: string
@@ -83,7 +92,7 @@ interface ActiveRefreshTarget {
 
 interface RefreshRequestPlan {
   readonly combinationCount: number
-  readonly execute: () => Promise<MarketPriceReadResult>
+  readonly execute: (signal: AbortSignal) => Promise<MarketPriceReadResult>
 }
 
 interface MarketDataState {
@@ -93,6 +102,7 @@ interface MarketDataState {
   readonly catalogError: string | null
   readonly catalogSource: MarketDataSource | null
   readonly catalogWarnings: readonly string[]
+  readonly catalogLastAttempt: MarketLastAttempt | null
   readonly snapshots: ReadonlyMap<string, MarketPriceSnapshot>
   readonly manualSellPrices: ReadonlyMap<string, number>
   readonly materialPurchaseCitiesByRoot: MaterialPurchaseCitiesByRoot
@@ -100,6 +110,7 @@ interface MarketDataState {
   readonly error: string | null
   readonly refreshWarnings: readonly string[]
   readonly lastSuccessfulFetchAt: string | null
+  readonly priceLastAttempt: MarketLastAttempt | null
   readonly refreshProgress: MarketRefreshProgress | null
   readonly lastRefreshReport: MarketRefreshReport | null
   loadMarkets: () => Promise<readonly MarketDefinition[]>
@@ -119,6 +130,40 @@ interface MarketDataState {
     materialCities: ReadonlyMap<string, MarketCityId>,
     saleCity: MarketCityId | null,
   ) => void
+}
+
+function createRunningAttempt(
+  kind: MarketLastAttemptKind,
+  message: string,
+  startedAt = new Date().toISOString(),
+): MarketLastAttempt {
+  return {
+    kind,
+    status: 'running',
+    startedAt,
+    finishedAt: null,
+    message,
+  }
+}
+
+function finishAttempt(
+  kind: MarketLastAttemptKind,
+  status: 'success' | 'error',
+  startedAt: string,
+  message: string,
+): MarketLastAttempt {
+  return {
+    kind,
+    status,
+    startedAt,
+    finishedAt: new Date().toISOString(),
+    message,
+  }
+}
+
+function abortActivePriceRefresh(): void {
+  activePriceRefreshController?.abort()
+  activePriceRefreshController = null
 }
 
 function isSnapshotFresh(snapshot: MarketPriceSnapshot | undefined): boolean {
@@ -278,6 +323,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
   catalogError: null,
   catalogSource: initialMarkets.length > 0 ? 'browser-cache' : null,
   catalogWarnings: [],
+  catalogLastAttempt: null,
   snapshots: initialSnapshots,
   manualSellPrices: initialSellPrices,
   materialPurchaseCitiesByRoot: initialMaterialPurchaseCities,
@@ -285,6 +331,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
   error: null,
   refreshWarnings: [],
   lastSuccessfulFetchAt: null,
+  priceLastAttempt: null,
   refreshProgress: null,
   lastRefreshReport: null,
 
@@ -293,7 +340,16 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       return get().markets
     }
 
-    set({ catalogStatus: 'loading', catalogError: null })
+    const startedAt = new Date().toISOString()
+    set({
+      catalogStatus: 'loading',
+      catalogError: null,
+      catalogLastAttempt: createRunningAttempt(
+        'catalog',
+        'Cargando catálogo de mercados…',
+        startedAt,
+      ),
+    })
     marketCatalogPromise ??= fetchMarketsWithFallback(get().markets).finally(
       () => {
         marketCatalogPromise = null
@@ -348,18 +404,24 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
         catalogError: null,
         catalogSource: catalogResult.source,
         catalogWarnings: catalogResult.warnings,
+        catalogLastAttempt: finishAttempt(
+          'catalog',
+          'success',
+          startedAt,
+          `Catálogo cargado desde ${MARKET_DATA_SOURCE_LABELS[catalogResult.source]}.`,
+        ),
       })
       return markets
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'No fue posible cargar el catálogo de mercados'
+      const message = describeMarketError(error, {
+        fallback: 'No fue posible cargar el catálogo de mercados',
+      })
       set({
         catalogStatus: 'error',
         catalogError: message,
         catalogSource: null,
         catalogWarnings: [],
+        catalogLastAttempt: finishAttempt('catalog', 'error', startedAt, message),
       })
       throw error
     }
@@ -391,16 +453,20 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     } = params
 
     if (get().markets.length === 0) {
+      const startedAt = new Date().toISOString()
       try {
         await get().loadMarkets()
       } catch (error) {
+        if (isMarketRequestAbort(error)) return
+
+        const message = describeMarketError(error, {
+          fallback: 'No fue posible cargar el catálogo de mercados',
+        })
         set({
           status: 'error',
           refreshProgress: null,
-          error:
-            error instanceof Error
-              ? error.message
-              : 'No fue posible cargar el catálogo de mercados',
+          priceLastAttempt: finishAttempt('prices', 'error', startedAt, message),
+          error: message,
         })
         return
       }
@@ -467,12 +533,13 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     for (const [city, identifiers] of materialIdentifiersByCity) {
       plans.push({
         combinationCount: identifiers.length,
-        execute: () =>
+        execute: (signal) =>
           fetchCurrentPricesWithFallback({
             server: config.server,
             itemIdentifiers: identifiers,
             cities: [city],
             quality: MATERIAL_MARKET_QUALITY,
+            signal,
           }),
       })
     }
@@ -481,23 +548,40 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       for (const market of saleCitiesToRefresh) {
         plans.push({
           combinationCount: 1,
-          execute: () =>
+          execute: (signal) =>
             fetchCurrentPricesWithFallback({
               server: config.server,
               itemIdentifiers: [saleIdentifier],
               cities: [market.key],
               quality: config.quality,
+              signal,
             }),
         })
       }
     }
 
     if (plans.length === 0) {
-      set({ status: 'success', error: null, refreshProgress: null })
+      const startedAt = new Date().toISOString()
+      latestRequestId += 1
+      abortActivePriceRefresh()
+      set({
+        status: 'success',
+        error: null,
+        refreshProgress: null,
+        priceLastAttempt: finishAttempt(
+          'prices',
+          'success',
+          startedAt,
+          'No había precios pendientes; se mantuvieron datos vigentes.',
+        ),
+      })
       return
     }
 
     const requestId = ++latestRequestId
+    abortActivePriceRefresh()
+    const requestController = new AbortController()
+    activePriceRefreshController = requestController
     const startedAt = new Date().toISOString()
     const totalCombinations = plans.reduce(
       (total, plan) => total + plan.combinationCount,
@@ -510,6 +594,11 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       status: 'loading',
       error: null,
       refreshWarnings: [],
+      priceLastAttempt: createRunningAttempt(
+        'prices',
+        'Actualizando precios de mercado…',
+        startedAt,
+      ),
       refreshProgress: {
         origin,
         completedRequests: 0,
@@ -524,7 +613,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
         try {
           return {
             status: 'fulfilled' as const,
-            result: await plan.execute(),
+            result: await plan.execute(requestController.signal),
           }
         } catch (error) {
           return { status: 'rejected' as const, error }
@@ -548,6 +637,9 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     )
 
     if (requestId !== latestRequestId) return
+    if (activePriceRefreshController === requestController) {
+      activePriceRefreshController = null
+    }
 
     const nextSnapshots = new Map(get().snapshots)
     const warnings: string[] = []
@@ -555,11 +647,13 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
 
     for (const settled of settledGroups) {
       if (settled.status === 'rejected') {
-        warnings.push(
-          settled.error instanceof Error
-            ? settled.error.message
-            : 'Una consulta de precios no pudo completarse',
-        )
+        if (!isMarketRequestAbort(settled.error)) {
+          warnings.push(
+            describeMarketError(settled.error, {
+              fallback: 'Una consulta de precios no pudo completarse',
+            }),
+          )
+        }
         continue
       }
 
@@ -589,16 +683,22 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
           },
         ]),
       )
+      const fallbackWarnings =
+        cachedSnapshots.size > 0
+          ? [...uniqueWarnings, describeMarketCacheFallback('prices')]
+          : uniqueWarnings
+      const message =
+        fallbackWarnings.join(' · ') ||
+        'No fue posible consultar precios. Puedes reintentar o continuar con precios manuales.'
 
       saveMarketCache(cachedSnapshots)
       set({
         snapshots: cachedSnapshots,
         status: 'error',
         refreshProgress: null,
-        refreshWarnings: uniqueWarnings,
-        error:
-          uniqueWarnings.join(' · ') ||
-          'No fue posible consultar la API central ni el receiver local',
+        refreshWarnings: fallbackWarnings,
+        priceLastAttempt: finishAttempt('prices', 'error', startedAt, message),
+        error: message,
       })
       return
     }
@@ -620,6 +720,10 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
             manualOverrideCount,
           })
         : get().lastRefreshReport
+    const successMessage =
+      uniqueWarnings.length > 0
+        ? `Actualización completada con degradación: ${uniqueWarnings.join(' · ')}`
+        : `Actualización completada: ${totalCombinations} combinaciones consultadas.`
 
     saveMarketCache(nextSnapshots)
     set({
@@ -630,6 +734,12 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       refreshProgress: null,
       lastRefreshReport: report,
       lastSuccessfulFetchAt: completedAt,
+      priceLastAttempt: finishAttempt(
+        'prices',
+        'success',
+        startedAt,
+        successMessage,
+      ),
     })
   },
 
@@ -638,6 +748,8 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
   },
 
   clearCache: () => {
+    latestRequestId += 1
+    abortActivePriceRefresh()
     clearStoredMarketCache()
     set({
       snapshots: new Map(),
@@ -647,6 +759,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       refreshProgress: null,
       lastRefreshReport: null,
       lastSuccessfulFetchAt: null,
+      priceLastAttempt: null,
     })
   },
 

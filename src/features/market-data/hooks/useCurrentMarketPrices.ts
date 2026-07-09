@@ -49,11 +49,15 @@ export function useCurrentMarketPrices({
   const catalogError = useMarketDataStore((state) => state.catalogError)
   const catalogSource = useMarketDataStore((state) => state.catalogSource)
   const catalogWarnings = useMarketDataStore((state) => state.catalogWarnings)
+  const catalogLastAttempt = useMarketDataStore(
+    (state) => state.catalogLastAttempt,
+  )
   const loadMarkets = useMarketDataStore((state) => state.loadMarkets)
   const snapshots = useMarketDataStore((state) => state.snapshots)
   const status = useMarketDataStore((state) => state.status)
   const error = useMarketDataStore((state) => state.error)
   const refreshWarnings = useMarketDataStore((state) => state.refreshWarnings)
+  const priceLastAttempt = useMarketDataStore((state) => state.priceLastAttempt)
   const setConfig = useMarketDataStore((state) => state.setConfig)
   const refreshPrices = useMarketDataStore((state) => state.refreshPrices)
   const clearCache = useMarketDataStore((state) => state.clearCache)
@@ -447,9 +451,11 @@ export function useCurrentMarketPrices({
     catalogError,
     catalogSource,
     catalogWarnings,
+    catalogLastAttempt,
     status,
     error,
     refreshWarnings,
+    priceLastAttempt,
     setConfig,
     clearCache,
     refresh,

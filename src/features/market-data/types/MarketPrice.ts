@@ -17,6 +17,17 @@ export type MarketDataSource =
   | 'local-receiver'
   | 'browser-cache'
 
+export type MarketLastAttemptKind = 'catalog' | 'prices' | 'history'
+export type MarketLastAttemptStatus = 'running' | 'success' | 'error'
+
+export interface MarketLastAttempt {
+  readonly kind: MarketLastAttemptKind
+  readonly status: MarketLastAttemptStatus
+  readonly startedAt: string
+  readonly finishedAt: string | null
+  readonly message: string
+}
+
 export interface MarketDefinition {
   readonly key: MarketKey
   readonly name: string

@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react'
 import type {
   AlbionServer,
   MarketCatalogStatus,
@@ -5,6 +6,7 @@ import type {
   MarketDataSource,
   MarketDefinition,
   MarketFreshnessSummary,
+  MarketLastAttempt,
   MarketRequestStatus,
   MarketSourceSummary,
 } from '../types/MarketPrice'
@@ -16,10 +18,17 @@ import {
   CENTRAL_MARKET_API_URL,
   LOCAL_MARKET_API_URL,
 } from '../api/localMarketApi'
+import {
+  getMarketSourceStatuses,
+  type MarketNetworkSource,
+  type MarketSourceRuntimeStatus,
+} from '../api/marketSourceCooldown'
+import { useMarketDataStore } from '../store/marketDataStore'
 import type {
   MarketRefreshProgress,
   MarketRefreshReport,
 } from '../types/MarketRefresh'
+import { MarketLastAttemptBadge } from './MarketLastAttemptBadge'
 import { MarketRefreshSummary } from './MarketRefreshFeedback'
 
 interface MarketConnectionBarProps {
@@ -51,7 +60,7 @@ function getStatusPresentation(
 ): { readonly label: string; readonly className: string } {
   if (status === 'loading') {
     return {
-      label: 'Consultando API central…',
+      label: 'Consultando fuentes de mercado…',
       className: 'border-border bg-surface text-text-muted',
     }
   }
@@ -132,9 +141,100 @@ function getStatusPresentation(
   }
 }
 
+function formatCooldownRemaining(remainingMs: number): string {
+  const seconds = Math.max(1, Math.ceil(remainingMs / 1000))
+  if (seconds < 60) return `${seconds}s`
+
+  const minutes = Math.ceil(seconds / 60)
+  return `${minutes}min`
+}
+
+function getNetworkSourceCount(
+  source: MarketNetworkSource,
+  sourceSummary: MarketSourceSummary,
+): number {
+  return source === 'central-api'
+    ? sourceSummary.centralApi
+    : sourceSummary.localReceiver
+}
+
+function getNetworkSourceBadge(
+  status: MarketSourceRuntimeStatus,
+  sourceSummary: MarketSourceSummary,
+): { readonly label: string; readonly className: string; readonly title: string } {
+  const sourceLabel = MARKET_DATA_SOURCE_LABELS[status.source]
+  const activeCount = getNetworkSourceCount(status.source, sourceSummary)
+
+  if (status.cooldown) {
+    const remaining = formatCooldownRemaining(status.cooldown.remainingMs)
+
+    return {
+      label: `${sourceLabel}: cooldown ${remaining}`,
+      className: 'border-accent-border bg-accent-muted text-accent',
+      title: `${sourceLabel} está temporalmente en cooldown. Motivo: ${status.cooldown.reason}. Fallos consecutivos: ${status.cooldown.failureCount}.`,
+    }
+  }
+
+  if (activeCount > 0) {
+    return {
+      label: `${sourceLabel}: en uso`,
+      className: 'border-positive bg-positive-muted text-positive',
+      title: `${sourceLabel} aportó ${activeCount} ${activeCount === 1 ? 'precio' : 'precios'} en la vista actual.`,
+    }
+  }
+
+  return {
+    label: `${sourceLabel}: disponible`,
+    className: 'border-border bg-surface-raised text-text-faint',
+    title: `${sourceLabel} no está en cooldown y queda disponible para el próximo intento.`,
+  }
+}
+
+function getBrowserCacheBadge(
+  sourceSummary: MarketSourceSummary,
+  hasCachedPrice: boolean,
+): { readonly label: string; readonly className: string; readonly title: string } {
+  if (sourceSummary.browserCache > 0) {
+    return {
+      label: `Caché: en uso (${sourceSummary.browserCache})`,
+      className: 'border-accent-border bg-accent-muted text-accent',
+      title: 'La vista actual usa datos restaurados desde el caché del navegador.',
+    }
+  }
+
+  if (hasCachedPrice) {
+    return {
+      label: 'Caché: reserva disponible',
+      className: 'border-border bg-surface-raised text-text-faint',
+      title: 'Hay precios guardados que pueden mantenerse si las fuentes de red fallan.',
+    }
+  }
+
+  return {
+    label: 'Caché: sin datos',
+    className: 'border-border bg-surface-raised text-text-faint',
+    title: 'Todavía no hay precios automáticos guardados en este navegador.',
+  }
+}
+
+function getRefreshButtonLabel(
+  isRefreshing: boolean,
+  status: MarketRequestStatus,
+  catalogStatus: MarketCatalogStatus,
+): string {
+  if (isRefreshing) return 'Actualizando…'
+  if (status === 'error' || catalogStatus === 'error') return 'Reintentar ahora'
+  return 'Actualizar todos los precios'
+}
+
+function isVisibleAttempt(
+  attempt: MarketLastAttempt | null,
+): attempt is MarketLastAttempt {
+  return attempt !== null
+}
+
 export function MarketConnectionBar({
   config,
-  markets,
   catalogStatus,
   catalogError,
   catalogSource,
@@ -153,6 +253,14 @@ export function MarketConnectionBar({
   onClearCache,
   onDismissRefreshReport,
 }: MarketConnectionBarProps) {
+  const [sourceStatusNow, setSourceStatusNow] = useState(() => Date.now())
+  const catalogLastAttempt = useMarketDataStore(
+    (state) => state.catalogLastAttempt,
+  )
+  const priceLastAttempt = useMarketDataStore((state) => state.priceLastAttempt)
+  const visibleAttempts = [catalogLastAttempt, priceLastAttempt].filter(
+    isVisibleAttempt,
+  )
   const statusPresentation = getStatusPresentation(
     status,
     hasCachedPrice,
@@ -160,6 +268,19 @@ export function MarketConnectionBar({
   )
   const isRefreshing = status === 'loading' || catalogStatus === 'loading'
   const warnings = Array.from(new Set([...catalogWarnings, ...refreshWarnings]))
+  const sourceStatuses = useMemo(
+    () => getMarketSourceStatuses(sourceStatusNow),
+    [sourceStatusNow, status, catalogStatus],
+  )
+  const browserCacheBadge = getBrowserCacheBadge(sourceSummary, hasCachedPrice)
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setSourceStatusNow(Date.now())
+    }, 5 * 1000)
+
+    return () => window.clearInterval(interval)
+  }, [])
 
   return (
     <section className="mb-6 rounded-xl border border-border bg-surface p-4">
@@ -171,6 +292,41 @@ export function MarketConnectionBar({
             navegador. La compra se configura junto a los materiales y la venta
             dentro del resumen económico.
           </p>
+
+          <div
+            className="mt-3 flex flex-wrap gap-2"
+            aria-label="Estado de fuentes de mercado"
+          >
+            {sourceStatuses.map((sourceStatus) => {
+              const badge = getNetworkSourceBadge(sourceStatus, sourceSummary)
+
+              return (
+                <span
+                  key={sourceStatus.source}
+                  title={badge.title}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${badge.className}`}
+                >
+                  {badge.label}
+                </span>
+              )
+            })}
+
+            <span
+              title={browserCacheBadge.title}
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium ${browserCacheBadge.className}`}
+            >
+              {browserCacheBadge.label}
+            </span>
+
+            <MarketLastAttemptBadge
+              label="Último catálogo"
+              attempt={catalogLastAttempt}
+            />
+            <MarketLastAttemptBadge
+              label="Último precio"
+              attempt={priceLastAttempt}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end">
@@ -202,11 +358,11 @@ export function MarketConnectionBar({
 
           <button
             type="button"
-            disabled={isRefreshing || markets.length === 0}
+            disabled={isRefreshing}
             onClick={onRefresh}
             className="min-h-9 rounded-md border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
-            {isRefreshing ? 'Actualizando…' : 'Actualizar todos los precios'}
+            {getRefreshButtonLabel(isRefreshing, status, catalogStatus)}
           </button>
         </div>
       </div>
@@ -255,8 +411,7 @@ export function MarketConnectionBar({
               <p className="mt-1 text-[10px] leading-relaxed text-text-muted">
                 API central: {sourceSummary.centralApi} · Receiver:{' '}
                 {sourceSummary.localReceiver} · Caché:{' '}
-                {sourceSummary.browserCache} · Sin datos:{' '}
-                {sourceSummary.missing}
+                {sourceSummary.browserCache} · Sin datos: {sourceSummary.missing}
               </p>
               <p className="mt-1 text-[10px] text-text-faint">
                 Catálogo:{' '}
@@ -289,6 +444,24 @@ export function MarketConnectionBar({
               </button>
             </div>
           </div>
+
+          {visibleAttempts.length > 0 && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {visibleAttempts.map((attempt) => (
+                <div
+                  key={`${attempt.kind}:${attempt.startedAt}`}
+                  className="rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted"
+                >
+                  <p className="font-medium text-text">
+                    {attempt.kind === 'catalog'
+                      ? 'Último intento de catálogo'
+                      : 'Último intento de precios'}
+                  </p>
+                  <p className="mt-1">{attempt.message}</p>
+                </div>
+              ))}
+            </div>
+          )}
 
           {warnings.length > 0 && (
             <div className="mt-3 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">
