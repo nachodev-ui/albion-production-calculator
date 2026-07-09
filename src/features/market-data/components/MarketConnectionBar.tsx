@@ -6,6 +6,7 @@ import type {
   MarketDataSource,
   MarketDefinition,
   MarketFreshnessSummary,
+  MarketLastAttempt,
   MarketRequestStatus,
   MarketSourceSummary,
 } from '../types/MarketPrice'
@@ -26,6 +27,7 @@ import type {
   MarketRefreshProgress,
   MarketRefreshReport,
 } from '../types/MarketRefresh'
+import { MarketLastAttemptBadge } from './MarketLastAttemptBadge'
 import { MarketRefreshSummary } from './MarketRefreshFeedback'
 
 interface MarketConnectionBarProps {
@@ -35,9 +37,11 @@ interface MarketConnectionBarProps {
   readonly catalogError: string | null
   readonly catalogSource: MarketDataSource | null
   readonly catalogWarnings: readonly string[]
+  readonly catalogLastAttempt: MarketLastAttempt | null
   readonly status: MarketRequestStatus
   readonly error: string | null
   readonly refreshWarnings: readonly string[]
+  readonly priceLastAttempt: MarketLastAttempt | null
   readonly hasCachedPrice: boolean
   readonly priceCount: number
   readonly freshnessSummary: MarketFreshnessSummary
@@ -214,16 +218,27 @@ function getBrowserCacheBadge(
   }
 }
 
+function getRefreshButtonLabel(
+  isRefreshing: boolean,
+  status: MarketRequestStatus,
+  catalogStatus: MarketCatalogStatus,
+): string {
+  if (isRefreshing) return 'Actualizando…'
+  if (status === 'error' || catalogStatus === 'error') return 'Reintentar ahora'
+  return 'Actualizar todos los precios'
+}
+
 export function MarketConnectionBar({
   config,
-  markets,
   catalogStatus,
   catalogError,
   catalogSource,
   catalogWarnings,
+  catalogLastAttempt,
   status,
   error,
   refreshWarnings,
+  priceLastAttempt,
   hasCachedPrice,
   priceCount,
   freshnessSummary,
@@ -292,6 +307,15 @@ export function MarketConnectionBar({
             >
               {browserCacheBadge.label}
             </span>
+
+            <MarketLastAttemptBadge
+              label="Último catálogo"
+              attempt={catalogLastAttempt}
+            />
+            <MarketLastAttemptBadge
+              label="Último precio"
+              attempt={priceLastAttempt}
+            />
           </div>
         </div>
 
@@ -324,11 +348,11 @@ export function MarketConnectionBar({
 
           <button
             type="button"
-            disabled={isRefreshing || markets.length === 0}
+            disabled={isRefreshing}
             onClick={onRefresh}
             className="min-h-9 rounded-md border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
-            {isRefreshing ? 'Actualizando…' : 'Actualizar todos los precios'}
+            {getRefreshButtonLabel(isRefreshing, status, catalogStatus)}
           </button>
         </div>
       </div>
@@ -409,6 +433,22 @@ export function MarketConnectionBar({
                 Limpiar
               </button>
             </div>
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {[catalogLastAttempt, priceLastAttempt].filter(Boolean).map((attempt) => (
+              <div
+                key={`${attempt.kind}:${attempt.startedAt}`}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-xs leading-relaxed text-text-muted"
+              >
+                <p className="font-medium text-text">
+                  {attempt.kind === 'catalog'
+                    ? 'Último intento de catálogo'
+                    : 'Último intento de precios'}
+                </p>
+                <p className="mt-1">{attempt.message}</p>
+              </div>
+            ))}
           </div>
 
           {warnings.length > 0 && (
