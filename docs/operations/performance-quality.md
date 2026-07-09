@@ -1,6 +1,6 @@
 # Rendimiento y calidad
 
-Esta página documenta la línea base inicial del Paso 4. El objetivo es medir antes de optimizar: cualquier lazy loading, cambio de render crítico o separación de módulos debe compararse contra este presupuesto.
+Esta página documenta la línea base del Paso 4. El objetivo es medir antes de optimizar: cualquier lazy loading, cambio de render crítico o separación de módulos debe compararse contra este presupuesto.
 
 ## Scripts
 
@@ -25,22 +25,44 @@ artifacts/performance/bundle-report.json
 
 `artifacts/` está ignorado por Git porque contiene reportes generados localmente o por CI.
 
-## Presupuesto inicial
+## Presupuesto medido
 
 La configuración vive en `quality/bundle-budget.json`.
 
-| Métrica | Presupuesto inicial |
+| Métrica | Presupuesto |
 | --- | ---: |
-| Total aplicación raw | 50.000.000 bytes |
-| Total aplicación gzip | 20.000.000 bytes |
-| JavaScript raw | 45.000.000 bytes |
-| JavaScript gzip | 18.000.000 bytes |
-| CSS raw | 2.000.000 bytes |
-| CSS gzip | 500.000 bytes |
-| Archivo de aplicación más grande raw | 45.000.000 bytes |
-| Archivo de aplicación más grande gzip | 18.000.000 bytes |
+| Total aplicación raw | 3.800.000 bytes |
+| Total aplicación gzip | 320.000 bytes |
+| JavaScript raw | 3.600.000 bytes |
+| JavaScript gzip | 300.000 bytes |
+| CSS raw | 90.000 bytes |
+| CSS gzip | 20.000 bytes |
+| Archivo de aplicación más grande raw | 3.000.000 bytes |
+| Archivo de aplicación más grande gzip | 100.000 bytes |
+| Entry JavaScript raw | 300.000 bytes |
+| Entry JavaScript gzip | 90.000 bytes |
 
-Estos límites son una barrera inicial muy amplia de regresión extrema, no el objetivo final de rendimiento. Deben ajustarse hacia abajo después de completar lazy loading y cualquier extracción del optimizador fuera del render crítico.
+Estos límites se basan en el reporte generado después del primer lazy loading y dejan margen para cambios menores sin volver al presupuesto amplio inicial.
+
+## Línea base observada
+
+Después de separar el dataset y el panel de receta del bundle inicial, el reporte de CI mostró:
+
+| Métrica observada | Valor |
+| --- | ---: |
+| Total aplicación raw | 3.111.919 bytes |
+| Total aplicación gzip | 247.393 bytes |
+| JavaScript raw | 3.039.009 bytes |
+| JavaScript gzip | 223.545 bytes |
+| CSS raw | 59.215 bytes |
+| CSS gzip | 11.134 bytes |
+| Entry JavaScript raw | 234.426 bytes |
+| Entry JavaScript gzip | 71.037 bytes |
+| Archivo más grande | `JsonItemRepository-*.js` |
+| Archivo más grande raw | 2.497.549 bytes |
+| Archivo más grande gzip | 73.989 bytes |
+
+La conclusión de esa medición fue que no hacía falta separar inmediatamente historial u optimizador: el problema principal era que `items.json` entraba en el chunk inicial mediante `JsonItemRepository`. Ese dataset ahora se carga como chunk separado.
 
 ## Qué mide
 
@@ -50,6 +72,7 @@ El script recorre `dist`, ignora sourcemaps y calcula:
 - tamaño JavaScript raw y gzip;
 - tamaño CSS raw y gzip;
 - archivo de aplicación más grande;
+- entry JavaScript `assets/index-*.js`;
 - media estática como dato informativo, sin presupuesto bloqueante;
 - lista de assets más pesados.
 
@@ -61,12 +84,13 @@ Si una métrica presupuestada supera el límite configurado, el comando falla co
 
 El primer corte de lazy loading mantiene el shell, encabezado, estado vacío y controles básicos en el render inicial. Se difieren los bloques que no son necesarios antes de interactuar:
 
+- dataset y repositorio de ítems (`JsonItemRepository` + `items.json`);
 - catálogo lateral de crafteo;
 - panel completo de receta, incluyendo historial, gráficos, optimizador, comparación de recetas y acciones de resumen;
 - módulo de presets;
 - módulo de refinamiento en estado próximamente.
 
-Cada bloque lazy usa `Suspense` con fallback visual para evitar pantallas en blanco mientras Vite descarga el chunk correspondiente.
+Cada bloque lazy usa `Suspense` o carga dinámica con fallback visual para evitar pantallas en blanco mientras Vite descarga el chunk correspondiente.
 
 ## CI
 
@@ -74,24 +98,25 @@ El workflow principal ejecuta:
 
 ```text
 pnpm build
-pnpm bundle:check
+pnpm exec tsx scripts/check-bundle-budget.ts --write-report
 ```
 
-Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del presupuesto inicial sin ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
+Luego sube `artifacts/performance/bundle-report.json` como artifact `bundle-report`.
+
+Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del presupuesto sin ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
 
 ## Cómo interpretar una falla
 
-1. Revisa el asset de aplicación más grande impreso por `pnpm bundle:check`.
-2. Ejecuta `pnpm bundle:analyze` para guardar el reporte JSON.
-3. Decide si corresponde optimizar, aplicar lazy loading o ajustar el presupuesto.
+1. Revisa el artifact `bundle-report` del workflow run.
+2. Mira `entryJavaScript`, `largestFile`, `totals`, `javascript`, `css` y `assets`.
+3. Decide si corresponde optimizar, aplicar lazy loading adicional o ajustar el presupuesto.
 4. Si se ajusta el presupuesto, explica el motivo en el PR.
 
 ## Próximos pasos del Paso 4
 
-Después de este primer lazy loading, el orden recomendado es:
+Después de esta medición, el orden recomendado es:
 
-1. medir el reporte generado por `pnpm bundle:analyze`;
-2. revisar si el optimizador debe moverse a un chunk propio más granular;
-3. endurecer `quality/bundle-budget.json` contra la nueva línea base;
-4. agregar pruebas de accesibilidad;
-5. agregar pruebas de integración de UI.
+1. pruebas de accesibilidad;
+2. pruebas de integración de UI;
+3. si esas pruebas detectan lentitud real, mover optimizador/historial a chunks más granulares;
+4. endurecer nuevamente `quality/bundle-budget.json` cuando el producto se estabilice.
