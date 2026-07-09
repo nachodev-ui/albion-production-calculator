@@ -45,6 +45,10 @@ export default defineConfig({
           },
           { text: 'Pruebas y calidad', link: '/operations/testing' },
           {
+            text: 'Rendimiento y calidad',
+            link: '/operations/performance-quality',
+          },
+          {
             text: 'Política de documentación',
             link: '/operations/documentation',
           },
