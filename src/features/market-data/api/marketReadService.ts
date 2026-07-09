@@ -8,6 +8,11 @@ import type {
 import { buildMarketCacheKey } from '../types/MarketPrice'
 import { fetchCentralMarkets } from './centralMarketCatalogClient'
 import { fetchCurrentCentralPrices } from './centralMarketClient'
+import {
+  describeMarketCacheFallback,
+  describeMarketError,
+  describeMarketFallbackWarning,
+} from './marketErrorMessages'
 import { fetchLocalMarkets } from './localMarketCatalogClient'
 import { fetchCurrentLocalPrices } from './localMarketClient'
 
@@ -31,10 +36,6 @@ interface FetchCurrentPricesParams {
   readonly signal?: AbortSignal
 }
 
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error desconocido'
-}
-
 export async function fetchMarketsWithFallback(
   cachedMarkets: readonly MarketDefinition[] = [],
   signal?: AbortSignal,
@@ -50,7 +51,7 @@ export async function fetchMarketsWithFallback(
       return {
         markets: await fetchLocalMarkets(signal),
         source: 'local-receiver',
-        warnings: [`API central no disponible: ${describeError(centralError)}`],
+        warnings: [describeMarketFallbackWarning('central-api', centralError)],
       }
     } catch (localError) {
       if (cachedMarkets.length > 0) {
@@ -58,14 +59,17 @@ export async function fetchMarketsWithFallback(
           markets: cachedMarkets,
           source: 'browser-cache',
           warnings: [
-            `API central no disponible: ${describeError(centralError)}`,
-            `Receiver local no disponible: ${describeError(localError)}`,
+            describeMarketFallbackWarning('central-api', centralError),
+            describeMarketFallbackWarning('local-receiver', localError),
+            describeMarketCacheFallback('catalog'),
           ],
         }
       }
 
       throw new Error(
-        `No fue posible cargar mercados. API central: ${describeError(centralError)}. Receiver local: ${describeError(localError)}`,
+        `No fue posible cargar mercados. ${describeMarketError(centralError, {
+          source: 'central-api',
+        })} ${describeMarketError(localError, { source: 'local-receiver' })}`,
         { cause: localError },
       )
     }
@@ -159,7 +163,7 @@ export async function fetchCurrentPricesWithFallback(
     for (const [key, snapshot] of central) result.set(key, snapshot)
   } catch (error) {
     centralError = error
-    warnings.push(`API central no disponible: ${describeError(error)}`)
+    warnings.push(describeMarketFallbackWarning('central-api', error))
   }
 
   const missingByCity = new Map<MarketCityId, string[]>()
@@ -200,7 +204,9 @@ export async function fetchCurrentPricesWithFallback(
         if (merged.contributed) sources.add('local-receiver')
       }
     } else {
-      localErrors.push(describeError(settled.reason))
+      localErrors.push(
+        describeMarketError(settled.reason, { source: 'local-receiver' }),
+      )
     }
   }
 
@@ -212,7 +218,13 @@ export async function fetchCurrentPricesWithFallback(
 
   if (!centralSucceeded && !localSucceeded) {
     throw new Error(
-      `No se pudo consultar precios. API central: ${describeError(centralError)}. Receiver local: ${localErrors.join('; ') || 'sin respuesta'}`,
+      `No se pudo consultar precios. ${describeMarketError(centralError, {
+        source: 'central-api',
+      })} ${
+        localErrors.length > 0
+          ? `Receiver local: ${localErrors.join('; ')}`
+          : 'Receiver local: sin respuesta.'
+      }`,
     )
   }
 
