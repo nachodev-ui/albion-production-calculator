@@ -23,7 +23,7 @@ interface FetchJsonErrorOptions {
   readonly cause?: unknown
 }
 
-const DEFAULT_RETRY_ATTEMPTS = 2
+const DEFAULT_RETRY_ATTEMPTS = 0
 const DEFAULT_RETRY_DELAY_MS = 150
 const MAX_RETRY_ATTEMPTS = 3
 
