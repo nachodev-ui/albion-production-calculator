@@ -8,6 +8,11 @@ import type {
   MarketDataSource,
 } from '../types/MarketPrice'
 import { fetchCentralMarketHistory } from './centralHistoryClient'
+import {
+  describeMarketCacheFallback,
+  describeMarketError,
+  describeMarketFallbackWarning,
+} from './marketErrorMessages'
 import { fetchLocalMarketHistory } from './localHistoryClient'
 
 export interface MarketHistoryReadResult {
@@ -27,10 +32,6 @@ interface FetchMarketHistoryWithFallbackParams {
 }
 
 const LOCAL_HISTORY_CONCURRENCY = 4
-
-function describeError(error: unknown): string {
-  return error instanceof Error ? error.message : 'Error desconocido'
-}
 
 function dedupeCandidates(
   candidates: readonly MarketHistoryCandidate[],
@@ -166,9 +167,7 @@ export async function fetchMarketHistoryWithFallback({
         }
       }
     } else {
-      warnings.push(
-        `API central no disponible: ${describeError(settled.reason)}`,
-      )
+      warnings.push(describeMarketFallbackWarning('central-api', settled.reason))
     }
   }
 
@@ -210,7 +209,9 @@ export async function fetchMarketHistoryWithFallback({
           emptyOnlineSnapshots.set(key, snapshot)
         }
       } catch (error) {
-        localErrors.push(describeError(error))
+        localErrors.push(
+          describeMarketError(error, { source: 'local-receiver' }),
+        )
       }
     },
   )
@@ -222,6 +223,7 @@ export async function fetchMarketHistoryWithFallback({
   }
 
   const failedKeys: string[] = []
+  let restoredFromCache = false
 
   for (const candidate of requested) {
     const key = buildMarketHistoryCacheKey(
@@ -234,6 +236,7 @@ export async function fetchMarketHistoryWithFallback({
 
     const cached = cachedSnapshots.get(key)
     if (cached) {
+      restoredFromCache = true
       snapshots.set(key, asBrowserCache(cached))
       sources.add('browser-cache')
       continue
@@ -259,6 +262,10 @@ export async function fetchMarketHistoryWithFallback({
     }
 
     failedKeys.push(key)
+  }
+
+  if (restoredFromCache) {
+    warnings.push(describeMarketCacheFallback('history'))
   }
 
   return {
