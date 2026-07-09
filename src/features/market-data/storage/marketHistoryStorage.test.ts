@@ -37,7 +37,7 @@ describe('marketHistoryStorage', () => {
     vi.unstubAllGlobals()
   })
 
-  it('migra la caché anterior y marca el snapshot restaurado como browser-cache', () => {
+  it('migra la caché anterior, limpia claves legacy y marca el snapshot restaurado como browser-cache', () => {
     const storage = new MemoryStorage()
     const cacheKey = 'americas|martlock|T4_BAG|1'
     storage.setItem(
@@ -75,6 +75,9 @@ describe('marketHistoryStorage', () => {
     expect(
       storage.getItem('albion-production-calculator.market-history-cache.v3'),
     ).not.toBeNull()
+    expect(
+      storage.getItem('albion-production-calculator.local-market-history-cache.v2'),
+    ).toBeNull()
   })
 
   it('persiste la versión vigente', () => {
