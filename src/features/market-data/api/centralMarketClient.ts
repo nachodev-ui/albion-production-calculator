@@ -11,6 +11,7 @@ import {
   MARKET_SERVER_IDS,
 } from './localMarketApi'
 import { mapMarketPriceRow, parsePriceRows } from './marketResponseMapping'
+import { runWithMarketSourceCooldown } from './marketSourceCooldown'
 
 interface FetchCurrentCentralPricesParams {
   readonly server: AlbionServer
@@ -36,52 +37,55 @@ export async function fetchCurrentCentralPrices({
     return new Map()
   }
 
-  const payload = await fetchJson<unknown>(
-    `${CENTRAL_MARKET_API_URL}/prices/query`,
-    {
-      method: 'POST',
-      signal,
-      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
+  return runWithMarketSourceCooldown('central-api', async () => {
+    const payload = await fetchJson<unknown>(
+      `${CENTRAL_MARKET_API_URL}/prices/query`,
+      {
+        method: 'POST',
+        signal,
+        timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+        retryAttempts: 1,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          server: MARKET_SERVER_IDS[server],
+          marketKeys: uniqueCities,
+          entries: uniqueItems.map((itemIdentifier) => ({
+            itemIdentifier,
+            quality,
+          })),
+        }),
       },
-      body: JSON.stringify({
-        server: MARKET_SERVER_IDS[server],
-        marketKeys: uniqueCities,
-        entries: uniqueItems.map((itemIdentifier) => ({
-          itemIdentifier,
-          quality,
-        })),
-      }),
-    },
-  )
-
-  const rows = parsePriceRows(payload)
-  const fetchedAt = new Date().toISOString()
-  const result = new Map<string, MarketPriceSnapshot>()
-
-  for (const row of rows) {
-    const snapshot = mapMarketPriceRow({
-      server,
-      fallbackQuality: quality,
-      row,
-      source: 'central-api',
-      fetchedAt,
-    })
-
-    if (!snapshot || !uniqueCities.includes(snapshot.city)) continue
-
-    result.set(
-      buildMarketCacheKey(
-        snapshot.server,
-        snapshot.city,
-        snapshot.itemIdentifier,
-        snapshot.quality,
-      ),
-      snapshot,
     )
-  }
 
-  return result
+    const rows = parsePriceRows(payload)
+    const fetchedAt = new Date().toISOString()
+    const result = new Map<string, MarketPriceSnapshot>()
+
+    for (const row of rows) {
+      const snapshot = mapMarketPriceRow({
+        server,
+        fallbackQuality: quality,
+        row,
+        source: 'central-api',
+        fetchedAt,
+      })
+
+      if (!snapshot || !uniqueCities.includes(snapshot.city)) continue
+
+      result.set(
+        buildMarketCacheKey(
+          snapshot.server,
+          snapshot.city,
+          snapshot.itemIdentifier,
+          snapshot.quality,
+        ),
+        snapshot,
+      )
+    }
+
+    return result
+  })
 }
