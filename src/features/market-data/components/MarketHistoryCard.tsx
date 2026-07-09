@@ -21,7 +21,6 @@ import {
 } from '../types/MarketPrice'
 import {
   getMarketSourceStatuses,
-  type MarketNetworkSource,
   type MarketSourceRuntimeStatus,
 } from '../api/marketSourceCooldown'
 import { buildMarketHistoryView } from '../utils/marketHistoryAnalytics'
