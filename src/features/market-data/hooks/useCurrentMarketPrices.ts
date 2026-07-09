@@ -49,11 +49,15 @@ export function useCurrentMarketPrices({
   const catalogError = useMarketDataStore((state) => state.catalogError)
   const catalogSource = useMarketDataStore((state) => state.catalogSource)
   const catalogWarnings = useMarketDataStore((state) => state.catalogWarnings)
+  const catalogLastAttempt = useMarketDataStore(
+    (state) => state.catalogLastAttempt,
+  )
   const loadMarkets = useMarketDataStore((state) => state.loadMarkets)
   const snapshots = useMarketDataStore((state) => state.snapshots)
   const status = useMarketDataStore((state) => state.status)
   const error = useMarketDataStore((state) => state.error)
   const refreshWarnings = useMarketDataStore((state) => state.refreshWarnings)
+  const priceLastAttempt = useMarketDataStore((state) => state.priceLastAttempt)
   const setConfig = useMarketDataStore((state) => state.setConfig)
   const refreshPrices = useMarketDataStore((state) => state.refreshPrices)
   const clearCache = useMarketDataStore((state) => state.clearCache)
@@ -205,59 +209,14 @@ export function useCurrentMarketPrices({
     const prices = new Map<string, number>()
 
     for (const [key, detail] of automaticPurchasePriceDetails) {
-      if (detail.value !== null) {
-        prices.set(key, detail.value)
-      }
+      if (detail.value !== null) prices.set(key, detail.value)
     }
 
     return prices
   }, [automaticPurchasePriceDetails])
 
-  const materialMarketPriceComparisons =
-    useMemo<MaterialMarketPriceComparisons>(() => {
-      const comparisons = new Map<
-        string,
-        ReturnType<typeof buildMaterialMarketPriceOptions>
-      >()
-
-      for (const target of materialTargets) {
-        const itemPriceKey = buildItemPriceKey(
-          target.itemId,
-          target.enchantment,
-        )
-
-        if (comparisons.has(itemPriceKey)) continue
-
-        comparisons.set(
-          itemPriceKey,
-          buildMaterialMarketPriceOptions({
-            markets,
-            snapshots,
-            server: config.server,
-            itemIdentifier: buildMarketItemIdentifier(
-              target.itemId,
-              target.enchantment,
-            ),
-            purchaseStrategy: config.purchaseStrategy,
-            now,
-          }),
-        )
-      }
-
-      return comparisons
-    }, [
-      config.purchaseStrategy,
-      config.server,
-      markets,
-      materialTargets,
-      now,
-      snapshots,
-    ])
-
   const automaticSalePriceDetail = useMemo(() => {
-    if (!saleTarget) {
-      return resolveSalePriceDetail(null, config.saleStrategy, now)
-    }
+    if (!saleTarget) return resolveSalePriceDetail(undefined, config.saleStrategy, now)
 
     const itemIdentifier = buildMarketItemIdentifier(
       saleTarget.itemId,
@@ -285,33 +244,56 @@ export function useCurrentMarketPrices({
 
   const automaticSalePrice = automaticSalePriceDetail.value
 
-  const saleMarketPriceOptions = useMemo(() => {
-    if (!saleTarget) return []
-
-    return buildSaleMarketPriceOptions({
+  const materialMarketPriceComparisons = useMemo<MaterialMarketPriceComparisons>(
+    () =>
+      buildMaterialMarketPriceOptions({
+        targets: materialTargets,
+        markets,
+        snapshots,
+        server: config.server,
+        strategy: config.purchaseStrategy,
+        selectedCities: resolvedMaterialPurchaseCities,
+        now,
+      }),
+    [
+      config.purchaseStrategy,
+      config.server,
       markets,
-      snapshots,
-      server: config.server,
-      itemIdentifier: buildMarketItemIdentifier(
-        saleTarget.itemId,
-        saleTarget.enchantment,
-      ),
-      quality: config.quality,
-      saleStrategy: config.saleStrategy,
+      materialTargets,
       now,
-    })
-  }, [
-    config.quality,
-    config.saleStrategy,
-    config.server,
-    markets,
-    now,
-    saleTarget,
-    snapshots,
-  ])
+      resolvedMaterialPurchaseCities,
+      snapshots,
+    ],
+  )
+
+  const saleMarketPriceOptions = useMemo(
+    () =>
+      saleTarget
+        ? buildSaleMarketPriceOptions({
+            target: saleTarget,
+            markets,
+            snapshots,
+            server: config.server,
+            quality: config.quality,
+            strategy: config.saleStrategy,
+            selectedCity: config.saleCity,
+            now,
+          })
+        : [],
+    [
+      config.quality,
+      config.saleCity,
+      config.saleStrategy,
+      config.server,
+      markets,
+      now,
+      saleTarget,
+      snapshots,
+    ],
+  )
 
   const freshnessSummary = useMemo<MarketFreshnessSummary>(() => {
-    const summary = {
+    const summary: MarketFreshnessSummary = {
       recent: 0,
       acceptable: 0,
       stale: 0,
@@ -447,9 +429,11 @@ export function useCurrentMarketPrices({
     catalogError,
     catalogSource,
     catalogWarnings,
+    catalogLastAttempt,
     status,
     error,
     refreshWarnings,
+    priceLastAttempt,
     setConfig,
     clearCache,
     refresh,
