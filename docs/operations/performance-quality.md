@@ -103,6 +103,19 @@ Las pruebas de accesibilidad actuales se ejecutan con Vitest en entorno Node usa
 - estados de carga lazy visibles;
 - selector de encantamiento como grupo etiquetado, con botones nativos, `aria-pressed` y niveles no soportados deshabilitados sin ocultarlos.
 
+## Pruebas de integración de UI
+
+Las pruebas de integración de UI también usan SSR para mantenerse rápidas y sin dependencias adicionales. Cubren:
+
+- arranque de la app en el módulo de crafteo;
+- estado lazy visible del catálogo/dataset;
+- navegación entre módulos mediante estados `activeModule`;
+- acción de abrir catálogo solo en el header de crafteo;
+- drawer móvil del catálogo abierto como diálogo etiquetado;
+- listado de resultados con botones seleccionables, `aria-pressed` y estado vacío explícito.
+
+Estas pruebas no simulan eventos reales de navegador. Si más adelante incorporamos `jsdom`, Testing Library o Playwright, se pueden ampliar para disparar clicks/teclado reales sobre el DOM.
+
 ## CI
 
 El workflow principal ejecuta:
@@ -126,8 +139,8 @@ Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del pr
 
 ## Próximos pasos del Paso 4
 
-Después de esta medición y las pruebas de accesibilidad, el orden recomendado es:
+Después de esta medición, accesibilidad e integración UI, el orden recomendado es:
 
-1. pruebas de integración de UI;
-2. si esas pruebas detectan lentitud real, mover optimizador/historial a chunks más granulares;
+1. revisar si falta documentación en CI para cerrar el Paso 4;
+2. si las pruebas futuras detectan lentitud real, mover optimizador/historial a chunks más granulares;
 3. endurecer nuevamente `quality/bundle-budget.json` cuando el producto se estabilice.
