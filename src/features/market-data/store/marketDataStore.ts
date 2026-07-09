@@ -57,6 +57,7 @@ const MARKET_CACHE_TTL_MS = 5 * 60 * 1000
 let latestRequestId = 0
 let latestReportId = 0
 let marketCatalogPromise: Promise<MarketCatalogResult> | null = null
+let activePriceRefreshController: AbortController | null = null
 
 interface RefreshMarketPricesParams {
   readonly rootKey: string
@@ -83,7 +84,7 @@ interface ActiveRefreshTarget {
 
 interface RefreshRequestPlan {
   readonly combinationCount: number
-  readonly execute: () => Promise<MarketPriceReadResult>
+  readonly execute: (signal: AbortSignal) => Promise<MarketPriceReadResult>
 }
 
 interface MarketDataState {
@@ -119,6 +120,11 @@ interface MarketDataState {
     materialCities: ReadonlyMap<string, MarketCityId>,
     saleCity: MarketCityId | null,
   ) => void
+}
+
+function abortActivePriceRefresh(): void {
+  activePriceRefreshController?.abort()
+  activePriceRefreshController = null
 }
 
 function isSnapshotFresh(snapshot: MarketPriceSnapshot | undefined): boolean {
@@ -467,12 +473,13 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     for (const [city, identifiers] of materialIdentifiersByCity) {
       plans.push({
         combinationCount: identifiers.length,
-        execute: () =>
+        execute: (signal) =>
           fetchCurrentPricesWithFallback({
             server: config.server,
             itemIdentifiers: identifiers,
             cities: [city],
             quality: MATERIAL_MARKET_QUALITY,
+            signal,
           }),
       })
     }
@@ -481,23 +488,29 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
       for (const market of saleCitiesToRefresh) {
         plans.push({
           combinationCount: 1,
-          execute: () =>
+          execute: (signal) =>
             fetchCurrentPricesWithFallback({
               server: config.server,
               itemIdentifiers: [saleIdentifier],
               cities: [market.key],
               quality: config.quality,
+              signal,
             }),
         })
       }
     }
 
     if (plans.length === 0) {
+      latestRequestId += 1
+      abortActivePriceRefresh()
       set({ status: 'success', error: null, refreshProgress: null })
       return
     }
 
     const requestId = ++latestRequestId
+    abortActivePriceRefresh()
+    const requestController = new AbortController()
+    activePriceRefreshController = requestController
     const startedAt = new Date().toISOString()
     const totalCombinations = plans.reduce(
       (total, plan) => total + plan.combinationCount,
@@ -524,7 +537,7 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
         try {
           return {
             status: 'fulfilled' as const,
-            result: await plan.execute(),
+            result: await plan.execute(requestController.signal),
           }
         } catch (error) {
           return { status: 'rejected' as const, error }
@@ -548,6 +561,9 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
     )
 
     if (requestId !== latestRequestId) return
+    if (activePriceRefreshController === requestController) {
+      activePriceRefreshController = null
+    }
 
     const nextSnapshots = new Map(get().snapshots)
     const warnings: string[] = []
@@ -638,6 +654,8 @@ export const useMarketDataStore = create<MarketDataState>((set, get) => ({
   },
 
   clearCache: () => {
+    latestRequestId += 1
+    abortActivePriceRefresh()
     clearStoredMarketCache()
     set({
       snapshots: new Map(),
