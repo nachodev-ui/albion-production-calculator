@@ -44,7 +44,6 @@ export async function fetchCentralMarkets(
       {
         signal,
         timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
-        retryAttempts: 1,
         headers: { Accept: 'application/json' },
       },
     )
