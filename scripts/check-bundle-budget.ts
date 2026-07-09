@@ -38,9 +38,12 @@ interface BundleReport {
   readonly generatedAt: string
   readonly distDir: string
   readonly budgets: BundleBudgets
+  /** Application bundle total. Excludes static media copied from public assets. */
   readonly totals: BundleMetric
   readonly javascript: BundleMetric
   readonly css: BundleMetric
+  /** Static media is reported for visibility, but it is not budgeted as code bundle. */
+  readonly media: BundleMetric
   readonly largestFile: AssetEntry | null
   readonly assets: readonly AssetEntry[]
 }
@@ -203,6 +206,10 @@ async function analyzeAsset(distDir: string, file: string): Promise<AssetEntry> 
   }
 }
 
+function isBudgetedAsset(asset: AssetEntry): boolean {
+  return asset.kind !== 'media'
+}
+
 function sumAssets(
   assets: readonly AssetEntry[],
   predicate: (asset: AssetEntry) => boolean,
@@ -234,18 +241,20 @@ async function buildReport(config: BundleBudgetConfig): Promise<BundleReport> {
   const sortedAssets = assets.toSorted(
     (left, right) => right.rawBytes - left.rawBytes,
   )
+  const budgetedAssets = sortedAssets.filter(isBudgetedAsset)
 
   return {
     generatedAt: new Date().toISOString(),
     distDir: config.distDir,
     budgets: config.budgets,
-    totals: sumAssets(sortedAssets, () => true),
+    totals: sumAssets(budgetedAssets, () => true),
     javascript: sumAssets(
       sortedAssets,
       (asset) => asset.kind === 'javascript',
     ),
     css: sumAssets(sortedAssets, (asset) => asset.kind === 'css'),
-    largestFile: findLargestAsset(sortedAssets),
+    media: sumAssets(sortedAssets, (asset) => asset.kind === 'media'),
+    largestFile: findLargestAsset(budgetedAssets),
     assets: sortedAssets,
   }
 }
@@ -272,12 +281,12 @@ function collectBudgetViolations(report: BundleReport): string[] {
 
   return [
     checkBudget(
-      'Total raw',
+      'Total aplicación raw',
       report.totals.rawBytes,
       report.budgets.totalRawBytes,
     ),
     checkBudget(
-      'Total gzip',
+      'Total aplicación gzip',
       report.totals.gzipBytes,
       report.budgets.totalGzipBytes,
     ),
@@ -295,14 +304,14 @@ function collectBudgetViolations(report: BundleReport): string[] {
     checkBudget('CSS gzip', report.css.gzipBytes, report.budgets.cssGzipBytes),
     largestFile
       ? checkBudget(
-          `Archivo más grande (${largestFile.file}) raw`,
+          `Archivo de aplicación más grande (${largestFile.file}) raw`,
           largestFile.rawBytes,
           report.budgets.largestFileRawBytes,
         )
       : null,
     largestFile
       ? checkBudget(
-          `Archivo más grande (${largestFile.file}) gzip`,
+          `Archivo de aplicación más grande (${largestFile.file}) gzip`,
           largestFile.gzipBytes,
           report.budgets.largestFileGzipBytes,
         )
@@ -313,13 +322,14 @@ function collectBudgetViolations(report: BundleReport): string[] {
 function printReport(report: BundleReport): void {
   console.log('Bundle budget report')
   console.log(`Dist: ${report.distDir}`)
-  console.log(`Total: ${formatMetric(report.totals)}`)
+  console.log(`Application total: ${formatMetric(report.totals)}`)
   console.log(`JavaScript: ${formatMetric(report.javascript)}`)
   console.log(`CSS: ${formatMetric(report.css)}`)
+  console.log(`Static media: ${formatMetric(report.media)} (reported only)`)
 
   if (report.largestFile) {
     console.log(
-      `Largest file: ${report.largestFile.file} (${formatMetric(report.largestFile)})`,
+      `Largest application file: ${report.largestFile.file} (${formatMetric(report.largestFile)})`,
     )
   }
 
