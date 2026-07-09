@@ -6,12 +6,20 @@ export type MarketNetworkSource = Extract<
   'central-api' | 'local-receiver'
 >
 
+export type MarketSourceRuntimeState = 'ready' | 'cooldown'
+
 export interface MarketSourceCooldownSnapshot {
   readonly source: MarketNetworkSource
   readonly failureCount: number
   readonly blockedUntil: number
   readonly remainingMs: number
   readonly reason: string
+}
+
+export interface MarketSourceRuntimeStatus {
+  readonly source: MarketNetworkSource
+  readonly state: MarketSourceRuntimeState
+  readonly cooldown: MarketSourceCooldownSnapshot | null
 }
 
 interface MarketSourceCooldownState {
@@ -23,6 +31,10 @@ interface MarketSourceCooldownState {
 
 const BASE_SOURCE_COOLDOWN_MS = 30_000
 const MAX_SOURCE_COOLDOWN_MS = 2 * 60 * 1000
+const MARKET_NETWORK_SOURCES: readonly MarketNetworkSource[] = [
+  'central-api',
+  'local-receiver',
+]
 
 const sourceCooldowns = new Map<
   MarketNetworkSource,
@@ -104,6 +116,20 @@ export function getMarketSourceCooldown(
     remainingMs,
     reason: state.reason,
   }
+}
+
+export function getMarketSourceStatuses(
+  now = Date.now(),
+): readonly MarketSourceRuntimeStatus[] {
+  return MARKET_NETWORK_SOURCES.map((source) => {
+    const cooldown = getMarketSourceCooldown(source, now)
+
+    return {
+      source,
+      state: cooldown ? 'cooldown' : 'ready',
+      cooldown,
+    }
+  })
 }
 
 export function isMarketSourceInCooldown(

@@ -3,6 +3,7 @@ import { FetchJsonError } from '@shared/http/fetchJson'
 import {
   enableMarketSourceCooldownForTests,
   getMarketSourceCooldown,
+  getMarketSourceStatuses,
   isMarketSourceInCooldown,
   recordMarketSourceFailure,
   recordMarketSourceSuccess,
@@ -34,6 +35,34 @@ describe('marketSourceCooldown', () => {
       reason: 'network',
     })
     expect(cooldown?.remainingMs).toBeGreaterThan(0)
+  })
+
+  it('expone estados runtime de fuentes de red', () => {
+    recordMarketSourceFailure(
+      'local-receiver',
+      new FetchJsonError('HTTP 503', {
+        category: 'http',
+        status: 503,
+        retriable: true,
+      }),
+      1_000,
+    )
+
+    expect(getMarketSourceStatuses(1_001)).toEqual([
+      {
+        source: 'central-api',
+        state: 'ready',
+        cooldown: null,
+      },
+      {
+        source: 'local-receiver',
+        state: 'cooldown',
+        cooldown: expect.objectContaining({
+          source: 'local-receiver',
+          reason: 'http:503',
+        }),
+      },
+    ])
   })
 
   it('no abre cooldown para abortos del usuario', () => {
