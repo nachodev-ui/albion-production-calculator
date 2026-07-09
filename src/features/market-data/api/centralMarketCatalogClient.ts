@@ -1,9 +1,10 @@
+import type { CentralMarketCatalogEnvelope } from '@shared/contracts/market-api-payloads'
+import { fetchJson } from '@shared/http/fetchJson'
 import type { MarketDefinition, MarketType } from '../types/MarketPrice'
-import { CENTRAL_MARKET_API_URL } from './localMarketApi'
-
-interface MarketEnvelope {
-  readonly data?: unknown
-}
+import {
+  CENTRAL_MARKET_API_URL,
+  MARKET_REQUEST_TIMEOUT_MS,
+} from './localMarketApi'
 
 function isMarketType(value: unknown): value is MarketType {
   return value === 'regular' || value === 'black-market'
@@ -13,6 +14,7 @@ function mapMarket(value: unknown): MarketDefinition | null {
   if (!value || typeof value !== 'object') return null
 
   const candidate = value as Record<string, unknown>
+
   if (
     typeof candidate['key'] !== 'string' ||
     candidate['key'].trim().length === 0 ||
@@ -35,21 +37,17 @@ function mapMarket(value: unknown): MarketDefinition | null {
 export async function fetchCentralMarkets(
   signal?: AbortSignal,
 ): Promise<readonly MarketDefinition[]> {
-  const response = await fetch(`${CENTRAL_MARKET_API_URL}/markets`, {
-    signal,
-    headers: { Accept: 'application/json' },
-  })
+  const payload = await fetchJson<CentralMarketCatalogEnvelope>(
+    `${CENTRAL_MARKET_API_URL}/markets`,
+    {
+      signal,
+      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+      headers: { Accept: 'application/json' },
+    },
+  )
 
-  if (!response.ok) {
-    throw new Error(`La API central respondió con estado ${response.status}`)
-  }
+  const data = payload.data
 
-  const payload: unknown = await response.json()
-  if (!payload || typeof payload !== 'object') {
-    throw new Error('La API central devolvió un catálogo inesperado')
-  }
-
-  const data = (payload as MarketEnvelope).data
   if (!Array.isArray(data)) {
     throw new Error('La API central no devolvió la lista de mercados')
   }

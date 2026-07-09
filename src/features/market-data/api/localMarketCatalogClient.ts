@@ -1,9 +1,10 @@
+import type { LocalMarketCatalogEnvelope } from '@shared/contracts/market-api-payloads'
+import { fetchJson } from '@shared/http/fetchJson'
 import type { MarketDefinition, MarketType } from '../types/MarketPrice'
-import { LOCAL_MARKET_API_URL } from './localMarketApi'
-
-interface LocalMarketEnvelope {
-  readonly data?: unknown
-}
+import {
+  LOCAL_MARKET_API_URL,
+  MARKET_REQUEST_TIMEOUT_MS,
+} from './localMarketApi'
 
 function isMarketType(value: unknown): value is MarketType {
   return value === 'regular' || value === 'black-market'
@@ -13,6 +14,7 @@ function mapMarket(value: unknown): MarketDefinition | null {
   if (!value || typeof value !== 'object') return null
 
   const candidate = value as Record<string, unknown>
+
   if (
     typeof candidate['key'] !== 'string' ||
     candidate['key'].trim().length === 0 ||
@@ -35,23 +37,17 @@ function mapMarket(value: unknown): MarketDefinition | null {
 export async function fetchLocalMarkets(
   signal?: AbortSignal,
 ): Promise<readonly MarketDefinition[]> {
-  const response = await fetch(`${LOCAL_MARKET_API_URL}/markets`, {
-    signal,
-    headers: { Accept: 'application/json' },
-  })
+  const payload = await fetchJson<LocalMarketCatalogEnvelope>(
+    `${LOCAL_MARKET_API_URL}/markets`,
+    {
+      signal,
+      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+      headers: { Accept: 'application/json' },
+    },
+  )
 
-  if (!response.ok) {
-    throw new Error(
-      `El catálogo del receiver respondió con estado ${response.status}`,
-    )
-  }
+  const data = payload.data
 
-  const payload: unknown = await response.json()
-  if (!payload || typeof payload !== 'object') {
-    throw new Error('El receiver local devolvió un catálogo inesperado')
-  }
-
-  const data = (payload as LocalMarketEnvelope).data
   if (!Array.isArray(data)) {
     throw new Error('El receiver local no devolvió la lista de mercados')
   }

@@ -1,3 +1,8 @@
+import type {
+  LocalHistoryEnvelope,
+  LocalHistoryRecord,
+} from '@shared/contracts/market-api-payloads'
+import { fetchJson } from '@shared/http/fetchJson'
 import type { MarketHistorySnapshot } from '../types/MarketHistory'
 import type {
   AlbionServer,
@@ -6,16 +11,9 @@ import type {
 import {
   LOCAL_MARKET_API_URL,
   LOCAL_SERVER_IDS,
+  MARKET_REQUEST_TIMEOUT_MS,
 } from './localMarketApi'
 import { mapHistoryPoints } from './marketHistoryResponseMapping'
-
-interface LocalHistoryRecord {
-  readonly history?: unknown
-}
-
-interface LocalHistoryEnvelope {
-  readonly data?: unknown
-}
 
 interface FetchLocalMarketHistoryParams {
   readonly server: AlbionServer
@@ -54,7 +52,7 @@ export async function fetchLocalMarketHistory({
   rangeEnd,
   signal,
 }: FetchLocalMarketHistoryParams): Promise<MarketHistorySnapshot> {
-  const response = await fetch(
+  const payload = await fetchJson<LocalHistoryEnvelope>(
     createHistoryRequestUrl({
       server,
       itemIdentifier,
@@ -63,28 +61,19 @@ export async function fetchLocalMarketHistory({
     }),
     {
       signal,
+      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
       headers: {
         Accept: 'application/json',
       },
     },
   )
 
-  if (!response.ok) {
-    throw new Error(`El servicio local respondió con estado ${response.status}`)
-  }
-
-  const payload: unknown = await response.json()
-  if (!payload || typeof payload !== 'object') {
-    throw new Error('El servicio local devolvió un historial inesperado')
-  }
-
-  const data = (payload as LocalHistoryEnvelope).data
-  const firstRecord = Array.isArray(data) && data.length > 0
-    ? data[0]
-    : undefined
-  const history = firstRecord && typeof firstRecord === 'object'
-    ? (firstRecord as LocalHistoryRecord).history
-    : undefined
+  const data = payload.data
+  const firstRecord = Array.isArray(data) && data.length > 0 ? data[0] : undefined
+  const history =
+    firstRecord && typeof firstRecord === 'object'
+      ? (firstRecord as LocalHistoryRecord).history
+      : undefined
 
   return {
     server,
