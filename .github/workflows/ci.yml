@@ -60,3 +60,6 @@ jobs:
 
       - name: Build application
         run: pnpm build
+
+      - name: Check bundle budget
+        run: pnpm bundle:check
