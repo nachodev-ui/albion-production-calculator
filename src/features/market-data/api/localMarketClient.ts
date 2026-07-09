@@ -11,6 +11,7 @@ import {
   MARKET_SERVER_IDS,
 } from './localMarketApi'
 import { mapMarketPriceRow, parsePriceRows } from './marketResponseMapping'
+import { runWithMarketSourceCooldown } from './marketSourceCooldown'
 
 const MAX_URL_LENGTH = 3900
 
@@ -113,35 +114,37 @@ export async function fetchCurrentLocalPrices({
     return new Map()
   }
 
-  const fetchedAt = new Date().toISOString()
-  const result = new Map<string, MarketPriceSnapshot>()
+  return runWithMarketSourceCooldown('local-receiver', async () => {
+    const fetchedAt = new Date().toISOString()
+    const result = new Map<string, MarketPriceSnapshot>()
 
-  for (const city of uniqueCities) {
-    const batches = splitIntoUrlSafeBatches(server, uniqueItems, city, quality)
+    for (const city of uniqueCities) {
+      const batches = splitIntoUrlSafeBatches(server, uniqueItems, city, quality)
 
-    for (const batch of batches) {
-      const snapshots = await fetchBatch(
-        server,
-        batch,
-        city,
-        quality,
-        fetchedAt,
-        signal,
-      )
-
-      for (const snapshot of snapshots) {
-        result.set(
-          buildMarketCacheKey(
-            snapshot.server,
-            snapshot.city,
-            snapshot.itemIdentifier,
-            snapshot.quality,
-          ),
-          snapshot,
+      for (const batch of batches) {
+        const snapshots = await fetchBatch(
+          server,
+          batch,
+          city,
+          quality,
+          fetchedAt,
+          signal,
         )
+
+        for (const snapshot of snapshots) {
+          result.set(
+            buildMarketCacheKey(
+              snapshot.server,
+              snapshot.city,
+              snapshot.itemIdentifier,
+              snapshot.quality,
+            ),
+            snapshot,
+          )
+        }
       }
     }
-  }
 
-  return result
+    return result
+  })
 }
