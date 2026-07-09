@@ -27,7 +27,16 @@ const DEFAULT_RETRY_ATTEMPTS = 2
 const DEFAULT_RETRY_DELAY_MS = 150
 const MAX_RETRY_ATTEMPTS = 3
 
-const RETRIABLE_HTTP_STATUSES = new Set([408, 409, 425, 429, 500, 502, 503, 504])
+const RETRIABLE_HTTP_STATUSES = new Set([
+  408,
+  409,
+  425,
+  429,
+  500,
+  502,
+  503,
+  504,
+])
 
 export class FetchJsonError extends Error {
   readonly category: FetchJsonErrorCategory
@@ -40,7 +49,13 @@ export class FetchJsonError extends Error {
     this.category = options.category
     this.status = options.status
     this.retriable = options.retriable
-    this.cause = options.cause
+
+    if (options.cause !== undefined) {
+      Object.defineProperty(this, 'cause', {
+        value: options.cause,
+        configurable: true,
+      })
+    }
   }
 }
 
@@ -57,13 +72,6 @@ function normalizeRetryDelayMs(value: number | undefined): number {
 }
 
 function createTimeoutSignal(timeoutMs: number): TimeoutSignalHandle {
-  if (typeof AbortSignal.timeout === 'function') {
-    return {
-      signal: AbortSignal.timeout(timeoutMs),
-      clear: () => undefined,
-    }
-  }
-
   const controller = new AbortController()
   const timeout = globalThis.setTimeout(() => controller.abort(), timeoutMs)
 
@@ -176,8 +184,16 @@ function delay(ms: number, signal: AbortSignal | null | undefined): Promise<void
       return
     }
 
-    const timeout = globalThis.setTimeout(resolve, ms)
+    let settled = false
+    const timeout = globalThis.setTimeout(() => {
+      settled = true
+      signal?.removeEventListener('abort', abort)
+      resolve()
+    }, ms)
+
     const abort = () => {
+      if (settled) return
+      settled = true
       globalThis.clearTimeout(timeout)
       reject(
         new FetchJsonError('Request aborted', {
