@@ -37,7 +37,7 @@ interface MarketHistoryCardProps {
   readonly status: MarketRequestStatus
   readonly error: string | null
   readonly warnings: readonly string[]
-  readonly lastAttempt: MarketLastAttempt | null
+  readonly lastAttempt?: MarketLastAttempt | null
   readonly hasCachedHistory: boolean
   readonly isComparing: boolean
   readonly onComparisonChange: (patch: Partial<MarketConfig>) => void
@@ -305,7 +305,7 @@ export function MarketHistoryCard({
 
             <MarketLastAttemptBadge
               label="Último historial"
-              attempt={lastAttempt}
+              attempt={lastAttempt ?? null}
             />
           </div>
         </div>
