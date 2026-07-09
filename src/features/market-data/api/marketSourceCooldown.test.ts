@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FetchJsonError } from '@shared/http/fetchJson'
 import {
+  enableMarketSourceCooldownForTests,
   getMarketSourceCooldown,
   isMarketSourceInCooldown,
   recordMarketSourceFailure,
@@ -67,6 +68,7 @@ describe('marketSourceCooldown', () => {
   })
 
   it('evita ejecutar operaciones durante cooldown activo', async () => {
+    enableMarketSourceCooldownForTests()
     recordMarketSourceFailure(
       'central-api',
       new FetchJsonError('Request timed out', {
