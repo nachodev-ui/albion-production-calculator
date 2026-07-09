@@ -11,6 +11,8 @@ interface BundleBudgets {
   readonly cssGzipBytes: number
   readonly largestFileRawBytes: number
   readonly largestFileGzipBytes: number
+  readonly entryJavaScriptRawBytes: number
+  readonly entryJavaScriptGzipBytes: number
 }
 
 interface BundleBudgetConfig {
@@ -44,6 +46,8 @@ interface BundleReport {
   readonly css: BundleMetric
   /** Static media is reported for visibility, but it is not budgeted as code bundle. */
   readonly media: BundleMetric
+  /** Vite entry chunk, normally assets/index-*.js. */
+  readonly entryJavaScript: AssetEntry | null
   readonly largestFile: AssetEntry | null
   readonly assets: readonly AssetEntry[]
 }
@@ -144,6 +148,14 @@ function parseConfig(value: unknown): BundleBudgetConfig {
         budgetMap['largestFileGzipBytes'],
         'largestFileGzipBytes',
       ),
+      entryJavaScriptRawBytes: asPositiveNumber(
+        budgetMap['entryJavaScriptRawBytes'],
+        'entryJavaScriptRawBytes',
+      ),
+      entryJavaScriptGzipBytes: asPositiveNumber(
+        budgetMap['entryJavaScriptGzipBytes'],
+        'entryJavaScriptGzipBytes',
+      ),
     },
   }
 }
@@ -210,6 +222,13 @@ function isBudgetedAsset(asset: AssetEntry): boolean {
   return asset.kind !== 'media'
 }
 
+function isEntryJavaScriptAsset(asset: AssetEntry): boolean {
+  return (
+    asset.kind === 'javascript' &&
+    path.basename(asset.file).startsWith('index-')
+  )
+}
+
 function sumAssets(
   assets: readonly AssetEntry[],
   predicate: (asset: AssetEntry) => boolean,
@@ -254,6 +273,8 @@ async function buildReport(config: BundleBudgetConfig): Promise<BundleReport> {
     ),
     css: sumAssets(sortedAssets, (asset) => asset.kind === 'css'),
     media: sumAssets(sortedAssets, (asset) => asset.kind === 'media'),
+    entryJavaScript:
+      sortedAssets.find(isEntryJavaScriptAsset) ?? null,
     largestFile: findLargestAsset(budgetedAssets),
     assets: sortedAssets,
   }
@@ -278,6 +299,7 @@ function checkBudget(
 
 function collectBudgetViolations(report: BundleReport): string[] {
   const largestFile = report.largestFile
+  const entryJavaScript = report.entryJavaScript
 
   return [
     checkBudget(
@@ -316,6 +338,20 @@ function collectBudgetViolations(report: BundleReport): string[] {
           report.budgets.largestFileGzipBytes,
         )
       : null,
+    entryJavaScript
+      ? checkBudget(
+          `Entry JavaScript (${entryJavaScript.file}) raw`,
+          entryJavaScript.rawBytes,
+          report.budgets.entryJavaScriptRawBytes,
+        )
+      : 'Entry JavaScript: no se encontró assets/index-*.js',
+    entryJavaScript
+      ? checkBudget(
+          `Entry JavaScript (${entryJavaScript.file}) gzip`,
+          entryJavaScript.gzipBytes,
+          report.budgets.entryJavaScriptGzipBytes,
+        )
+      : null,
   ].filter((violation): violation is string => violation !== null)
 }
 
@@ -326,6 +362,12 @@ function printReport(report: BundleReport): void {
   console.log(`JavaScript: ${formatMetric(report.javascript)}`)
   console.log(`CSS: ${formatMetric(report.css)}`)
   console.log(`Static media: ${formatMetric(report.media)} (reported only)`)
+
+  if (report.entryJavaScript) {
+    console.log(
+      `Entry JavaScript: ${report.entryJavaScript.file} (${formatMetric(report.entryJavaScript)})`,
+    )
+  }
 
   if (report.largestFile) {
     console.log(
