@@ -54,6 +54,18 @@ interface MarketHistoryState {
 
 let latestChartRequestId = 0
 let latestOptimizerRequestId = 0
+let activeChartRequestController: AbortController | null = null
+let activeOptimizerRequestController: AbortController | null = null
+
+function abortActiveChartRequest(): void {
+  activeChartRequestController?.abort()
+  activeChartRequestController = null
+}
+
+function abortActiveOptimizerRequest(): void {
+  activeOptimizerRequestController?.abort()
+  activeOptimizerRequestController = null
+}
 
 function isSnapshotFresh(
   snapshot: MarketHistorySnapshot | undefined,
@@ -122,6 +134,8 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
 
   refreshHistory: async ({ target, config, force = false }) => {
     if (!target) {
+      latestChartRequestId += 1
+      abortActiveChartRequest()
       set({ status: 'idle', error: null, warnings: [] })
       return
     }
@@ -146,11 +160,17 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
     const cached = get().snapshots.get(cacheKey)
 
     if (!force && isSnapshotFresh(cached, range.end)) {
+      latestChartRequestId += 1
+      abortActiveChartRequest()
       set({ status: 'success', error: null, warnings: [] })
       return
     }
 
     const requestId = ++latestChartRequestId
+    abortActiveChartRequest()
+    const requestController = new AbortController()
+    activeChartRequestController = requestController
+
     set({ status: 'loading', error: null, warnings: [] })
 
     try {
@@ -159,9 +179,13 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
         rangeStart: range.start,
         rangeEnd: range.end,
         cachedSnapshots: get().snapshots,
+        signal: requestController.signal,
       })
 
       if (requestId !== latestChartRequestId) return
+      if (activeChartRequestController === requestController) {
+        activeChartRequestController = null
+      }
 
       const snapshot = result.snapshots.get(cacheKey)
       if (!snapshot) {
@@ -184,6 +208,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       })
     } catch (error) {
       if (requestId !== latestChartRequestId) return
+      if (activeChartRequestController === requestController) {
+        activeChartRequestController = null
+      }
 
       set({
         status: 'error',
@@ -200,6 +227,8 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
     const uniqueCandidates = dedupeCandidates(candidates)
 
     if (uniqueCandidates.length === 0) {
+      latestOptimizerRequestId += 1
+      abortActiveOptimizerRequest()
       set({
         optimizerStatus: 'idle',
         optimizerError: null,
@@ -225,6 +254,8 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
     })
 
     if (pending.length === 0) {
+      latestOptimizerRequestId += 1
+      abortActiveOptimizerRequest()
       set({
         optimizerStatus: 'success',
         optimizerError: null,
@@ -239,6 +270,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
     }
 
     const requestId = ++latestOptimizerRequestId
+    abortActiveOptimizerRequest()
+    const requestController = new AbortController()
+    activeOptimizerRequestController = requestController
     const cachedCount = uniqueCandidates.length - pending.length
 
     set({
@@ -258,7 +292,13 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
         rangeStart: range.start,
         rangeEnd: range.end,
         cachedSnapshots: currentSnapshots,
+        signal: requestController.signal,
       })
+
+      if (requestId !== latestOptimizerRequestId) return
+      if (activeOptimizerRequestController === requestController) {
+        activeOptimizerRequestController = null
+      }
 
       const nextSnapshots = new Map(get().snapshots)
       for (const [key, snapshot] of result.snapshots) {
@@ -266,11 +306,6 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       }
 
       if (result.snapshots.size > 0) saveMarketHistoryCache(nextSnapshots)
-
-      if (requestId !== latestOptimizerRequestId) {
-        if (result.snapshots.size > 0) set({ snapshots: nextSnapshots })
-        return
-      }
 
       const failed = result.failedKeys.length
       const allRequestsFailed =
@@ -295,6 +330,9 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
       })
     } catch (error) {
       if (requestId !== latestOptimizerRequestId) return
+      if (activeOptimizerRequestController === requestController) {
+        activeOptimizerRequestController = null
+      }
 
       set({
         optimizerStatus: 'error',
@@ -313,6 +351,10 @@ export const useMarketHistoryStore = create<MarketHistoryState>((set, get) => ({
   },
 
   clearCache: () => {
+    latestChartRequestId += 1
+    latestOptimizerRequestId += 1
+    abortActiveChartRequest()
+    abortActiveOptimizerRequest()
     clearStoredMarketHistoryCache()
     set({
       snapshots: new Map(),
