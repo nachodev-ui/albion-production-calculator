@@ -1,11 +1,15 @@
+import { fetchJson } from '@shared/http/fetchJson'
 import type {
   AlbionServer,
   MarketCityId,
   MarketPriceSnapshot,
 } from '../types/MarketPrice'
 import { buildMarketCacheKey } from '../types/MarketPrice'
-
-import { LOCAL_MARKET_API_URL, MARKET_SERVER_IDS } from './localMarketApi'
+import {
+  LOCAL_MARKET_API_URL,
+  MARKET_REQUEST_TIMEOUT_MS,
+  MARKET_SERVER_IDS,
+} from './localMarketApi'
 import { mapMarketPriceRow, parsePriceRows } from './marketResponseMapping'
 
 const MAX_URL_LENGTH = 3900
@@ -56,6 +60,7 @@ function splitIntoUrlSafeBatches(
   }
 
   if (current.length > 0) batches.push(current)
+
   return batches
 }
 
@@ -67,21 +72,18 @@ async function fetchBatch(
   fetchedAt: string,
   signal?: AbortSignal,
 ): Promise<readonly MarketPriceSnapshot[]> {
-  const response = await fetch(
+  const payload = await fetchJson<unknown>(
     createRequestUrl(server, itemIdentifiers, city, quality),
     {
       signal,
+      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
       headers: {
         Accept: 'application/json',
       },
     },
   )
 
-  if (!response.ok) {
-    throw new Error(`El receiver local respondió con estado ${response.status}`)
-  }
-
-  return parsePriceRows(await response.json()).flatMap((row) => {
+  return parsePriceRows(payload).flatMap((row) => {
     const snapshot = mapMarketPriceRow({
       server,
       fallbackCity: city,
