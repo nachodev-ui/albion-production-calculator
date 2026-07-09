@@ -14,6 +14,7 @@ import {
   MARKET_REQUEST_TIMEOUT_MS,
 } from './localMarketApi'
 import { mapHistoryPoints } from './marketHistoryResponseMapping'
+import { runWithMarketSourceCooldown } from './marketSourceCooldown'
 
 interface FetchLocalMarketHistoryParams {
   readonly server: AlbionServer
@@ -52,38 +53,42 @@ export async function fetchLocalMarketHistory({
   rangeEnd,
   signal,
 }: FetchLocalMarketHistoryParams): Promise<MarketHistorySnapshot> {
-  const payload = await fetchJson<LocalHistoryEnvelope>(
-    createHistoryRequestUrl({
+  return runWithMarketSourceCooldown('local-receiver', async () => {
+    const payload = await fetchJson<LocalHistoryEnvelope>(
+      createHistoryRequestUrl({
+        server,
+        itemIdentifier,
+        city,
+        quality,
+      }),
+      {
+        signal,
+        timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
+        retryAttempts: 1,
+        headers: {
+          Accept: 'application/json',
+        },
+      },
+    )
+
+    const data = payload.data
+    const firstRecord =
+      Array.isArray(data) && data.length > 0 ? data[0] : undefined
+    const history =
+      firstRecord && typeof firstRecord === 'object'
+        ? (firstRecord as LocalHistoryRecord).history
+        : undefined
+
+    return {
       server,
       itemIdentifier,
       city,
       quality,
-    }),
-    {
-      signal,
-      timeoutMs: MARKET_REQUEST_TIMEOUT_MS,
-      headers: {
-        Accept: 'application/json',
-      },
-    },
-  )
-
-  const data = payload.data
-  const firstRecord = Array.isArray(data) && data.length > 0 ? data[0] : undefined
-  const history =
-    firstRecord && typeof firstRecord === 'object'
-      ? (firstRecord as LocalHistoryRecord).history
-      : undefined
-
-  return {
-    server,
-    itemIdentifier,
-    city,
-    quality,
-    rangeStart,
-    rangeEnd,
-    points: mapHistoryPoints(history),
-    source: 'local-receiver',
-    fetchedAt: new Date().toISOString(),
-  }
+      rangeStart,
+      rangeEnd,
+      points: mapHistoryPoints(history),
+      source: 'local-receiver',
+      fetchedAt: new Date().toISOString(),
+    }
+  })
 }
