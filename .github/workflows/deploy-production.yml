@@ -89,6 +89,23 @@ jobs:
       - name: Validate bundle budget
         run: pnpm bundle:check
 
+      - name: Validate production API host in built bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! grep -R -Fq 'albion-market-api.onrender.com' dist; then
+            echo '::error::The production build does not contain the Render API host.'
+            exit 1
+          fi
+
+          if grep -R -Fq 'albion-market-api-nachodev.fly.dev' dist; then
+            echo '::error::The production build still contains the obsolete Fly.io host.'
+            exit 1
+          fi
+
+          echo 'Production build contains Render and no Fly.io host.'
+
       - name: Collect Cloudflare deployment diagnostic
         continue-on-error: true
         shell: bash
@@ -195,7 +212,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          expected_api='https://albion-market-api.onrender.com/api/v1'
+          expected_host='albion-market-api.onrender.com'
           obsolete_host='albion-market-api-nachodev.fly.dev'
           public_origin='https://albion-production-calculator.pages.dev'
           deploy_log="${RUNNER_TEMP}/wrangler-production-deploy.log"
@@ -287,9 +304,9 @@ jobs:
                 continue
               fi
 
-              if grep -Fq "${expected_api}" "${bundle_file}" && \
+              if grep -Fq "${expected_host}" "${bundle_file}" && \
                  ! grep -Fq "${obsolete_host}" "${bundle_file}"; then
-                echo "${label}: bundle uses Render and contains no Fly.io reference."
+                echo "${label}: bundle contains the Render host and no Fly.io reference."
                 return 0
               fi
 
@@ -297,7 +314,7 @@ jobs:
               sleep 5
             done
 
-            echo "::error::${label} bundle did not converge to the expected Render API configuration."
+            echo "::error::${label} bundle did not converge to the expected Render host configuration."
             return 1
           }
 
