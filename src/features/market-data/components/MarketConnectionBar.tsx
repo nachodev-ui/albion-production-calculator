@@ -1,4 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  CENTRAL_MARKET_API_URL,
+  LOCAL_MARKET_API_URL,
+  LOCAL_RECEIVER_FALLBACK_ENABLED,
+} from '../api/localMarketApi'
+import {
+  getMarketSourceStatuses,
+  type MarketNetworkSource,
+  type MarketSourceRuntimeStatus,
+} from '../api/marketSourceCooldown'
+import { useMarketDataStore } from '../store/marketDataStore'
 import type {
   AlbionServer,
   MarketCatalogStatus,
@@ -14,16 +25,6 @@ import {
   MARKET_DATA_SOURCE_LABELS,
   MARKET_SERVER_LABELS,
 } from '../types/MarketPrice'
-import {
-  CENTRAL_MARKET_API_URL,
-  LOCAL_MARKET_API_URL,
-} from '../api/localMarketApi'
-import {
-  getMarketSourceStatuses,
-  type MarketNetworkSource,
-  type MarketSourceRuntimeStatus,
-} from '../api/marketSourceCooldown'
-import { useMarketDataStore } from '../store/marketDataStore'
 import type {
   MarketRefreshProgress,
   MarketRefreshReport,
@@ -60,7 +61,7 @@ function getStatusPresentation(
 ): { readonly label: string; readonly className: string } {
   if (status === 'loading') {
     return {
-      label: 'Consultando fuentes de mercado…',
+      label: 'Consultando datos de mercado…',
       className: 'border-border bg-surface text-text-muted',
     }
   }
@@ -72,7 +73,7 @@ function getStatusPresentation(
           className: 'border-accent-border bg-accent-muted text-accent',
         }
       : {
-          label: 'Fuentes de mercado desconectadas',
+          label: 'API de mercado desconectada',
           className: 'border-border bg-surface text-negative',
         }
   }
@@ -95,7 +96,7 @@ function getStatusPresentation(
       sourceSummary.browserCache === 0
     ) {
       return {
-        label: 'Receiver local (fallback)',
+        label: 'Receiver local (modo avanzado)',
         className: 'border-accent-border bg-accent-muted text-accent',
       }
     }
@@ -128,25 +129,20 @@ function getStatusPresentation(
     }
   }
 
-  if (sourceSummary.browserCache > 0) {
-    return {
-      label: 'Caché restaurada',
-      className: 'border-accent-border bg-accent-muted text-accent',
-    }
-  }
-
-  return {
-    label: 'Listo para consultar',
-    className: 'border-border bg-surface text-text-faint',
-  }
+  return sourceSummary.browserCache > 0
+    ? {
+        label: 'Caché restaurada',
+        className: 'border-accent-border bg-accent-muted text-accent',
+      }
+    : {
+        label: 'Listo para consultar',
+        className: 'border-border bg-surface text-text-faint',
+      }
 }
 
 function formatCooldownRemaining(remainingMs: number): string {
   const seconds = Math.max(1, Math.ceil(remainingMs / 1000))
-  if (seconds < 60) return `${seconds}s`
-
-  const minutes = Math.ceil(seconds / 60)
-  return `${minutes}min`
+  return seconds < 60 ? `${seconds}s` : `${Math.ceil(seconds / 60)}min`
 }
 
 function getNetworkSourceCount(
@@ -167,11 +163,10 @@ function getNetworkSourceBadge(
 
   if (status.cooldown) {
     const remaining = formatCooldownRemaining(status.cooldown.remainingMs)
-
     return {
       label: `${sourceLabel}: cooldown ${remaining}`,
       className: 'border-accent-border bg-accent-muted text-accent',
-      title: `${sourceLabel} está temporalmente en cooldown. Motivo: ${status.cooldown.reason}. Fallos consecutivos: ${status.cooldown.failureCount}.`,
+      title: `${sourceLabel} está temporalmente en cooldown. Motivo: ${status.cooldown.reason}.`,
     }
   }
 
@@ -186,7 +181,7 @@ function getNetworkSourceBadge(
   return {
     label: `${sourceLabel}: disponible`,
     className: 'border-border bg-surface-raised text-text-faint',
-    title: `${sourceLabel} no está en cooldown y queda disponible para el próximo intento.`,
+    title: `${sourceLabel} queda disponible para el próximo intento.`,
   }
 }
 
@@ -198,33 +193,21 @@ function getBrowserCacheBadge(
     return {
       label: `Caché: en uso (${sourceSummary.browserCache})`,
       className: 'border-accent-border bg-accent-muted text-accent',
-      title: 'La vista actual usa datos restaurados desde el caché del navegador.',
+      title: 'La vista actual usa datos restaurados desde el navegador.',
     }
   }
 
-  if (hasCachedPrice) {
-    return {
-      label: 'Caché: reserva disponible',
-      className: 'border-border bg-surface-raised text-text-faint',
-      title: 'Hay precios guardados que pueden mantenerse si las fuentes de red fallan.',
-    }
-  }
-
-  return {
-    label: 'Caché: sin datos',
-    className: 'border-border bg-surface-raised text-text-faint',
-    title: 'Todavía no hay precios automáticos guardados en este navegador.',
-  }
-}
-
-function getRefreshButtonLabel(
-  isRefreshing: boolean,
-  status: MarketRequestStatus,
-  catalogStatus: MarketCatalogStatus,
-): string {
-  if (isRefreshing) return 'Actualizando…'
-  if (status === 'error' || catalogStatus === 'error') return 'Reintentar ahora'
-  return 'Actualizar todos los precios'
+  return hasCachedPrice
+    ? {
+        label: 'Caché: reserva disponible',
+        className: 'border-border bg-surface-raised text-text-faint',
+        title: 'Hay datos guardados para una degradación temporal.',
+      }
+    : {
+        label: 'Caché: sin datos',
+        className: 'border-border bg-surface-raised text-text-faint',
+        title: 'Todavía no hay datos automáticos guardados.',
+      }
 }
 
 function isVisibleAttempt(
@@ -275,10 +258,7 @@ export function MarketConnectionBar({
   const browserCacheBadge = getBrowserCacheBadge(sourceSummary, hasCachedPrice)
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setSourceStatusNow(Date.now())
-    }, 5 * 1000)
-
+    const interval = window.setInterval(() => setSourceStatusNow(Date.now()), 5_000)
     return () => window.clearInterval(interval)
   }, [])
 
@@ -288,9 +268,11 @@ export function MarketConnectionBar({
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-text">Datos de mercado</h3>
           <p className="mt-1 max-w-2xl text-xs leading-relaxed text-text-faint">
-            Prioridad automática: API central → receiver local → caché del
-            navegador. La compra se configura junto a los materiales y la venta
-            dentro del resumen económico.
+            {LOCAL_RECEIVER_FALLBACK_ENABLED
+              ? 'Modo colaborador: API central → receiver local → caché del navegador.'
+              : 'Modo público: API central HTTPS → caché del navegador.'}{' '}
+            La compra se configura junto a los materiales y la venta dentro del
+            resumen económico.
           </p>
 
           <div
@@ -299,7 +281,6 @@ export function MarketConnectionBar({
           >
             {sourceStatuses.map((sourceStatus) => {
               const badge = getNetworkSourceBadge(sourceStatus, sourceSummary)
-
               return (
                 <span
                   key={sourceStatus.source}
@@ -362,7 +343,11 @@ export function MarketConnectionBar({
             onClick={onRefresh}
             className="min-h-9 rounded-md border border-border bg-surface-raised px-3 py-1.5 text-xs font-medium text-text transition-colors hover:border-border-strong disabled:cursor-wait disabled:opacity-60"
           >
-            {getRefreshButtonLabel(isRefreshing, status, catalogStatus)}
+            {isRefreshing
+              ? 'Actualizando…'
+              : status === 'error' || catalogStatus === 'error'
+                ? 'Reintentar ahora'
+                : 'Actualizar todos los precios'}
           </button>
         </div>
       </div>
@@ -389,29 +374,34 @@ export function MarketConnectionBar({
                 {CENTRAL_MARKET_API_URL}
               </p>
               <p className="mt-1 text-[10px] text-text-faint">
-                Fuente principal de lectura
+                Fuente de red requerida
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-surface p-3">
-              <p className="text-[11px] text-text-faint">Receiver local</p>
-              <p
-                className="mt-1 truncate text-xs font-medium text-text"
-                title={LOCAL_MARKET_API_URL}
-              >
-                {LOCAL_MARKET_API_URL}
-              </p>
-              <p className="mt-1 text-[10px] text-text-faint">
-                Fallback cuando falta la API central
-              </p>
-            </div>
+            {LOCAL_RECEIVER_FALLBACK_ENABLED && (
+              <div className="rounded-lg border border-border bg-surface p-3">
+                <p className="text-[11px] text-text-faint">Receiver local</p>
+                <p
+                  className="mt-1 truncate text-xs font-medium text-text"
+                  title={LOCAL_MARKET_API_URL}
+                >
+                  {LOCAL_MARKET_API_URL}
+                </p>
+                <p className="mt-1 text-[10px] text-text-faint">
+                  Habilitado solo para diagnóstico local
+                </p>
+              </div>
+            )}
 
             <div className="rounded-lg border border-border bg-surface p-3">
               <p className="text-[11px] text-text-faint">Origen activo</p>
               <p className="mt-1 text-[10px] leading-relaxed text-text-muted">
-                API central: {sourceSummary.centralApi} · Receiver:{' '}
-                {sourceSummary.localReceiver} · Caché:{' '}
-                {sourceSummary.browserCache} · Sin datos: {sourceSummary.missing}
+                API central: {sourceSummary.centralApi} · Caché:{' '}
+                {sourceSummary.browserCache}
+                {LOCAL_RECEIVER_FALLBACK_ENABLED
+                  ? ` · Receiver: ${sourceSummary.localReceiver}`
+                  : ''}{' '}
+                · Sin datos: {sourceSummary.missing}
               </p>
               <p className="mt-1 text-[10px] text-text-faint">
                 Catálogo:{' '}
@@ -434,7 +424,6 @@ export function MarketConnectionBar({
                   sin datos
                 </p>
               </div>
-
               <button
                 type="button"
                 onClick={onClearCache}
@@ -465,7 +454,7 @@ export function MarketConnectionBar({
 
           {warnings.length > 0 && (
             <div className="mt-3 rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs leading-relaxed text-text-muted">
-              <p className="font-medium text-text">Fallback utilizado</p>
+              <p className="font-medium text-text">Degradación utilizada</p>
               {warnings.map((warning) => (
                 <p key={warning} className="mt-1">
                   {warning}
@@ -485,7 +474,9 @@ export function MarketConnectionBar({
               No se pudieron actualizar los precios: {error}.{' '}
               {hasCachedPrice
                 ? 'Se mantienen los últimos datos guardados en este navegador.'
-                : 'Levanta albion-market-api o el receiver local, o continúa con precios manuales.'}
+                : LOCAL_RECEIVER_FALLBACK_ENABLED
+                  ? 'Revisa la API central o el receiver local, o continúa con precios manuales.'
+                  : 'Revisa la API central o continúa con precios manuales.'}
             </p>
           )}
 
