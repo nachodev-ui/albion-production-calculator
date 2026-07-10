@@ -128,6 +128,18 @@ function normalizeTimeoutMs(rawValue: string | undefined): number {
 
 assertNoUnexpectedViteEnv()
 
+const localReceiverFallbackEnabled = normalizeBoolean(
+  'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
+  readPublicEnv('VITE_ENABLE_LOCAL_RECEIVER_FALLBACK'),
+  DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED,
+)
+
+if (import.meta.env.PROD && localReceiverFallbackEnabled) {
+  throw new Error(
+    'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK debe ser false en builds de producción',
+  )
+}
+
 export const PUBLIC_ENV = {
   centralMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_CENTRAL_MARKET_API_URL',
@@ -135,11 +147,7 @@ export const PUBLIC_ENV = {
     fallback: DEFAULT_CENTRAL_MARKET_API_URL,
     requireHttps: import.meta.env.PROD,
   }),
-  localReceiverFallbackEnabled: normalizeBoolean(
-    'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
-    readPublicEnv('VITE_ENABLE_LOCAL_RECEIVER_FALLBACK'),
-    DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED,
-  ),
+  localReceiverFallbackEnabled,
   localMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_LOCAL_MARKET_API_URL',
     rawValue:
