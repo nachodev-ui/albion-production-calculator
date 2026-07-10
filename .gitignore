@@ -15,6 +15,11 @@ dist-ssr
 # Generated reports
 artifacts/
 
+# Local deployment credentials
+secrets/
+*.secret
+*.token
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
