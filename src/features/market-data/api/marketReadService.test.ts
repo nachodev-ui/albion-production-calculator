@@ -254,9 +254,11 @@ describe('marketReadService', () => {
 
     expect(result.source).toBe('browser-cache')
     expect(result.markets).toEqual(cachedMarkets)
-    expect(result.warnings.some((warning) => warning.includes('Receiver local'))).toBe(
-      true,
-    )
+    expect(
+      result.warnings.some((warning) =>
+        warning.toLowerCase().includes('receiver local'),
+      ),
+    ).toBe(true)
   })
 
   it('en modo público usa caché sin intentar conectarse al receiver', async () => {
