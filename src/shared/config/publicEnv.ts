@@ -1,12 +1,14 @@
 const DEFAULT_CENTRAL_MARKET_API_URL = 'http://127.0.0.1:8080/api/v1'
 const DEFAULT_LOCAL_MARKET_API_URL = 'http://127.0.0.1:8787/api/v1'
 const DEFAULT_MARKET_REQUEST_TIMEOUT_MS = 7_000
+const DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED = false
 
 const MIN_TIMEOUT_MS = 1_000
 const MAX_TIMEOUT_MS = 30_000
 
 const ALLOWED_PUBLIC_ENV_KEYS = new Set([
   'VITE_CENTRAL_MARKET_API_URL',
+  'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
   'VITE_LOCAL_MARKET_API_URL',
   'VITE_MARKET_API_URL',
   'VITE_MARKET_REQUEST_TIMEOUT_MS',
@@ -51,11 +53,17 @@ function normalizeApiBaseUrl({
   key,
   rawValue,
   fallback,
+  requireHttps = false,
 }: {
   readonly key: string
   readonly rawValue: string | undefined
   readonly fallback: string
+  readonly requireHttps?: boolean
 }): string {
+  if (requireHttps && !rawValue) {
+    throw new Error(`${key} es obligatoria para compilar el frontend en producción`)
+  }
+
   const value = rawValue ?? fallback
 
   let parsed: URL
@@ -73,6 +81,10 @@ function normalizeApiBaseUrl({
     throw new Error(`${key} debe usar http o https`)
   }
 
+  if (requireHttps && parsed.protocol !== 'https:') {
+    throw new Error(`${key} debe usar HTTPS en producción`)
+  }
+
   if (parsed.protocol === 'http:' && !isLoopbackHostname(parsed.hostname)) {
     throw new Error(`${key} solo puede usar http en localhost/127.0.0.1`)
   }
@@ -83,6 +95,18 @@ function normalizeApiBaseUrl({
   }
 
   return normalized
+}
+
+function normalizeBoolean(
+  key: string,
+  rawValue: string | undefined,
+  fallback: boolean,
+): boolean {
+  if (!rawValue) return fallback
+  if (rawValue === 'true') return true
+  if (rawValue === 'false') return false
+
+  throw new Error(`${key} debe ser true o false`)
 }
 
 function normalizeTimeoutMs(rawValue: string | undefined): number {
@@ -104,12 +128,26 @@ function normalizeTimeoutMs(rawValue: string | undefined): number {
 
 assertNoUnexpectedViteEnv()
 
+const localReceiverFallbackEnabled = normalizeBoolean(
+  'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
+  readPublicEnv('VITE_ENABLE_LOCAL_RECEIVER_FALLBACK'),
+  DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED,
+)
+
+if (import.meta.env.PROD && localReceiverFallbackEnabled) {
+  throw new Error(
+    'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK debe ser false en builds de producción',
+  )
+}
+
 export const PUBLIC_ENV = {
   centralMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_CENTRAL_MARKET_API_URL',
     rawValue: readPublicEnv('VITE_CENTRAL_MARKET_API_URL'),
     fallback: DEFAULT_CENTRAL_MARKET_API_URL,
+    requireHttps: import.meta.env.PROD,
   }),
+  localReceiverFallbackEnabled,
   localMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_LOCAL_MARKET_API_URL',
     rawValue:

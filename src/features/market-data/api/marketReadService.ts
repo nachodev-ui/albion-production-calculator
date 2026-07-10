@@ -9,11 +9,13 @@ import { buildMarketCacheKey } from '../types/MarketPrice'
 import { fetchCentralMarkets } from './centralMarketCatalogClient'
 import { fetchCurrentCentralPrices } from './centralMarketClient'
 import {
+  describeMarketCacheFallback,
   describeMarketError,
   describeMarketFallbackWarning,
 } from './marketErrorMessages'
 import { fetchLocalMarkets } from './localMarketCatalogClient'
 import { fetchCurrentLocalPrices } from './localMarketClient'
+import { LOCAL_RECEIVER_FALLBACK_ENABLED } from './localMarketApi'
 
 export interface MarketCatalogResult {
   readonly markets: readonly MarketDefinition[]
@@ -33,11 +35,13 @@ interface FetchCurrentPricesParams {
   readonly cities: readonly MarketCityId[]
   readonly quality: number
   readonly signal?: AbortSignal
+  readonly localReceiverFallbackEnabled?: boolean
 }
 
 export async function fetchMarketsWithFallback(
   cachedMarkets: readonly MarketDefinition[] = [],
   signal?: AbortSignal,
+  localReceiverFallbackEnabled = LOCAL_RECEIVER_FALLBACK_ENABLED,
 ): Promise<MarketCatalogResult> {
   try {
     return {
@@ -46,11 +50,33 @@ export async function fetchMarketsWithFallback(
       warnings: [],
     }
   } catch (centralError) {
+    const centralWarning = describeMarketFallbackWarning(
+      'central-api',
+      centralError,
+    )
+
+    if (!localReceiverFallbackEnabled) {
+      if (cachedMarkets.length > 0) {
+        return {
+          markets: cachedMarkets,
+          source: 'browser-cache',
+          warnings: [centralWarning, describeMarketCacheFallback('catalog')],
+        }
+      }
+
+      throw new Error(
+        `No fue posible cargar mercados. ${describeMarketError(centralError, {
+          source: 'central-api',
+        })}`,
+        { cause: centralError },
+      )
+    }
+
     try {
       return {
         markets: await fetchLocalMarkets(signal),
         source: 'local-receiver',
-        warnings: [describeMarketFallbackWarning('central-api', centralError)],
+        warnings: [centralWarning],
       }
     } catch (localError) {
       if (cachedMarkets.length > 0) {
@@ -58,8 +84,9 @@ export async function fetchMarketsWithFallback(
           markets: cachedMarkets,
           source: 'browser-cache',
           warnings: [
-            describeMarketFallbackWarning('central-api', centralError),
+            centralWarning,
             describeMarketFallbackWarning('local-receiver', localError),
+            describeMarketCacheFallback('catalog'),
           ],
         }
       }
@@ -146,6 +173,15 @@ export async function fetchCurrentPricesWithFallback(
     return { snapshots: new Map(), sources: [], warnings: [] }
   }
 
+  const localReceiverFallbackEnabled =
+    params.localReceiverFallbackEnabled ?? LOCAL_RECEIVER_FALLBACK_ENABLED
+  const centralParams = {
+    server: params.server,
+    itemIdentifiers: params.itemIdentifiers,
+    cities: params.cities,
+    quality: params.quality,
+    signal: params.signal,
+  }
   const result = new Map<string, MarketPriceSnapshot>()
   const sources = new Set<Exclude<MarketDataSource, 'browser-cache'>>()
   const warnings: string[] = []
@@ -155,7 +191,7 @@ export async function fetchCurrentPricesWithFallback(
   const localErrors: string[] = []
 
   try {
-    const central = await fetchCurrentCentralPrices(params)
+    const central = await fetchCurrentCentralPrices(centralParams)
     centralSucceeded = true
     sources.add('central-api')
     for (const [key, snapshot] of central) result.set(key, snapshot)
@@ -164,65 +200,73 @@ export async function fetchCurrentPricesWithFallback(
     warnings.push(describeMarketFallbackWarning('central-api', error))
   }
 
-  const missingByCity = new Map<MarketCityId, string[]>()
-  for (const city of Array.from(new Set(params.cities))) {
-    const missingItems = Array.from(new Set(params.itemIdentifiers)).filter(
-      (itemIdentifier) =>
-        needsLocalCompletion(
-          result.get(
-            buildMarketCacheKey(
-              params.server,
-              city,
-              itemIdentifier,
-              params.quality,
+  if (localReceiverFallbackEnabled) {
+    const missingByCity = new Map<MarketCityId, string[]>()
+    for (const city of Array.from(new Set(params.cities))) {
+      const missingItems = Array.from(new Set(params.itemIdentifiers)).filter(
+        (itemIdentifier) =>
+          needsLocalCompletion(
+            result.get(
+              buildMarketCacheKey(
+                params.server,
+                city,
+                itemIdentifier,
+                params.quality,
+              ),
             ),
           ),
-        ),
+      )
+
+      if (missingItems.length > 0) missingByCity.set(city, missingItems)
+    }
+
+    const localSettled = await Promise.allSettled(
+      Array.from(missingByCity.entries()).map(async ([city, itemIdentifiers]) =>
+        fetchCurrentLocalPrices({
+          server: params.server,
+          cities: [city],
+          itemIdentifiers,
+          quality: params.quality,
+          signal: params.signal,
+        }),
+      ),
     )
 
-    if (missingItems.length > 0) missingByCity.set(city, missingItems)
-  }
-
-  const localSettled = await Promise.allSettled(
-    Array.from(missingByCity.entries()).map(async ([city, itemIdentifiers]) =>
-      fetchCurrentLocalPrices({
-        ...params,
-        cities: [city],
-        itemIdentifiers,
-      }),
-    ),
-  )
-
-  for (const settled of localSettled) {
-    if (settled.status === 'fulfilled') {
-      localSucceeded = true
-      for (const [key, snapshot] of settled.value) {
-        const merged = mergeSnapshots(result.get(key), snapshot)
-        result.set(key, merged.snapshot)
-        if (merged.contributed) sources.add('local-receiver')
+    for (const settled of localSettled) {
+      if (settled.status === 'fulfilled') {
+        localSucceeded = true
+        for (const [key, snapshot] of settled.value) {
+          const merged = mergeSnapshots(result.get(key), snapshot)
+          result.set(key, merged.snapshot)
+          if (merged.contributed) sources.add('local-receiver')
+        }
+      } else {
+        localErrors.push(
+          describeMarketError(settled.reason, { source: 'local-receiver' }),
+        )
       }
-    } else {
-      localErrors.push(
-        describeMarketError(settled.reason, { source: 'local-receiver' }),
+    }
+
+    if (localErrors.length > 0) {
+      warnings.push(
+        `Receiver local incompleto: ${Array.from(new Set(localErrors)).join('; ')}`,
       )
     }
   }
 
-  if (localErrors.length > 0) {
-    warnings.push(
-      `Receiver local incompleto: ${Array.from(new Set(localErrors)).join('; ')}`,
-    )
-  }
-
   if (!centralSucceeded && !localSucceeded) {
+    const centralMessage = describeMarketError(centralError, {
+      source: 'central-api',
+    })
+
     throw new Error(
-      `No se pudo consultar precios. ${describeMarketError(centralError, {
-        source: 'central-api',
-      })} ${
-        localErrors.length > 0
-          ? `Receiver local: ${localErrors.join('; ')}`
-          : 'Receiver local: sin respuesta.'
-      }`,
+      localReceiverFallbackEnabled
+        ? `No se pudo consultar precios. ${centralMessage} ${
+            localErrors.length > 0
+              ? `Receiver local: ${localErrors.join('; ')}`
+              : 'Receiver local: sin respuesta.'
+          }`
+        : `No se pudo consultar precios. ${centralMessage}`,
     )
   }
 

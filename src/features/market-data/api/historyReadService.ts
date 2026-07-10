@@ -14,6 +14,7 @@ import {
   describeMarketFallbackWarning,
 } from './marketErrorMessages'
 import { fetchLocalMarketHistory } from './localHistoryClient'
+import { LOCAL_RECEIVER_FALLBACK_ENABLED } from './localMarketApi'
 
 export interface MarketHistoryReadResult {
   readonly snapshots: ReadonlyMap<string, MarketHistorySnapshot>
@@ -29,6 +30,7 @@ interface FetchMarketHistoryWithFallbackParams {
   readonly rangeEnd: string
   readonly cachedSnapshots?: ReadonlyMap<string, MarketHistorySnapshot>
   readonly signal?: AbortSignal
+  readonly localReceiverFallbackEnabled?: boolean
 }
 
 const LOCAL_HISTORY_CONCURRENCY = 4
@@ -121,6 +123,7 @@ export async function fetchMarketHistoryWithFallback({
   rangeEnd,
   cachedSnapshots = new Map(),
   signal,
+  localReceiverFallbackEnabled: localReceiverFallbackOverride,
 }: FetchMarketHistoryWithFallbackParams): Promise<MarketHistoryReadResult> {
   const requested = dedupeCandidates(candidates)
   if (requested.length === 0) {
@@ -133,6 +136,8 @@ export async function fetchMarketHistoryWithFallback({
     }
   }
 
+  const localReceiverFallbackEnabled =
+    localReceiverFallbackOverride ?? LOCAL_RECEIVER_FALLBACK_ENABLED
   const snapshots = new Map<string, MarketHistorySnapshot>()
   const emptyOnlineSnapshots = new Map<string, MarketHistorySnapshot>()
   const sources = new Set<MarketDataSource>()
@@ -182,44 +187,46 @@ export async function fetchMarketHistoryWithFallback({
   })
   const localErrors: string[] = []
 
-  await runWithConcurrency(
-    missing,
-    LOCAL_HISTORY_CONCURRENCY,
-    async (candidate) => {
-      const key = buildMarketHistoryCacheKey(
-        candidate.server,
-        candidate.city,
-        candidate.itemIdentifier,
-        candidate.quality,
-      )
-
-      try {
-        requestCount += 1
-        const snapshot = await fetchLocalMarketHistory({
-          ...candidate,
-          rangeStart,
-          rangeEnd,
-          signal,
-        })
-
-        if (snapshot.points.length > 0) {
-          snapshots.set(key, snapshot)
-          sources.add('local-receiver')
-        } else {
-          emptyOnlineSnapshots.set(key, snapshot)
-        }
-      } catch (error) {
-        localErrors.push(
-          describeMarketError(error, { source: 'local-receiver' }),
+  if (localReceiverFallbackEnabled) {
+    await runWithConcurrency(
+      missing,
+      LOCAL_HISTORY_CONCURRENCY,
+      async (candidate) => {
+        const key = buildMarketHistoryCacheKey(
+          candidate.server,
+          candidate.city,
+          candidate.itemIdentifier,
+          candidate.quality,
         )
-      }
-    },
-  )
 
-  if (localErrors.length > 0) {
-    warnings.push(
-      `Receiver local incompleto: ${Array.from(new Set(localErrors)).join('; ')}`,
+        try {
+          requestCount += 1
+          const snapshot = await fetchLocalMarketHistory({
+            ...candidate,
+            rangeStart,
+            rangeEnd,
+            signal,
+          })
+
+          if (snapshot.points.length > 0) {
+            snapshots.set(key, snapshot)
+            sources.add('local-receiver')
+          } else {
+            emptyOnlineSnapshots.set(key, snapshot)
+          }
+        } catch (error) {
+          localErrors.push(
+            describeMarketError(error, { source: 'local-receiver' }),
+          )
+        }
+      },
     )
+
+    if (localErrors.length > 0) {
+      warnings.push(
+        `Receiver local incompleto: ${Array.from(new Set(localErrors)).join('; ')}`,
+      )
+    }
   }
 
   const failedKeys: string[] = []

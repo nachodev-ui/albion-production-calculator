@@ -10,6 +10,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: 'Inicio', link: '/' },
+      { text: 'Distribución', link: '/architecture/distribution-model' },
       { text: 'Arquitectura', link: '/architecture/overview' },
       { text: 'Mercado', link: '/architecture/market-data' },
       { text: 'Operación', link: '/operations/local-development' },
@@ -25,6 +26,10 @@ export default defineConfig({
       {
         text: 'Arquitectura',
         items: [
+          {
+            text: 'Modelo de distribución',
+            link: '/architecture/distribution-model',
+          },
           { text: 'Aplicación', link: '/architecture/overview' },
           { text: 'Datos de mercado', link: '/architecture/market-data' },
         ],
@@ -60,6 +65,10 @@ export default defineConfig({
           {
             text: 'ADR-001: marketKey y fallback',
             link: '/decisions/0001-market-keys-and-fallback',
+          },
+          {
+            text: 'ADR-002: distribución hosted-first',
+            link: '/decisions/0002-hosted-first-distribution',
           },
         ],
       },
