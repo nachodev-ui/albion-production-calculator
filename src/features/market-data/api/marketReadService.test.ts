@@ -275,9 +275,11 @@ describe('marketReadService', () => {
     expect(result.warnings.some((warning) => warning.includes('receiver'))).toBe(
       false,
     )
-    expect(result.warnings.some((warning) => warning.includes('caché'))).toBe(
-      true,
-    )
+    expect(
+      result.warnings.some((warning) =>
+        warning.includes('catálogo guardado'),
+      ),
+    ).toBe(true)
   })
 
   it('en modo público informa solo el fallo central cuando no existe caché', async () => {
