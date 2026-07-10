@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - scripts/verify-production-market-ui.cjs
+      - scripts/check-public-security.ts
+      - public/_headers
       - .github/workflows/production-market-ui.yml
       - docs/operations/production-market-ui-validation.md
   workflow_dispatch:
@@ -61,6 +63,7 @@ jobs:
           MARKET_KEY: thetford
           ALBION_SERVER: west
           MARKET_QUALITY: '1'
+          EXPECT_CSP_CLEAN: ${{ github.event_name == 'workflow_run' && 'true' || 'false' }}
           ARTIFACT_DIRECTORY: .e2e/artifacts/production-market-ui
         run: |
           set -euo pipefail
