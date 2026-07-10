@@ -47,6 +47,8 @@ El workflow se ejecuta:
 
 En los PR se valida el recorrido de datos contra la versión pública vigente. La ausencia de violaciones CSP se exige después del deployment, cuando `public/_headers` ya está publicado.
 
+La ejecución posterior al deployment publica el estado de commit `market-ui/production`. Un estado `success` significa que Chromium encontró el precio real de Thetford en la interfaz pública, confirmó la fuente central y no observó violaciones CSP.
+
 ## Evidencia
 
 Cada ejecución conserva durante 14 días:
