@@ -185,12 +185,29 @@ jobs:
       - name: Deploy to Cloudflare Pages
         id: cloudflare_deploy
         continue-on-error: true
-        uses: cloudflare/wrangler-action@v3
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -o pipefail
+
+          deploy_log="${RUNNER_TEMP}/wrangler-production-deploy.log"
+
+          npx --yes wrangler@latest pages deploy dist \
+            --project-name=albion-production-calculator \
+            --branch=main \
+            --commit-hash="${GITHUB_SHA}" \
+            --commit-dirty=false \
+            2>&1 | tee "${deploy_log}"
+
+      - name: Upload Wrangler deployment log
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ env.CLOUDFLARE_ACCOUNT_ID }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          command: pages deploy dist --project-name=albion-production-calculator --branch=main --commit-hash=${{ github.sha }} --commit-dirty=false
+          name: wrangler-production-deploy-${{ github.run_id }}
+          path: ${{ runner.temp }}/wrangler-production-deploy.log
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Verify deployed frontend and API host
         id: verify_production
