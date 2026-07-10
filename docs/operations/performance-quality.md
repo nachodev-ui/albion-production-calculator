@@ -124,23 +124,26 @@ El workflow principal ejecuta:
 pnpm test
 pnpm build
 pnpm exec tsx scripts/check-bundle-budget.ts --write-report
+pnpm docs:build
 ```
 
 Luego sube `artifacts/performance/bundle-report.json` como artifact `bundle-report`.
 
-Esto impide fusionar PRs que aumenten el bundle de aplicación por encima del presupuesto sin ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
+Esto impide fusionar PRs que rompan tests, build de aplicación, presupuesto de bundle o build de documentación. Los PRs que aumenten el bundle de aplicación por encima del presupuesto deben ajustar explícitamente `quality/bundle-budget.json` y documentar la razón.
 
 ## Cómo interpretar una falla
 
 1. Revisa el artifact `bundle-report` del workflow run.
 2. Mira `entryJavaScript`, `largestFile`, `totals`, `javascript`, `css` y `assets`.
 3. Decide si corresponde optimizar, aplicar lazy loading adicional o ajustar el presupuesto.
-4. Si se ajusta el presupuesto, explica el motivo en el PR.
+4. Si falla `pnpm docs:build`, revisa enlaces, frontmatter, configuración de VitePress o ejemplos de código inválidos.
 
-## Próximos pasos del Paso 4
+## Cierre del Paso 4
 
-Después de esta medición, accesibilidad e integración UI, el orden recomendado es:
+El Paso 4 se considera cerrado cuando CI valida:
 
-1. revisar si falta documentación en CI para cerrar el Paso 4;
-2. si las pruebas futuras detectan lentitud real, mover optimizador/historial a chunks más granulares;
-3. endurecer nuevamente `quality/bundle-budget.json` cuando el producto se estabilice.
+- bundle analysis y presupuesto;
+- lazy loading no crítico;
+- pruebas de accesibilidad;
+- pruebas de integración de UI;
+- build de documentación.
