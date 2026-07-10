@@ -4,6 +4,7 @@ import { relative } from 'node:path'
 
 const allowedViteKeys = new Set([
   'VITE_CENTRAL_MARKET_API_URL',
+  'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
   'VITE_LOCAL_MARKET_API_URL',
   'VITE_MARKET_API_URL',
   'VITE_MARKET_REQUEST_TIMEOUT_MS',
