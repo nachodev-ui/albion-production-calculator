@@ -90,12 +90,23 @@ function assertSecurityHeaders(): void {
     "object-src 'none'",
     "frame-ancestors 'none'",
     "script-src 'self'",
+    "connect-src 'self' https:",
   ]
 
   const missing = required.filter((entry) => !headers.includes(entry))
   if (missing.length > 0) {
     throw new Error(
       `Headers de seguridad incompletos en ${relative(process.cwd(), headersPath)}:\n${missing.join('\n')}`,
+    )
+  }
+
+  const forbiddenLoopbacks = ['127.0.0.1', 'localhost', '[::1]']
+  const exposedLoopbacks = forbiddenLoopbacks.filter((entry) =>
+    headers.includes(entry),
+  )
+  if (exposedLoopbacks.length > 0) {
+    throw new Error(
+      `La CSP pública no debe autorizar servicios loopback:\n${exposedLoopbacks.join('\n')}`,
     )
   }
 }
