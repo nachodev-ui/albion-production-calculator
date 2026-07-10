@@ -11,7 +11,7 @@ La aplicación pública no requiere instalaciones locales:
 ```text
 Usuario
   → Cloudflare Pages HTTPS
-  → albion-market-api en Fly.io HTTPS
+  → albion-market-api en Render HTTPS
   → PostgreSQL Neon
 ```
 
@@ -19,7 +19,7 @@ Dominios configurados:
 
 ```text
 Frontend: https://albion-production-calculator.pages.dev
-API v1:   https://albion-market-api-nachodev.fly.dev/api/v1
+API v1:   https://albion-market-api.onrender.com/api/v1
 ```
 
 La lectura pública usa esta prioridad:
@@ -65,7 +65,7 @@ VITE_LOCAL_MARKET_API_URL=http://127.0.0.1:8787/api/v1
 ## Configuración de producción
 
 ```dotenv
-VITE_CENTRAL_MARKET_API_URL=https://albion-market-api-nachodev.fly.dev/api/v1
+VITE_CENTRAL_MARKET_API_URL=https://albion-market-api.onrender.com/api/v1
 VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=false
 VITE_MARKET_REQUEST_TIMEOUT_MS=7000
 ```

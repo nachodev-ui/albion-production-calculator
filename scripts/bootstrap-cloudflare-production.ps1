@@ -49,7 +49,7 @@ $previousTimeout = $env:VITE_MARKET_REQUEST_TIMEOUT_MS
 try {
     $env:CLOUDFLARE_ACCOUNT_ID = $accountId
     $env:CLOUDFLARE_API_TOKEN = $apiToken
-    $env:VITE_CENTRAL_MARKET_API_URL = "https://albion-market-api-nachodev.fly.dev/api/v1"
+    $env:VITE_CENTRAL_MARKET_API_URL = "https://albion-market-api.onrender.com/api/v1"
     $env:VITE_ENABLE_LOCAL_RECEIVER_FALLBACK = "false"
     $env:VITE_MARKET_REQUEST_TIMEOUT_MS = "7000"
 
@@ -90,7 +90,7 @@ try {
         throw "La verificación del frontend no devolvió la aplicación esperada."
     }
 
-    Invoke-RestMethod -Method Get -Uri "https://albion-market-api-nachodev.fly.dev/readyz" | Out-Host
+    Invoke-RestMethod -Method Get -Uri "https://albion-market-api.onrender.com/readyz" | Out-Host
     Write-Host "Frontend desplegado correctamente en $frontendUrl"
 }
 finally {

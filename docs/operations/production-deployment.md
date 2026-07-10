@@ -5,7 +5,7 @@
 ```text
 Usuario
   → Cloudflare Pages global
-  → albion-market-api en Fly.io São Paulo
+  → albion-market-api en Render Virginia
   → PostgreSQL Neon en São Paulo
 ```
 
@@ -17,8 +17,8 @@ pública de la API.
 
 ```text
 Frontend: https://albion-production-calculator.pages.dev
-API:      https://albion-market-api-nachodev.fly.dev
-API v1:   https://albion-market-api-nachodev.fly.dev/api/v1
+API:      https://albion-market-api.onrender.com
+API v1:   https://albion-market-api.onrender.com/api/v1
 ```
 
 El proyecto de Cloudflare Pages debe llamarse exactamente
@@ -27,7 +27,7 @@ no está disponible, actualiza en el mismo cambio:
 
 - el workflow de despliegue;
 - `scripts/bootstrap-cloudflare-production.ps1`;
-- `fly.toml` del repositorio de API, por CORS;
+- la variable `CORS_ALLOWED_ORIGINS` del servicio de API;
 - la documentación de ambos repositorios.
 
 ## Configuración del bundle
@@ -35,7 +35,7 @@ no está disponible, actualiza en el mismo cambio:
 Producción utiliza:
 
 ```dotenv
-VITE_CENTRAL_MARKET_API_URL=https://albion-market-api-nachodev.fly.dev/api/v1
+VITE_CENTRAL_MARKET_API_URL=https://albion-market-api.onrender.com/api/v1
 VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=false
 VITE_MARKET_REQUEST_TIMEOUT_MS=7000
 ```
@@ -70,8 +70,8 @@ issues, pull requests, logs ni documentación.
 Antes de publicar el frontend, la API debe responder correctamente:
 
 ```powershell
-Invoke-RestMethod https://albion-market-api-nachodev.fly.dev/healthz
-Invoke-RestMethod https://albion-market-api-nachodev.fly.dev/readyz
+Invoke-RestMethod https://albion-market-api.onrender.com/healthz
+Invoke-RestMethod https://albion-market-api.onrender.com/readyz
 ```
 
 Después ejecuta:
@@ -146,7 +146,7 @@ $frontend.StatusCode
 $frontend.Headers
 
 Invoke-RestMethod `
-    https://albion-market-api-nachodev.fly.dev/api/v1/status
+    https://albion-market-api.onrender.com/api/v1/status
 ```
 
 En el navegador verifica:
