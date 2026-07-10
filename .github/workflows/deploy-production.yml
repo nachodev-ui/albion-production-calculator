@@ -90,7 +90,6 @@ jobs:
         run: pnpm bundle:check
 
       - name: Collect Cloudflare deployment diagnostic
-        id: cloudflare_diagnostic
         continue-on-error: true
         shell: bash
         env:
@@ -108,17 +107,9 @@ jobs:
           errors='[]'
           messages='[]'
 
-          if [[ -n "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
-            has_account_id=true
-          fi
-
-          if [[ -n "${CLOUDFLARE_API_TOKEN}" ]]; then
-            has_api_token=true
-          fi
-
-          if [[ "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-fA-F]{32}$ ]]; then
-            account_id_format_valid=true
-          fi
+          [[ -n "${CLOUDFLARE_ACCOUNT_ID}" ]] && has_account_id=true
+          [[ -n "${CLOUDFLARE_API_TOKEN}" ]] && has_api_token=true
+          [[ "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-fA-F]{32}$ ]] && account_id_format_valid=true
 
           if [[ "${has_account_id}" == true && \
                 "${has_api_token}" == true && \
@@ -164,15 +155,6 @@ jobs:
 
           cat "${diagnostic_file}"
 
-          if [[ "${has_account_id}" != true || \
-                "${has_api_token}" != true || \
-                "${account_id_format_valid}" != true || \
-                "${project_http_status}" != '200' || \
-                "${project_success}" != true ]]; then
-            echo "::warning::Cloudflare preflight did not confirm project access; Wrangler will perform the authoritative deployment attempt."
-            exit 1
-          fi
-
       - name: Upload Cloudflare deployment diagnostic
         if: always()
         uses: actions/upload-artifact@v4
@@ -184,16 +166,15 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         id: cloudflare_deploy
-        continue-on-error: true
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          set -o pipefail
+          set -euo pipefail
 
           deploy_log="${RUNNER_TEMP}/wrangler-production-deploy.log"
 
-          npx --yes wrangler@latest pages deploy dist \
+          npx --yes wrangler@4.110.0 pages deploy dist \
             --project-name=albion-production-calculator \
             --branch=main \
             --commit-hash="${GITHUB_SHA}" \
@@ -206,88 +187,123 @@ jobs:
         with:
           name: wrangler-production-deploy-${{ github.run_id }}
           path: ${{ runner.temp }}/wrangler-production-deploy.log
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Verify deployed frontend and API host
-        id: verify_production
-        if: steps.cloudflare_deploy.outcome == 'success'
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
 
-          frontend_origin='https://albion-production-calculator.pages.dev'
           expected_api='https://albion-market-api.onrender.com/api/v1'
           obsolete_host='albion-market-api-nachodev.fly.dev'
-          html_file="${RUNNER_TEMP}/production-index.html"
-          bundle_file="${RUNNER_TEMP}/production-bundles.js"
-          verified=false
+          public_origin='https://albion-production-calculator.pages.dev'
+          deploy_log="${RUNNER_TEMP}/wrangler-production-deploy.log"
+          verification_log="${RUNNER_TEMP}/production-verification.log"
 
-          for attempt in $(seq 1 24); do
-            cache_buster="${GITHUB_SHA}-${attempt}-$(date +%s)"
+          exec > >(tee -a "${verification_log}") 2>&1
 
-            curl \
-              --fail \
-              --show-error \
-              --silent \
-              --location \
-              --header 'Cache-Control: no-cache' \
-              --output "${html_file}" \
-              "${frontend_origin}/?deployment-check=${cache_buster}"
+          deployment_origin="$(
+            grep -oE 'https://[a-z0-9]+\.albion-production-calculator\.pages\.dev' "${deploy_log}" \
+              | tail -n 1 \
+              || true
+          )"
 
-            if ! grep -Fq '<div id="root"></div>' "${html_file}"; then
-              echo "Attempt ${attempt}: production HTML is not ready yet."
-              sleep 5
-              continue
-            fi
+          if [[ -z "${deployment_origin}" ]]; then
+            echo '::error::Wrangler did not report an immutable deployment URL.'
+            exit 1
+          fi
 
-            mapfile -t asset_paths < <(
-              grep -oE '(src|href)="[^"]+\.js"' "${html_file}" \
-                | sed -E 's/^(src|href)="//; s/"$//' \
-                | sort -u
-            )
+          verify_bundle() {
+            local origin="$1"
+            local attempts="$2"
+            local label="$3"
+            local html_file="${RUNNER_TEMP}/${label}-index.html"
+            local bundle_file="${RUNNER_TEMP}/${label}-bundles.js"
 
-            if [[ "${#asset_paths[@]}" -eq 0 ]]; then
-              echo "Attempt ${attempt}: no JavaScript assets found."
-              sleep 5
-              continue
-            fi
+            for attempt in $(seq 1 "${attempts}"); do
+              local cache_buster="${GITHUB_SHA}-${attempt}-$(date +%s)"
 
-            : > "${bundle_file}"
-
-            for asset_path in "${asset_paths[@]}"; do
-              if [[ "${asset_path}" == http://* || "${asset_path}" == https://* ]]; then
-                asset_url="${asset_path}"
-              else
-                asset_url="${frontend_origin}${asset_path}"
-              fi
-
-              curl \
+              if ! curl \
                 --fail \
                 --show-error \
                 --silent \
                 --location \
                 --header 'Cache-Control: no-cache' \
-                "${asset_url}" \
-                >> "${bundle_file}"
+                --output "${html_file}" \
+                "${origin}/?deployment-check=${cache_buster}"; then
+                echo "${label} attempt ${attempt}: HTML is not reachable yet."
+                sleep 5
+                continue
+              fi
+
+              if ! grep -Fq '<div id="root"></div>' "${html_file}"; then
+                echo "${label} attempt ${attempt}: root node is missing."
+                sleep 5
+                continue
+              fi
+
+              mapfile -t asset_paths < <(
+                grep -oE '(src|href)="[^"]+\.js"' "${html_file}" \
+                  | sed -E 's/^(src|href)="//; s/"$//' \
+                  | sort -u \
+                  || true
+              )
+
+              if [[ "${#asset_paths[@]}" -eq 0 ]]; then
+                echo "${label} attempt ${attempt}: no JavaScript assets found."
+                sleep 5
+                continue
+              fi
+
+              : > "${bundle_file}"
+              local assets_ok=true
+
+              for asset_path in "${asset_paths[@]}"; do
+                local asset_url
+
+                if [[ "${asset_path}" == http://* || "${asset_path}" == https://* ]]; then
+                  asset_url="${asset_path}"
+                else
+                  asset_url="${origin}${asset_path}"
+                fi
+
+                if ! curl \
+                  --fail \
+                  --show-error \
+                  --silent \
+                  --location \
+                  --header 'Cache-Control: no-cache' \
+                  "${asset_url}" \
+                  >> "${bundle_file}"; then
+                  echo "${label} attempt ${attempt}: failed to download ${asset_path}."
+                  assets_ok=false
+                  break
+                fi
+              done
+
+              if [[ "${assets_ok}" != true ]]; then
+                sleep 5
+                continue
+              fi
+
+              if grep -Fq "${expected_api}" "${bundle_file}" && \
+                 ! grep -Fq "${obsolete_host}" "${bundle_file}"; then
+                echo "${label}: bundle uses Render and contains no Fly.io reference."
+                return 0
+              fi
+
+              echo "${label} attempt ${attempt}: bundle has not converged yet."
+              sleep 5
             done
 
-            if grep -Fq "${expected_api}" "${bundle_file}" && \
-               ! grep -Fq "${obsolete_host}" "${bundle_file}"; then
-              verified=true
-              echo "Production bundle uses Render and contains no Fly.io reference."
-              break
-            fi
+            echo "::error::${label} bundle did not converge to the expected Render API configuration."
+            return 1
+          }
 
-            echo "Attempt ${attempt}: waiting for the new production bundle."
-            sleep 5
-          done
-
-          if [[ "${verified}" != true ]]; then
-            echo "::error::The public bundle did not converge to the expected Render API configuration."
-            exit 1
-          fi
+          echo "Immutable deployment URL: ${deployment_origin}"
+          verify_bundle "${deployment_origin}" 12 immutable
+          verify_bundle "${public_origin}" 48 public
 
           curl \
             --fail \
@@ -298,23 +314,17 @@ jobs:
             --retry-delay 5 \
             https://albion-market-api.onrender.com/readyz
 
-      - name: Enforce production deployment result
+          echo
+          echo 'Production deployment, public bundle and Render readiness validated.'
+
+      - name: Upload production verification log
         if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [[ "${{ steps.cloudflare_deploy.outcome }}" != 'success' ]]; then
-            echo "::error::Cloudflare Pages deployment failed."
-            exit 1
-          fi
-
-          if [[ "${{ steps.verify_production.outcome }}" != 'success' ]]; then
-            echo "::error::Production smoke tests failed."
-            exit 1
-          fi
-
-          echo "Cloudflare Pages deployment and production smoke tests passed."
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-verification-${{ github.run_id }}
+          path: ${{ runner.temp }}/production-verification.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Publish production deployment status
         if: always()
