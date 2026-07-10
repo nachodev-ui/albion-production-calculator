@@ -71,3 +71,6 @@ jobs:
           name: bundle-report
           path: artifacts/performance/bundle-report.json
           if-no-files-found: error
+
+      - name: Build documentation
+        run: pnpm docs:build
