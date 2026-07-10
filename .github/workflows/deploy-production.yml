@@ -106,83 +106,7 @@ jobs:
 
           echo 'Production build contains Render and no Fly.io host.'
 
-      - name: Collect Cloudflare deployment diagnostic
-        continue-on-error: true
-        shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: |
-          set -uo pipefail
-
-          diagnostic_file="${RUNNER_TEMP}/cloudflare-production-diagnostic.json"
-          project_file="${RUNNER_TEMP}/cloudflare-pages-project.json"
-          has_account_id=false
-          has_api_token=false
-          account_id_format_valid=false
-          project_http_status='not-requested'
-          project_success=false
-          errors='[]'
-          messages='[]'
-
-          [[ -n "${CLOUDFLARE_ACCOUNT_ID}" ]] && has_account_id=true
-          [[ -n "${CLOUDFLARE_API_TOKEN}" ]] && has_api_token=true
-          [[ "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-fA-F]{32}$ ]] && account_id_format_valid=true
-
-          if [[ "${has_account_id}" == true && \
-                "${has_api_token}" == true && \
-                "${account_id_format_valid}" == true ]]; then
-            project_http_status="$(curl \
-              --silent \
-              --show-error \
-              --output "${project_file}" \
-              --write-out '%{http_code}' \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/albion-production-calculator" \
-              || printf '000')"
-
-            if jq -e . "${project_file}" >/dev/null 2>&1; then
-              project_success="$(jq -r '.success // false' "${project_file}")"
-              errors="$(jq -c '.errors // []' "${project_file}")"
-              messages="$(jq -c '.messages // []' "${project_file}")"
-            fi
-          fi
-
-          jq -n \
-            --argjson has_account_id "${has_account_id}" \
-            --argjson has_api_token "${has_api_token}" \
-            --argjson account_id_format_valid "${account_id_format_valid}" \
-            --arg project_http_status "${project_http_status}" \
-            --argjson project_success "${project_success}" \
-            --argjson errors "${errors}" \
-            --argjson messages "${messages}" \
-            --arg run_id "${GITHUB_RUN_ID}" \
-            --arg commit_sha "${GITHUB_SHA}" \
-            '{
-              has_account_id: $has_account_id,
-              has_api_token: $has_api_token,
-              account_id_format_valid: $account_id_format_valid,
-              project_http_status: $project_http_status,
-              project_success: $project_success,
-              errors: $errors,
-              messages: $messages,
-              run_id: $run_id,
-              commit_sha: $commit_sha
-            }' \
-            > "${diagnostic_file}"
-
-          cat "${diagnostic_file}"
-
-      - name: Upload Cloudflare deployment diagnostic
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cloudflare-production-diagnostic-${{ github.run_id }}
-          path: ${{ runner.temp }}/cloudflare-production-diagnostic.json
-          if-no-files-found: error
-          retention-days: 14
-
       - name: Deploy to Cloudflare Pages
-        id: cloudflare_deploy
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -231,6 +155,17 @@ jobs:
             exit 1
           fi
 
+          mapfile -t asset_paths < <(
+            find dist -type f -name '*.js' -printf '/%P\n' | sort
+          )
+
+          if [[ "${#asset_paths[@]}" -eq 0 ]]; then
+            echo '::error::The production build contains no JavaScript chunks.'
+            exit 1
+          fi
+
+          echo "JavaScript chunks to verify: ${#asset_paths[@]}"
+
           verify_bundle() {
             local origin="$1"
             local attempts="$2"
@@ -260,38 +195,17 @@ jobs:
                 continue
               fi
 
-              mapfile -t asset_paths < <(
-                grep -oE '(src|href)="[^"]+\.js"' "${html_file}" \
-                  | sed -E 's/^(src|href)="//; s/"$//' \
-                  | sort -u \
-                  || true
-              )
-
-              if [[ "${#asset_paths[@]}" -eq 0 ]]; then
-                echo "${label} attempt ${attempt}: no JavaScript assets found."
-                sleep 5
-                continue
-              fi
-
               : > "${bundle_file}"
               local assets_ok=true
 
               for asset_path in "${asset_paths[@]}"; do
-                local asset_url
-
-                if [[ "${asset_path}" == http://* || "${asset_path}" == https://* ]]; then
-                  asset_url="${asset_path}"
-                else
-                  asset_url="${origin}${asset_path}"
-                fi
-
                 if ! curl \
                   --fail \
                   --show-error \
                   --silent \
                   --location \
                   --header 'Cache-Control: no-cache' \
-                  "${asset_url}" \
+                  "${origin}${asset_path}" \
                   >> "${bundle_file}"; then
                   echo "${label} attempt ${attempt}: failed to download ${asset_path}."
                   assets_ok=false
@@ -306,15 +220,15 @@ jobs:
 
               if grep -Fq "${expected_host}" "${bundle_file}" && \
                  ! grep -Fq "${obsolete_host}" "${bundle_file}"; then
-                echo "${label}: bundle contains the Render host and no Fly.io reference."
+                echo "${label}: all JavaScript chunks contain Render configuration and no Fly.io reference."
                 return 0
               fi
 
-              echo "${label} attempt ${attempt}: bundle has not converged yet."
+              echo "${label} attempt ${attempt}: deployed chunks have not converged yet."
               sleep 5
             done
 
-            echo "::error::${label} bundle did not converge to the expected Render host configuration."
+            echo "::error::${label} chunks did not converge to the expected Render host configuration."
             return 1
           }
 
@@ -332,7 +246,7 @@ jobs:
             https://albion-market-api.onrender.com/readyz
 
           echo
-          echo 'Production deployment, public bundle and Render readiness validated.'
+          echo 'Production deployment, every JavaScript chunk and Render readiness validated.'
 
       - name: Upload production verification log
         if: always()
