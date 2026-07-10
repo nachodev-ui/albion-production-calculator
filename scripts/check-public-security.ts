@@ -91,6 +91,9 @@ function assertSecurityHeaders(): void {
     "frame-ancestors 'none'",
     "script-src 'self'",
     "connect-src 'self' https:",
+    "img-src 'self' data: https://render.albiononline.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   ]
 
   const missing = required.filter((entry) => !headers.includes(entry))
