@@ -88,7 +88,7 @@ jobs:
       - name: Validate bundle budget
         run: pnpm bundle:check
 
-      - name: Validate Cloudflare credentials and Pages project
+      - name: Validate Cloudflare Pages access
         shell: bash
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -111,23 +111,6 @@ jobs:
             exit 1
           fi
 
-          verify_file="${RUNNER_TEMP}/cloudflare-token-verify.json"
-          verify_status="$(curl \
-            --silent \
-            --show-error \
-            --output "${verify_file}" \
-            --write-out '%{http_code}' \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/tokens/verify")"
-
-          if [[ "${verify_status}" != "200" ]] || \
-             [[ "$(jq -r '.success // false' "${verify_file}")" != "true" ]] || \
-             [[ "$(jq -r '.result.status // empty' "${verify_file}")" != "active" ]]; then
-            echo "::error::Cloudflare rejected the API token for the configured account."
-            jq -c '{success, errors, messages, status: .result.status}' "${verify_file}" || true
-            exit 1
-          fi
-
           project_file="${RUNNER_TEMP}/cloudflare-pages-project.json"
           project_status="$(curl \
             --silent \
@@ -139,12 +122,12 @@ jobs:
 
           if [[ "${project_status}" != "200" ]] || \
              [[ "$(jq -r '.success // false' "${project_file}")" != "true" ]]; then
-            echo "::error::The API token cannot access the albion-production-calculator Pages project in the configured account."
+            echo "::error::Cloudflare credentials cannot access the albion-production-calculator Pages project in the configured account."
             jq -c '{success, errors, messages}' "${project_file}" || true
             exit 1
           fi
 
-          echo "Cloudflare token, account and Pages project validated."
+          echo "Cloudflare account, token and Pages project access validated."
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
