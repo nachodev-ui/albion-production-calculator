@@ -16,7 +16,11 @@ interface EnchantmentSelectorProps {
  */
 export function EnchantmentSelector({ value, onChange, maxEnchantment }: EnchantmentSelectorProps) {
   return (
-    <div className="inline-flex rounded-lg border border-border bg-surface-raised p-1 gap-1">
+    <div
+      role="group"
+      aria-label="Nivel de encantamiento"
+      className="inline-flex rounded-lg border border-border bg-surface-raised p-1 gap-1"
+    >
       {ENCHANTMENT_LEVELS.map((level) => {
         const disabled = level > maxEnchantment
         const isActive = level === value
@@ -26,6 +30,7 @@ export function EnchantmentSelector({ value, onChange, maxEnchantment }: Enchant
             type="button"
             disabled={disabled}
             onClick={() => onChange(level)}
+            aria-label={`Seleccionar encantamiento ${level === 0 ? 'sin encantamiento' : formatEnchantment(level)}`}
             aria-pressed={isActive}
             className={`min-w-[2.75rem] rounded-md px-3 py-1.5 text-xs font-mono tabular transition-all ${
               isActive

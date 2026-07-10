@@ -60,3 +60,17 @@ jobs:
 
       - name: Build application
         run: pnpm build
+
+      - name: Check bundle budget
+        run: pnpm exec tsx scripts/check-bundle-budget.ts --write-report
+
+      - name: Upload bundle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-report
+          path: artifacts/performance/bundle-report.json
+          if-no-files-found: error
+
+      - name: Build documentation
+        run: pnpm docs:build

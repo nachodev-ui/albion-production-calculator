@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "distDir": "dist",
+  "reportPath": "artifacts/performance/bundle-report.json",
+  "budgets": {
+    "totalRawBytes": 3800000,
+    "totalGzipBytes": 320000,
+    "javascriptRawBytes": 3600000,
+    "javascriptGzipBytes": 300000,
+    "cssRawBytes": 90000,
+    "cssGzipBytes": 20000,
+    "largestFileRawBytes": 3000000,
+    "largestFileGzipBytes": 100000,
+    "entryJavaScriptRawBytes": 300000,
+    "entryJavaScriptGzipBytes": 90000
+  }
+}
