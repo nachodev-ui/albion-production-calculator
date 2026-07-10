@@ -20,6 +20,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   validate:
@@ -91,3 +92,29 @@ jobs:
           path: .e2e/artifacts/production-market-ui
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Publish production verification status
+        if: always() && github.event_name == 'workflow_run'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          VERIFICATION_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          state=failure
+          description='Public market UI validation failed'
+          if [[ "$VERIFICATION_STATUS" == 'success' ]]; then
+            state=success
+            description='Cloudflare reads real Thetford prices from Render'
+          fi
+
+          gh api \
+            --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$TARGET_SHA" \
+            -f state="$state" \
+            -f context='market-ui/production' \
+            -f description="$description" \
+            -f target_url="$RUN_URL"
