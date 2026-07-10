@@ -37,31 +37,30 @@ const CATEGORY_LABELS = {
   other: 'Otros',
 }
 
-function sleep(milliseconds) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds))
-}
+const delay = (milliseconds) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds))
 
-function normalizeInteger(value) {
+function positiveInteger(value) {
   const parsed = Number(value)
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-function readValidationItem() {
+function readItem() {
   const items = JSON.parse(fs.readFileSync(DATASET_PATH, 'utf8'))
   const item = items.find((candidate) => candidate.id === ITEM_ID)
 
   if (!item) throw new Error(`No se encontró ${ITEM_ID} en el dataset.`)
-  if (!item.recipe || !Array.isArray(item.recipe.tiers) || item.recipe.tiers.length === 0) {
+  if (!item.recipe?.tiers?.length) {
     throw new Error(`${ITEM_ID} no posee una receta navegable.`)
   }
   if (!CATEGORY_LABELS[item.category]) {
-    throw new Error(`Categoría no soportada para ${ITEM_ID}: ${item.category}.`)
+    throw new Error(`Categoría no soportada: ${item.category}.`)
   }
 
   return item
 }
 
-async function queryProductionPrice() {
+async function queryPrice() {
   const response = await fetch(`${API_BASE_URL}/prices/query`, {
     method: 'POST',
     headers: {
@@ -95,7 +94,7 @@ async function queryProductionPrice() {
           Number(candidate.quality) === QUALITY,
       )
     : null
-  const sellPriceMin = normalizeInteger(row?.sellPriceMin)
+  const sellPriceMin = positiveInteger(row?.sellPriceMin)
 
   if (!row || sellPriceMin === null) {
     throw new Error(
@@ -111,102 +110,87 @@ async function queryProductionPrice() {
   }
 }
 
-async function selectCatalogItem(page, item) {
+async function selectItem(page, item) {
   const categoryLabel = CATEGORY_LABELS[item.category]
   const categoryButton = page.locator('button[aria-haspopup="listbox"]').first()
   await categoryButton.waitFor({ state: 'visible', timeout: 120_000 })
 
-  const currentCategory = (await categoryButton.innerText()).replace(/\s+/g, ' ')
-  if (!currentCategory.includes(categoryLabel)) {
+  if (!(await categoryButton.innerText()).includes(categoryLabel)) {
     await categoryButton.click()
-    const categoryOption = page
-      .getByRole('option')
-      .filter({ hasText: categoryLabel })
-      .first()
-    await categoryOption.waitFor({ state: 'visible', timeout: 30_000 })
-    await categoryOption.click()
+    const option = page.getByRole('option').filter({ hasText: categoryLabel }).first()
+    await option.waitFor({ state: 'visible', timeout: 30_000 })
+    await option.click()
   }
 
-  const searchInput = page.getByPlaceholder('Buscar ítem…')
-  await searchInput.waitFor({ state: 'visible', timeout: 120_000 })
-  await searchInput.fill(item.name)
+  const search = page.getByPlaceholder('Buscar ítem…')
+  await search.fill(item.name)
 
-  const buttons = page.locator('button').filter({ hasText: item.name })
-  await buttons.first().waitFor({ state: 'visible', timeout: 60_000 })
-
-  const count = await buttons.count()
-  for (let index = 0; index < count; index += 1) {
-    const button = buttons.nth(index)
-    const text = (await button.innerText()).replace(/\s+/g, ' ').trim()
-    if (text.includes(`T${item.tier}`)) {
-      await button.click()
-      return
-    }
+  const exactTierButton = page.getByTitle(item.name, { exact: true })
+  if ((await exactTierButton.count()) > 0) {
+    await exactTierButton.first().waitFor({ state: 'visible', timeout: 60_000 })
+    await exactTierButton.first().click()
+    return
   }
 
-  await buttons.first().click()
+  const directButton = page.locator('button').filter({ hasText: item.name }).first()
+  await directButton.waitFor({ state: 'visible', timeout: 60_000 })
+  await directButton.click()
 }
 
-function findObservedPrice(rows) {
+function matchingObservedRow(rows) {
   return rows.find(
-    (candidate) =>
-      candidate.marketKey === MARKET_KEY &&
-      candidate.itemIdentifier === ITEM_ID &&
-      Number(candidate.quality) === QUALITY &&
-      normalizeInteger(candidate.sellPriceMin) !== null,
+    (row) =>
+      row.marketKey === MARKET_KEY &&
+      row.itemIdentifier === ITEM_ID &&
+      Number(row.quality) === QUALITY &&
+      positiveInteger(row.sellPriceMin) !== null,
   )
 }
 
-async function waitForAutomaticPrice({ page, summarySection, observedRows }) {
+async function waitForVisiblePrice(page, section, rows) {
   const deadline = Date.now() + 150_000
-  const priceInput = summarySection.locator('#unit-sell-price')
+  const input = section.locator('#unit-sell-price')
 
   while (Date.now() < deadline) {
-    const row = findObservedPrice(observedRows)
-    const expectedPrice = normalizeInteger(row?.sellPriceMin)
-    const inputValue = await priceInput.inputValue().catch(() => '')
-    const text = await page.locator('body').innerText().catch(() => '')
+    const row = matchingObservedRow(rows)
+    const expected = positiveInteger(row?.sellPriceMin)
+    const value = await input.inputValue().catch(() => '')
+    const body = await page.locator('body').innerText().catch(() => '')
     const sourceVisible =
-      text.includes('API central conectada') || text.includes('API central: en uso')
-    const automaticVisible = text.includes('Precio automático')
-    const cityVisible = text.includes(
+      body.includes('API central conectada') || body.includes('API central: en uso')
+    const automaticVisible = body.includes('Precio automático')
+    const configurationVisible = body.includes(
       'Precio aplicado desde Thetford · Vender mediante orden · Normal.',
     )
 
     if (
-      expectedPrice !== null &&
-      inputValue === String(expectedPrice) &&
+      expected !== null &&
+      value === String(expected) &&
       sourceVisible &&
       automaticVisible &&
-      cityVisible
+      configurationVisible
     ) {
       return {
         row,
-        expectedPrice,
-        inputValue,
+        expected,
+        value,
         sourceVisible,
         automaticVisible,
-        cityVisible,
+        configurationVisible,
       }
     }
 
-    await sleep(1_000)
+    await delay(1_000)
   }
 
-  const inputValue = await priceInput.inputValue().catch(() => '')
-  const text = await page.locator('body').innerText().catch(() => '')
   throw new Error(
-    [
-      'El frontend no mostró el precio automático esperado.',
-      `input=${inputValue || '<vacío>'}`,
-      `filas=${observedRows.length}`,
-      `API central=${text.includes('API central')}`,
-      `Thetford=${text.includes('Thetford')}`,
-    ].join(' '),
+    `El frontend no mostró el precio esperado. input=${
+      (await input.inputValue().catch(() => '')) || '<vacío>'
+    }; filas=${rows.length}`,
   )
 }
 
-function getCspViolations(messages) {
+function cspViolations(messages) {
   return messages.filter((entry) =>
     entry.text.toLowerCase().includes('content security policy'),
   )
@@ -214,13 +198,12 @@ function getCspViolations(messages) {
 
 async function main() {
   fs.mkdirSync(ARTIFACT_DIRECTORY, { recursive: true })
-
-  const item = readValidationItem()
-  const apiPreflight = await queryProductionPrice()
-  const consoleMessages = []
-  const observedPriceRows = []
-  const observedRequests = []
+  const item = readItem()
+  const apiPreflight = await queryPrice()
   const startedAt = new Date().toISOString()
+  const consoleMessages = []
+  const observedRequests = []
+  const observedRows = []
   const browser = await chromium.launch({ headless: true })
   const context = await browser.newContext({
     locale: 'es-CL',
@@ -256,9 +239,7 @@ async function main() {
     void response
       .json()
       .then((payload) => {
-        for (const row of Array.isArray(payload?.data) ? payload.data : []) {
-          observedPriceRows.push(row)
-        }
+        observedRows.push(...(Array.isArray(payload?.data) ? payload.data : []))
       })
       .catch((error) => {
         consoleMessages.push({
@@ -274,39 +255,33 @@ async function main() {
       waitUntil: 'domcontentloaded',
       timeout: 120_000,
     })
+    await selectItem(page, item)
 
-    await selectCatalogItem(page, item)
-
-    const summaryHeading = page.getByRole('heading', { name: 'Resumen de ganancia' })
-    await summaryHeading.waitFor({ state: 'visible', timeout: 120_000 })
-    const summarySection = summaryHeading.locator('xpath=ancestor::section')
-    const saleCity = summarySection.getByLabel('Vender en')
-    const saleStrategy = summarySection.getByLabel('Método de venta')
-    const quality = summarySection.getByLabel('Calidad')
+    const heading = page.getByRole('heading', { name: 'Resumen de ganancia' })
+    await heading.waitFor({ state: 'visible', timeout: 120_000 })
+    const section = heading.locator('xpath=ancestor::section')
+    const saleCity = section.getByLabel('Vender en')
+    const saleStrategy = section.getByLabel('Método de venta')
+    const quality = section.getByLabel('Calidad')
 
     await saleCity.waitFor({ state: 'visible', timeout: 60_000 })
     await saleCity.selectOption(MARKET_KEY)
     await saleStrategy.selectOption('sell-order')
     await quality.selectOption(String(QUALITY))
 
-    const refreshButton = page.getByRole('button', {
+    const refresh = page.getByRole('button', {
       name: /Actualizar todos los precios|Reintentar ahora/,
     })
-    await refreshButton.waitFor({ state: 'visible', timeout: 120_000 })
-    await refreshButton.click({ timeout: 120_000 })
+    await refresh.waitFor({ state: 'visible', timeout: 120_000 })
+    await refresh.click({ timeout: 120_000 })
 
-    verification = await waitForAutomaticPrice({
-      page,
-      summarySection,
-      observedRows: observedPriceRows,
-    })
-
+    verification = await waitForVisiblePrice(page, section, observedRows)
     await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true })
 
-    const cspViolations = getCspViolations(consoleMessages)
-    if (EXPECT_CSP_CLEAN && cspViolations.length > 0) {
+    const violations = cspViolations(consoleMessages)
+    if (EXPECT_CSP_CLEAN && violations.length > 0) {
       throw new Error(
-        `La producción generó ${cspViolations.length} violación(es) CSP: ${cspViolations
+        `Producción generó ${violations.length} violación(es) CSP: ${violations
           .map((entry) => entry.text)
           .join(' | ')}`,
       )
@@ -323,7 +298,7 @@ async function main() {
     await browser.close()
   }
 
-  const cspViolations = getCspViolations(consoleMessages)
+  const violations = cspViolations(consoleMessages)
   const summary = {
     success: true,
     startedAt,
@@ -340,18 +315,18 @@ async function main() {
     server: SERVER,
     quality: QUALITY,
     apiPreflight,
-    browserPrice: verification.expectedPrice,
-    displayedInputValue: verification.inputValue,
+    browserPrice: verification.expected,
+    displayedInputValue: verification.value,
     sourceVisible: verification.sourceVisible,
     automaticPriceVisible: verification.automaticVisible,
-    thetfordConfigurationVisible: verification.cityVisible,
+    thetfordConfigurationVisible: verification.configurationVisible,
     observedApiRequests: observedRequests,
-    observedPriceRows: observedPriceRows.length,
+    observedPriceRows: observedRows.length,
     cspCleanExpected: EXPECT_CSP_CLEAN,
-    cspViolationCount: cspViolations.length,
+    cspViolationCount: violations.length,
     screenshot: SCREENSHOT_PATH,
     priceChangedDuringValidation:
-      verification.expectedPrice !== apiPreflight.sellPriceMin,
+      verification.expected !== apiPreflight.sellPriceMin,
   }
 
   fs.writeFileSync(SUMMARY_PATH, `${JSON.stringify(summary, null, 2)}\n`, 'utf8')
