@@ -1,5 +1,6 @@
 import { FetchJsonError } from '@shared/http/fetchJson'
 import type { MarketDataSource } from '../types/MarketPrice'
+import { LOCAL_RECEIVER_FALLBACK_ENABLED } from './localMarketApi'
 
 export type MarketNetworkSource = Extract<
   MarketDataSource,
@@ -31,10 +32,6 @@ interface MarketSourceCooldownState {
 
 const BASE_SOURCE_COOLDOWN_MS = 30_000
 const MAX_SOURCE_COOLDOWN_MS = 2 * 60 * 1000
-const MARKET_NETWORK_SOURCES: readonly MarketNetworkSource[] = [
-  'central-api',
-  'local-receiver',
-]
 
 const sourceCooldowns = new Map<
   MarketNetworkSource,
@@ -120,8 +117,14 @@ export function getMarketSourceCooldown(
 
 export function getMarketSourceStatuses(
   now = Date.now(),
+  localReceiverFallbackEnabled = LOCAL_RECEIVER_FALLBACK_ENABLED,
 ): readonly MarketSourceRuntimeStatus[] {
-  return MARKET_NETWORK_SOURCES.map((source) => {
+  const sources: readonly MarketNetworkSource[] =
+    localReceiverFallbackEnabled
+      ? ['central-api', 'local-receiver']
+      : ['central-api']
+
+  return sources.map((source) => {
     const cooldown = getMarketSourceCooldown(source, now)
 
     return {
