@@ -59,7 +59,23 @@ jobs:
         run: pnpm lint
 
       - name: Run tests
-        run: pnpm test
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          set +e
+          pnpm test > artifacts/test-output.log 2>&1
+          status=$?
+          cat artifacts/test-output.log
+          exit "$status"
+
+      - name: Upload failing test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-log
+          path: artifacts/test-output.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Build application
         run: pnpm build
