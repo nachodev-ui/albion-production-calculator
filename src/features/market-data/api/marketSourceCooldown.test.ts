@@ -37,7 +37,7 @@ describe('marketSourceCooldown', () => {
     expect(cooldown?.remainingMs).toBeGreaterThan(0)
   })
 
-  it('expone estados runtime de fuentes de red', () => {
+  it('expone ambas fuentes runtime cuando el modo local está habilitado', () => {
     recordMarketSourceFailure(
       'local-receiver',
       new FetchJsonError('HTTP 503', {
@@ -48,7 +48,7 @@ describe('marketSourceCooldown', () => {
       1_000,
     )
 
-    expect(getMarketSourceStatuses(1_001)).toEqual([
+    expect(getMarketSourceStatuses(1_001, true)).toEqual([
       {
         source: 'central-api',
         state: 'ready',
@@ -61,6 +61,26 @@ describe('marketSourceCooldown', () => {
           source: 'local-receiver',
           reason: 'http:503',
         }),
+      },
+    ])
+  })
+
+  it('oculta el receiver de los estados runtime en modo público', () => {
+    recordMarketSourceFailure(
+      'local-receiver',
+      new FetchJsonError('HTTP 503', {
+        category: 'http',
+        status: 503,
+        retriable: true,
+      }),
+      1_000,
+    )
+
+    expect(getMarketSourceStatuses(1_001, false)).toEqual([
+      {
+        source: 'central-api',
+        state: 'ready',
+        cooldown: null,
       },
     ])
   })
