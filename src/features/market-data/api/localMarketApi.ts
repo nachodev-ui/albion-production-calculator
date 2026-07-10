@@ -8,6 +8,13 @@ import type { AlbionServer } from '../types/MarketPrice'
 export const CENTRAL_MARKET_API_URL = PUBLIC_ENV.centralMarketApiUrl
 
 /**
+ * Receiver local opcional para desarrollo y diagnóstico de colaboradores.
+ * La aplicación pública no lo consulta salvo activación explícita.
+ */
+export const LOCAL_RECEIVER_FALLBACK_ENABLED =
+  PUBLIC_ENV.localReceiverFallbackEnabled
+
+/**
  * Receiver local.
  * Se conserva VITE_MARKET_API_URL como alias legado, validado desde publicEnv.
  */

@@ -47,6 +47,36 @@ function historySeries(
   }
 }
 
+function createCachedSnapshot(): {
+  readonly key: string
+  readonly snapshot: MarketHistorySnapshot
+} {
+  const key = buildMarketHistoryCacheKey(
+    'americas',
+    'martlock',
+    'T4_BAG',
+    1,
+  )
+
+  return {
+    key,
+    snapshot: {
+      ...candidate,
+      rangeStart,
+      rangeEnd,
+      points: [
+        {
+          timestamp: '2026-06-24T00:00:00Z',
+          itemCount: 8,
+          averagePrice: 4300,
+        },
+      ],
+      source: 'central-api',
+      fetchedAt: '2026-06-25T10:00:00Z',
+    },
+  }
+}
+
 describe('fetchMarketHistoryWithFallback', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -74,7 +104,7 @@ describe('fetchMarketHistoryWithFallback', () => {
     ).toBe('central-api')
   })
 
-  it('usa el receiver local cuando falla la API central', async () => {
+  it('usa el receiver local cuando está habilitado y falla la API central', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response('', { status: 503 }))
@@ -103,6 +133,7 @@ describe('fetchMarketHistoryWithFallback', () => {
       candidates: [candidate],
       rangeStart,
       rangeEnd,
+      localReceiverFallbackEnabled: true,
     })
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
@@ -115,8 +146,7 @@ describe('fetchMarketHistoryWithFallback', () => {
     ).toBe('local-receiver')
   })
 
-
-  it('consulta el receiver solo para las combinaciones ausentes en la API central', async () => {
+  it('consulta el receiver solo para combinaciones ausentes en modo local', async () => {
     const candidates = [
       candidate,
       {
@@ -156,6 +186,7 @@ describe('fetchMarketHistoryWithFallback', () => {
       candidates,
       rangeStart,
       rangeEnd,
+      localReceiverFallbackEnabled: true,
     })
 
     expect(fetchMock).toHaveBeenCalledTimes(2)
@@ -164,27 +195,8 @@ describe('fetchMarketHistoryWithFallback', () => {
     expect(String(fetchMock.mock.calls[1]?.[0])).not.toContain('itemId=T4_BAG')
   })
 
-  it('restaura la caché cuando ambas fuentes están caídas', async () => {
-    const cacheKey = buildMarketHistoryCacheKey(
-      'americas',
-      'martlock',
-      'T4_BAG',
-      1,
-    )
-    const cached: MarketHistorySnapshot = {
-      ...candidate,
-      rangeStart,
-      rangeEnd,
-      points: [
-        {
-          timestamp: '2026-06-24T00:00:00Z',
-          itemCount: 8,
-          averagePrice: 4300,
-        },
-      ],
-      source: 'central-api',
-      fetchedAt: '2026-06-25T10:00:00Z',
-    }
+  it('restaura la caché cuando ambas fuentes del modo local están caídas', async () => {
+    const cached = createCachedSnapshot()
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response('', { status: 503 }))
@@ -195,15 +207,79 @@ describe('fetchMarketHistoryWithFallback', () => {
       candidates: [candidate],
       rangeStart,
       rangeEnd,
-      cachedSnapshots: new Map([[cacheKey, cached]]),
+      cachedSnapshots: new Map([[cached.key, cached.snapshot]]),
+      localReceiverFallbackEnabled: true,
     })
 
     expect(result.failedKeys).toEqual([])
     expect(result.sources).toEqual(['browser-cache'])
-    expect(result.snapshots.get(cacheKey)).toMatchObject({
+    expect(result.snapshots.get(cached.key)).toMatchObject({
       source: 'browser-cache',
       fetchedAt: '2026-06-25T10:00:00Z',
     })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('en modo público restaura caché sin consultar el receiver', async () => {
+    const cached = createCachedSnapshot()
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(new Response('', { status: 503 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await fetchMarketHistoryWithFallback({
+      candidates: [candidate],
+      rangeStart,
+      rangeEnd,
+      cachedSnapshots: new Map([[cached.key, cached.snapshot]]),
+      localReceiverFallbackEnabled: false,
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(result.requestCount).toBe(1)
+    expect(result.sources).toEqual(['browser-cache'])
+    expect(result.failedKeys).toEqual([])
+    expect(result.warnings.some((warning) => warning.includes('receiver'))).toBe(
+      false,
+    )
+  })
+
+  it('en modo público no busca combinaciones ausentes en localhost', async () => {
+    const candidates = [
+      candidate,
+      {
+        server: 'americas' as const,
+        city: 'fort_sterling',
+        itemIdentifier: 'T5_BAG',
+        quality: 1,
+      },
+    ]
+    const fetchMock = vi.fn<typeof fetch>(async () =>
+      centralEnvelope([historySeries('martlock', 'T4_BAG', 4500)]),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await fetchMarketHistoryWithFallback({
+      candidates,
+      rangeStart,
+      rangeEnd,
+      localReceiverFallbackEnabled: false,
+    })
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(result.requestCount).toBe(1)
+    expect(result.sources).toEqual(['central-api'])
+    expect(result.snapshots.size).toBe(2)
+    expect(
+      result.snapshots.get(
+        buildMarketHistoryCacheKey(
+          'americas',
+          'fort_sterling',
+          'T5_BAG',
+          1,
+        ),
+      )?.points,
+    ).toEqual([])
   })
 
   it('consulta múltiples candidatos en un solo batch central', async () => {
