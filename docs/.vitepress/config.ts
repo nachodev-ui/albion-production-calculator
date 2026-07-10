@@ -13,7 +13,7 @@ export default defineConfig({
       { text: 'Distribución', link: '/architecture/distribution-model' },
       { text: 'Arquitectura', link: '/architecture/overview' },
       { text: 'Mercado', link: '/architecture/market-data' },
-      { text: 'Operación', link: '/operations/local-development' },
+      { text: 'Despliegue', link: '/operations/production-deployment' },
     ],
     sidebar: [
       {
@@ -47,6 +47,10 @@ export default defineConfig({
           {
             text: 'Desarrollo local',
             link: '/operations/local-development',
+          },
+          {
+            text: 'Despliegue público',
+            link: '/operations/production-deployment',
           },
           { text: 'Pruebas y calidad', link: '/operations/testing' },
           {
