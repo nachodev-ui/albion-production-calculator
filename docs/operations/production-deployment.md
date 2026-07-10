@@ -106,9 +106,9 @@ CLOUDFLARE_ACCOUNT_ID
 CLOUDFLARE_API_TOKEN
 ```
 
-El workflow `.github/workflows/deploy-production.yml` está limitado a
-`workflow_dispatch`. No se ejecuta automáticamente al fusionar hasta que las
-cuentas, dominios y credenciales hayan sido provisionados.
+El workflow `.github/workflows/deploy-production.yml` se ejecuta automáticamente
+cuando un cambio se fusiona en `main`. También conserva `workflow_dispatch` para
+repetir una publicación manualmente cuando sea necesario.
 
 Cada ejecución repite:
 
