@@ -1,18 +1,25 @@
 # Albion Production Calculator
 
 Calculadora React para crafteo, refinamiento y análisis económico en Albion
-Online. Integra precios actuales, historial, retorno de recursos, tarifas,
-fama, liquidez y optimización de mercados.
+Online. Integra precios actuales, historial, retorno de recursos, tarifas, fama,
+liquidez y optimización de mercados.
 
 ## Distribución hosted-first
 
 La aplicación pública no requiere instalaciones locales:
 
 ```text
-Usuario normal
-  → frontend web HTTPS
-  → albion-market-api HTTPS
-  → PostgreSQL central
+Usuario
+  → Cloudflare Pages HTTPS
+  → albion-market-api en Fly.io HTTPS
+  → PostgreSQL Neon
+```
+
+Dominios configurados:
+
+```text
+Frontend: https://albion-production-calculator.pages.dev
+API v1:   https://albion-market-api-nachodev.fly.dev/api/v1
 ```
 
 La lectura pública usa esta prioridad:
@@ -27,9 +34,10 @@ El receiver de `albion-market-data-platform` es una herramienta independiente de
 captura para colaboradores. Recibe datos desde Albion Data Client y los envía a
 la API central; no es un requisito para utilizar la aplicación web.
 
-El fallback hacia el receiver permanece disponible solo para desarrollo local y
-diagnóstico avanzado mediante una flag explícita. Consulta
-[`docs/architecture/distribution-model.md`](docs/architecture/distribution-model.md).
+Consulta:
+
+- [`docs/architecture/distribution-model.md`](docs/architecture/distribution-model.md)
+- [`docs/operations/production-deployment.md`](docs/operations/production-deployment.md)
 
 ## Inicio rápido local
 
@@ -54,16 +62,31 @@ VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=true
 VITE_LOCAL_MARKET_API_URL=http://127.0.0.1:8787/api/v1
 ```
 
-Los builds públicos deben proporcionar una URL central HTTPS y mantener el
-fallback local desactivado:
+## Configuración de producción
 
 ```dotenv
-VITE_CENTRAL_MARKET_API_URL=https://api.example.com/api/v1
+VITE_CENTRAL_MARKET_API_URL=https://albion-market-api-nachodev.fly.dev/api/v1
 VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=false
+VITE_MARKET_REQUEST_TIMEOUT_MS=7000
 ```
 
-Nunca se deben colocar secretos, tokens ni credenciales en variables `VITE_*`,
-porque sus valores quedan expuestos en el bundle del navegador.
+Nunca coloques secretos, tokens ni credenciales en variables `VITE_*`, porque sus
+valores quedan expuestos en el bundle del navegador.
+
+Después de crear la cuenta y el token limitado de Cloudflare, el primer despliegue
+se ejecuta con:
+
+```powershell
+.\scripts\bootstrap-cloudflare-production.ps1
+```
+
+Los despliegues siguientes pueden realizarse desde el workflow manual
+`Deploy production` después de configurar en el GitHub Environment `production`:
+
+```text
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_API_TOKEN
+```
 
 ## Validación
 
@@ -73,6 +96,7 @@ pnpm security:check
 pnpm test
 pnpm lint
 pnpm build
+pnpm bundle:check
 pnpm docs:build
 ```
 
@@ -88,6 +112,7 @@ Empieza por:
 
 - [Primeros pasos](docs/getting-started.md)
 - [Modelo de distribución](docs/architecture/distribution-model.md)
+- [Despliegue público](docs/operations/production-deployment.md)
 - [Arquitectura de la aplicación](docs/architecture/overview.md)
 - [Arquitectura de mercado](docs/architecture/market-data.md)
 - [Política de documentación](docs/operations/documentation.md)
