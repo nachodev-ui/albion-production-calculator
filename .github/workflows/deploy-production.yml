@@ -88,48 +88,103 @@ jobs:
       - name: Validate bundle budget
         run: pnpm bundle:check
 
-      - name: Validate Cloudflare Pages access
+      - name: Collect Cloudflare deployment diagnostic
+        id: cloudflare_diagnostic
+        continue-on-error: true
         shell: bash
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
 
-          if [[ -z "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
-            echo "::error::CLOUDFLARE_ACCOUNT_ID is missing from the production environment."
-            exit 1
-          fi
-
-          if [[ -z "${CLOUDFLARE_API_TOKEN}" ]]; then
-            echo "::error::CLOUDFLARE_API_TOKEN is missing from the production environment."
-            exit 1
-          fi
-
-          if [[ ! "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-fA-F]{32}$ ]]; then
-            echo "::error::CLOUDFLARE_ACCOUNT_ID does not have the expected 32-character format."
-            exit 1
-          fi
-
+          diagnostic_file="${RUNNER_TEMP}/cloudflare-production-diagnostic.json"
           project_file="${RUNNER_TEMP}/cloudflare-pages-project.json"
-          project_status="$(curl \
-            --silent \
-            --show-error \
-            --output "${project_file}" \
-            --write-out '%{http_code}' \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/albion-production-calculator")"
+          has_account_id=false
+          has_api_token=false
+          account_id_format_valid=false
+          project_http_status='not-requested'
+          project_success=false
+          errors='[]'
+          messages='[]'
 
-          if [[ "${project_status}" != "200" ]] || \
-             [[ "$(jq -r '.success // false' "${project_file}")" != "true" ]]; then
-            echo "::error::Cloudflare credentials cannot access the albion-production-calculator Pages project in the configured account."
-            jq -c '{success, errors, messages}' "${project_file}" || true
+          if [[ -n "${CLOUDFLARE_ACCOUNT_ID}" ]]; then
+            has_account_id=true
+          fi
+
+          if [[ -n "${CLOUDFLARE_API_TOKEN}" ]]; then
+            has_api_token=true
+          fi
+
+          if [[ "${CLOUDFLARE_ACCOUNT_ID}" =~ ^[0-9a-fA-F]{32}$ ]]; then
+            account_id_format_valid=true
+          fi
+
+          if [[ "${has_account_id}" == true && \
+                "${has_api_token}" == true && \
+                "${account_id_format_valid}" == true ]]; then
+            project_http_status="$(curl \
+              --silent \
+              --show-error \
+              --output "${project_file}" \
+              --write-out '%{http_code}' \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/albion-production-calculator" \
+              || printf '000')"
+
+            if jq -e . "${project_file}" >/dev/null 2>&1; then
+              project_success="$(jq -r '.success // false' "${project_file}")"
+              errors="$(jq -c '.errors // []' "${project_file}")"
+              messages="$(jq -c '.messages // []' "${project_file}")"
+            fi
+          fi
+
+          jq -n \
+            --argjson has_account_id "${has_account_id}" \
+            --argjson has_api_token "${has_api_token}" \
+            --argjson account_id_format_valid "${account_id_format_valid}" \
+            --arg project_http_status "${project_http_status}" \
+            --argjson project_success "${project_success}" \
+            --argjson errors "${errors}" \
+            --argjson messages "${messages}" \
+            --arg run_id "${GITHUB_RUN_ID}" \
+            --arg commit_sha "${GITHUB_SHA}" \
+            '{
+              has_account_id: $has_account_id,
+              has_api_token: $has_api_token,
+              account_id_format_valid: $account_id_format_valid,
+              project_http_status: $project_http_status,
+              project_success: $project_success,
+              errors: $errors,
+              messages: $messages,
+              run_id: $run_id,
+              commit_sha: $commit_sha
+            }' \
+            > "${diagnostic_file}"
+
+          cat "${diagnostic_file}"
+
+          if [[ "${has_account_id}" != true || \
+                "${has_api_token}" != true || \
+                "${account_id_format_valid}" != true || \
+                "${project_http_status}" != '200' || \
+                "${project_success}" != true ]]; then
+            echo "::warning::Cloudflare preflight did not confirm project access; Wrangler will perform the authoritative deployment attempt."
             exit 1
           fi
 
-          echo "Cloudflare account, token and Pages project access validated."
+      - name: Upload Cloudflare deployment diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-production-diagnostic-${{ github.run_id }}
+          path: ${{ runner.temp }}/cloudflare-production-diagnostic.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Deploy to Cloudflare Pages
+        id: cloudflare_deploy
+        continue-on-error: true
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -138,6 +193,9 @@ jobs:
           command: pages deploy dist --project-name=albion-production-calculator --branch=main --commit-hash=${{ github.sha }} --commit-dirty=false
 
       - name: Verify deployed frontend and API host
+        id: verify_production
+        if: steps.cloudflare_deploy.outcome == 'success'
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -209,7 +267,7 @@ jobs:
             sleep 5
           done
 
-          if [[ "${verified}" != "true" ]]; then
+          if [[ "${verified}" != true ]]; then
             echo "::error::The public bundle did not converge to the expected Render API configuration."
             exit 1
           fi
@@ -222,6 +280,24 @@ jobs:
             --retry-all-errors \
             --retry-delay 5 \
             https://albion-market-api.onrender.com/readyz
+
+      - name: Enforce production deployment result
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ steps.cloudflare_deploy.outcome }}" != 'success' ]]; then
+            echo "::error::Cloudflare Pages deployment failed."
+            exit 1
+          fi
+
+          if [[ "${{ steps.verify_production.outcome }}" != 'success' ]]; then
+            echo "::error::Production smoke tests failed."
+            exit 1
+          fi
+
+          echo "Cloudflare Pages deployment and production smoke tests passed."
 
       - name: Publish production deployment status
         if: always()
