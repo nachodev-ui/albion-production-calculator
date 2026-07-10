@@ -1,0 +1,87 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-cloudflare-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy frontend to Cloudflare Pages
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VITE_CENTRAL_MARKET_API_URL: https://albion-market-api-nachodev.fly.dev/api/v1
+      VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+      VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate contracts and public security
+        run: |
+          pnpm contracts:check
+          pnpm security:check
+
+      - name: Run lint and tests
+        run: |
+          pnpm lint
+          pnpm test
+
+      - name: Build production application
+        run: pnpm build
+
+      - name: Validate bundle budget
+        run: pnpm bundle:check
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=albion-production-calculator --branch=main --commit-hash=${{ github.sha }} --commit-dirty=false
+
+      - name: Verify deployed frontend
+        shell: bash
+        run: |
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --location \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            https://albion-production-calculator.pages.dev/ \
+            | grep -F '<div id="root"></div>'
+
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --retry 12 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            https://albion-market-api-nachodev.fly.dev/readyz
