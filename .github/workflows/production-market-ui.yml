@@ -1,0 +1,93 @@
+name: Production market UI
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - scripts/verify-production-market-ui.cjs
+      - scripts/check-public-security.ts
+      - public/_headers
+      - .github/workflows/production-market-ui.yml
+      - docs/operations/production-market-ui-validation.md
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Deploy production
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Cloudflare → Render → Neon UI path
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install Playwright runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          runtime="$RUNNER_TEMP/production-market-ui-runtime"
+          mkdir -p "$runtime"
+          cd "$runtime"
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.58.2
+          npx playwright install --with-deps chromium
+
+      - name: Validate production market UI
+        shell: bash
+        env:
+          NODE_PATH: ${{ runner.temp }}/production-market-ui-runtime/node_modules
+          FRONTEND_URL: https://albion-production-calculator.pages.dev
+          API_BASE_URL: https://albion-market-api.onrender.com/api/v1
+          ITEM_ID: T4_MAIN_CURSEDSTAFF_CRYSTAL
+          MARKET_KEY: thetford
+          ALBION_SERVER: west
+          MARKET_QUALITY: '1'
+          EXPECT_CSP_CLEAN: ${{ github.event_name == 'workflow_run' && 'true' || 'false' }}
+          ARTIFACT_DIRECTORY: .e2e/artifacts/production-market-ui
+        run: |
+          set -euo pipefail
+          node scripts/verify-production-market-ui.cjs
+
+      - name: Publish summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f .e2e/artifacts/production-market-ui/summary.json ]]; then
+            {
+              echo '## Production market UI'
+              echo
+              echo '```json'
+              cat .e2e/artifacts/production-market-ui/summary.json
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload production evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: production-market-ui-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .e2e/artifacts/production-market-ui
+          if-no-files-found: warn
+          retention-days: 14
