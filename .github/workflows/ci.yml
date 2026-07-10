@@ -25,6 +25,9 @@ jobs:
     name: Quality checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      VITE_CENTRAL_MARKET_API_URL: https://api.example.invalid/api/v1
+      VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
 
     steps:
       - name: Checkout repository
