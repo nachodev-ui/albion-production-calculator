@@ -3,6 +3,8 @@ import { asBaseItemId } from '@core/domain/entities/Item'
 import { JsonItemRepository } from './JsonItemRepository'
 
 const repository = new JsonItemRepository()
+const ALCHEMY_INGREDIENT_PATTERN =
+  /^(?:T1_ALCHEMY_COMMON|T[357]_ALCHEMY_RARE_[A-Z0-9_]+)$/
 
 function getShapeshifterIngredientIds(): readonly string[] {
   const ids = repository
@@ -35,6 +37,19 @@ describe('ingredientes de bastones cambiaformas', () => {
         .filter(({ id, item }) => item?.name === id)
         .map(({ id }) => id),
     ).toEqual([])
+  })
+
+  it('mantiene las piezas de alquimia como componentes comprables', () => {
+    const alchemyIngredients = getShapeshifterIngredientIds()
+      .filter((id) => ALCHEMY_INGREDIENT_PATTERN.test(id))
+      .map((id) => repository.getById(asBaseItemId(id)))
+
+    expect(alchemyIngredients).toHaveLength(22)
+    expect(
+      alchemyIngredients.every(
+        (item) => item?.category === 'other' && item.recipe === null,
+      ),
+    ).toBe(true)
   })
 
   it('usa las traducciones oficiales para las piezas reportadas', () => {
