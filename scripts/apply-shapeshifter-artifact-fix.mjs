@@ -52,13 +52,39 @@ function isAlchemyCraftingIngredient(uniqueName: string): boolean {
   writeFileSync(GENERATOR_PATH, source, 'utf8')
 }
 
+function isolate() {
+  const before = JSON.parse(readFileSync(BEFORE_PATH, 'utf8'))
+  const generated = JSON.parse(readFileSync(DATASET_PATH, 'utf8'))
+  const beforeIds = new Set(before.map((item) => item.id))
+  const additions = generated.filter(
+    (item) => !beforeIds.has(item.id) && INGREDIENT_PATTERN.test(item.id),
+  )
+
+  if (additions.length !== 22) {
+    throw new Error(
+      `Se esperaban 22 dependencias nuevas en la generación y hubo ${additions.length}`,
+    )
+  }
+
+  const focused = [...before, ...additions]
+  writeFileSync(DATASET_PATH, `${JSON.stringify(focused, null, 2)}\n`, 'utf8')
+}
+
 function verify() {
   const before = JSON.parse(readFileSync(BEFORE_PATH, 'utf8'))
   const after = JSON.parse(readFileSync(DATASET_PATH, 'utf8'))
-  const beforeIds = new Set(before.map((item) => item.id))
+  const beforeById = new Map(before.map((item) => [item.id, item]))
+  const beforeIds = new Set(beforeById.keys())
   const afterIds = new Set(after.map((item) => item.id))
   const added = after.filter((item) => !beforeIds.has(item.id))
   const removed = before.filter((item) => !afterIds.has(item.id))
+  const modifiedExisting = after
+    .filter((item) => beforeIds.has(item.id))
+    .filter(
+      (item) =>
+        JSON.stringify(item) !== JSON.stringify(beforeById.get(item.id)),
+    )
+    .map((item) => item.id)
 
   console.log(
     JSON.stringify(
@@ -67,6 +93,7 @@ function verify() {
         after: after.length,
         added: added.map(({ id, name, category }) => ({ id, name, category })),
         removed: removed.map(({ id }) => id),
+        modifiedExisting,
       },
       null,
       2,
@@ -78,6 +105,11 @@ function verify() {
   }
   if (removed.length !== 0) {
     throw new Error(`La regeneración eliminó ${removed.length} objetos`)
+  }
+  if (modifiedExisting.length !== 0) {
+    throw new Error(
+      `La corrección modificó ${modifiedExisting.length} objetos existentes`,
+    )
   }
   if (
     added.some(
@@ -104,5 +136,6 @@ function verify() {
 
 const command = process.argv[2]
 if (command === 'apply') apply()
+else if (command === 'isolate') isolate()
 else if (command === 'verify') verify()
 else throw new Error(`Comando no reconocido: ${command ?? '<vacío>'}`)
