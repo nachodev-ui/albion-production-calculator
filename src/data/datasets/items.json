@@ -204028,5 +204028,715 @@
     "category": "other",
     "maxEnchantment": 0,
     "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_PANTHER",
+    "name": "Garras sombrías duras",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_PANTHER",
+    "name": "Garras sombrías finas",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_PANTHER",
+    "name": "Garras sombrías excelentes",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_ENT",
+    "name": "Raíz silvana dura",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_ENT",
+    "name": "Raíz silvana fina",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_ENT",
+    "name": "Raíz silvana excelente",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_DIREBEAR",
+    "name": "Patas de espíritu duras",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_DIREBEAR",
+    "name": "Patas de espíritu finas",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_DIREBEAR",
+    "name": "Patas de espíritu excelentes",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_WEREWOLF",
+    "name": "Colmillos de hombre lobo duros",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_WEREWOLF",
+    "name": "Colmillos de hombre lobo finos",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_WEREWOLF",
+    "name": "Colmillos de hombre lobo excelentes",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_IMP",
+    "name": "Cuerno de diablillo duro",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_IMP",
+    "name": "Cuerno de diablillo fino",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_IMP",
+    "name": "Cuerno de diablillo excelente",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_ELEMENTAL",
+    "name": "Diente de piedra rúnica duro",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_ELEMENTAL",
+    "name": "Diente de piedra rúnica fino",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_ELEMENTAL",
+    "name": "Diente de piedra rúnica excelente",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T3_ALCHEMY_RARE_EAGLE",
+    "name": "Pluma de alba dura",
+    "tier": 3,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_ALCHEMY_RARE_EAGLE",
+    "name": "Pluma de alba fina",
+    "tier": 5,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 2,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_ALCHEMY_RARE_EAGLE",
+    "name": "Pluma de alba excelente",
+    "tier": 7,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": null
+  },
+  {
+    "id": "T1_ALCHEMY_COMMON",
+    "name": "Restos de animales raros",
+    "tier": 1,
+    "category": "other",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "toolmaker",
+          "ingredients": [
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 5,
+          "silverFee": 0,
+          "craftingFocus": 0,
+          "alternatives": [
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_PANTHER",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_PANTHER",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_ENT",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_ENT",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_ENT",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_IMP",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_IMP",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_IMP",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T3_ALCHEMY_RARE_EAGLE",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 5,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T5_ALCHEMY_RARE_EAGLE",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 10,
+              "silverFee": 0,
+              "craftingFocus": 0
+            },
+            {
+              "ingredients": [
+                {
+                  "itemId": "T7_ALCHEMY_RARE_EAGLE",
+                  "enchantment": 0,
+                  "quantity": 1
+                }
+              ],
+              "outputQuantity": 25,
+              "silverFee": 0,
+              "craftingFocus": 0
+            }
+          ],
+          "upgradeFrom": null
+        }
+      ]
+    }
   }
 ]
