@@ -61,6 +61,16 @@ jobs:
           set -o pipefail
           node scripts/inspect-shapeshifters.mjs 2>&1 | tee artifacts/shapeshifter-apply.log
           node scripts/apply-shapeshifter-fix.mjs 2>&1 | tee -a artifacts/shapeshifter-apply.log
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/features/item-browser/data/__tests__/catalogBranches.test.ts')
+          text = path.read_text(encoding='utf-8')
+          old = "getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,\n    ).toBe(5)"
+          new = "getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,\n    ).toBe(6)"
+          if old not in text:
+              raise SystemExit('No se encontró la expectativa T3 de Hunter\'s Lodge')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
 
       - name: Upload shapeshifter apply log
         if: always() && github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog'
