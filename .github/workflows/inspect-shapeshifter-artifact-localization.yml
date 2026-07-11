@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Inspect official localization
+      - name: Inspect official localization and dataset coverage
         shell: bash
         run: |
           mkdir -p artifacts
@@ -28,14 +28,25 @@ jobs:
           const dataset = JSON.parse(
             await readFile('src/data/datasets/items.json', 'utf8'),
           )
-          const response = await fetch(
-            'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json',
-          )
-          if (!response.ok) {
-            throw new Error(`formatted/items.json: ${response.status}`)
+          const [localizationResponse, xmlResponse] = await Promise.all([
+            fetch(
+              'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json',
+            ),
+            fetch(
+              'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.xml',
+            ),
+          ])
+          if (!localizationResponse.ok) {
+            throw new Error(`formatted/items.json: ${localizationResponse.status}`)
           }
-          const localization = await response.json()
+          if (!xmlResponse.ok) {
+            throw new Error(`items.xml: ${xmlResponse.status}`)
+          }
+
+          const localization = await localizationResponse.json()
+          const xml = await xmlResponse.text()
           const byId = new Map(localization.map((entry) => [entry.UniqueName, entry]))
+          const datasetById = new Map(dataset.map((item) => [item.id, item]))
 
           const shapeshifterItems = dataset.filter(
             (item) => item.category === 'weapon' && item.id.includes('SHAPESHIFTER'),
@@ -50,34 +61,45 @@ jobs:
             ),
           ].filter((id) => id.includes('ALCHEMY'))
 
-          const result = ingredientIds.sort().map((id) => {
-            const direct = byId.get(id)
-            const suffix = id.replace(/^T\d+_/, '')
-            const candidates = localization
-              .filter(
-                (entry) =>
-                  entry.UniqueName.includes('ALCHEMY_RARE') &&
-                  (entry.UniqueName.endsWith(suffix) ||
-                    entry.UniqueName.includes(suffix.replace(/^ALCHEMY_/, ''))),
-              )
-              .map((entry) => ({
-                id: entry.UniqueName,
-                localizationNameVariable: entry.LocalizationNameVariable ?? null,
-                es: entry.LocalizedNames?.['ES-ES'] ?? null,
-                en: entry.LocalizedNames?.['EN-US'] ?? null,
-              }))
+          function readXmlNode(id) {
+            const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const match = xml.match(
+              new RegExp(`<([a-z]+)\\b[^>]*\\buniquename="${escaped}"[^>]*>`, 'i'),
+            )
+            if (!match) return null
+            const openingTag = match[0]
+            const readAttribute = (name) =>
+              openingTag.match(new RegExp(`${name}="([^"]*)"`, 'i'))?.[1] ?? null
+            return {
+              tagName: match[1],
+              tier: readAttribute('tier'),
+              shopCategory: readAttribute('shopcategory'),
+              shopSubcategory1: readAttribute('shopsubcategory1'),
+              craftingCategory: readAttribute('craftingcategory'),
+            }
+          }
 
+          const ingredients = ingredientIds.sort().map((id) => {
+            const official = byId.get(id)
+            const local = datasetById.get(id)
             return {
               id,
-              direct: direct
+              dataset: local
                 ? {
-                    localizationNameVariable:
-                      direct.LocalizationNameVariable ?? null,
-                    es: direct.LocalizedNames?.['ES-ES'] ?? null,
-                    en: direct.LocalizedNames?.['EN-US'] ?? null,
+                    name: local.name,
+                    category: local.category,
+                    tier: local.tier,
                   }
                 : null,
-              candidates,
+              xml: readXmlNode(id),
+              official: official
+                ? {
+                    localizationNameVariable:
+                      official.LocalizationNameVariable ?? null,
+                    es: official.LocalizedNames?.['ES-ES'] ?? null,
+                    en: official.LocalizedNames?.['EN-US'] ?? null,
+                  }
+                : null,
             }
           })
 
@@ -86,10 +108,16 @@ jobs:
               {
                 shapeshifterItemCount: shapeshifterItems.length,
                 ingredientCount: ingredientIds.length,
-                missingDirectLocalization: result
-                  .filter((entry) => !entry.direct?.es)
+                missingFromDataset: ingredients
+                  .filter((entry) => !entry.dataset)
                   .map((entry) => entry.id),
-                ingredients: result,
+                technicalNamesInDataset: ingredients
+                  .filter((entry) => entry.dataset?.name === entry.id)
+                  .map((entry) => entry.id),
+                missingOfficialSpanish: ingredients
+                  .filter((entry) => !entry.official?.es)
+                  .map((entry) => entry.id),
+                ingredients,
               },
               null,
               2,
