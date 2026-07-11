@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -32,9 +32,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ref: ${{ github.head_ref || github.ref }}
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -51,43 +48,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Apply shapeshifter crafting fix
-        if: github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog' && github.actor != 'github-actions[bot]'
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          sed -i 's#src/features/item-browser/data/__tests__/craftingBranches.test.ts#src/features/item-browser/data/__tests__/catalogBranches.test.ts#' scripts/apply-shapeshifter-fix.mjs
-          set -o pipefail
-          node scripts/inspect-shapeshifters.mjs 2>&1 | tee artifacts/shapeshifter-apply.log
-          node scripts/apply-shapeshifter-fix.mjs 2>&1 | tee -a artifacts/shapeshifter-apply.log
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('src/features/item-browser/data/__tests__/catalogBranches.test.ts')
-          text = path.read_text(encoding='utf-8')
-          old = "getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,\n    ).toBe(5)"
-          new = "getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,\n    ).toBe(6)"
-          if old not in text:
-              raise SystemExit('No se encontró la expectativa T3 de Hunter\'s Lodge')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          PY
-
-      - name: Upload shapeshifter apply log
-        if: always() && github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog'
-        uses: actions/upload-artifact@v4
-        with:
-          name: shapeshifter-apply-log
-          path: artifacts/shapeshifter-apply.log
-          if-no-files-found: ignore
-          retention-days: 7
-
-      - name: Format shapeshifter changes
-        if: github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog' && github.actor != 'github-actions[bot]'
-        run: >-
-          pnpm exec prettier --write
-          scripts/generate-dataset.ts
-          src/features/item-browser/data/craftingBranches.ts
-          src/features/item-browser/data/__tests__/catalogBranches.test.ts
 
       - name: Validate API contracts
         run: pnpm contracts:check
@@ -133,16 +93,3 @@ jobs:
 
       - name: Build documentation
         run: pnpm docs:build
-
-      - name: Publish validated shapeshifter code
-        if: github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog' && github.actor != 'github-actions[bot]'
-        shell: bash
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/generate-dataset.ts
-          git add src/data/datasets/items.json
-          git add src/features/item-browser/data/craftingBranches.ts
-          git add src/features/item-browser/data/__tests__/catalogBranches.test.ts
-          git commit -m "fix: add shapeshifter crafting catalog"
-          git push origin HEAD:${{ github.head_ref }}
