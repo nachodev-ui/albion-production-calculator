@@ -54,7 +54,20 @@ jobs:
 
       - name: Apply shapeshifter crafting fix
         if: github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog' && github.actor != 'github-actions[bot]'
-        run: node scripts/apply-shapeshifter-fix.mjs
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          node scripts/apply-shapeshifter-fix.mjs 2>&1 | tee artifacts/shapeshifter-apply.log
+
+      - name: Upload shapeshifter apply log
+        if: always() && github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog'
+        uses: actions/upload-artifact@v4
+        with:
+          name: shapeshifter-apply-log
+          path: artifacts/shapeshifter-apply.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Format shapeshifter changes
         if: github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog' && github.actor != 'github-actions[bot]'
