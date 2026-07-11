@@ -61,22 +61,25 @@ jobs:
             ),
           ].filter((id) => id.includes('ALCHEMY'))
 
-          function readXmlNode(id) {
+          function readXmlNodes(id) {
             const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            const match = xml.match(
-              new RegExp(`<([a-z]+)\\b[^>]*\\buniquename="${escaped}"[^>]*>`, 'i'),
-            )
-            if (!match) return null
-            const openingTag = match[0]
-            const readAttribute = (name) =>
-              openingTag.match(new RegExp(`${name}="([^"]*)"`, 'i'))?.[1] ?? null
-            return {
-              tagName: match[1],
-              tier: readAttribute('tier'),
-              shopCategory: readAttribute('shopcategory'),
-              shopSubcategory1: readAttribute('shopsubcategory1'),
-              craftingCategory: readAttribute('craftingcategory'),
-            }
+            const matches = [
+              ...xml.matchAll(
+                new RegExp(`<([a-z]+)\\b[^>]*\\buniquename="${escaped}"[^>]*>`, 'gi'),
+              ),
+            ]
+            return matches.map((match) => {
+              const openingTag = match[0]
+              const readAttribute = (name) =>
+                openingTag.match(new RegExp(`${name}="([^"]*)"`, 'i'))?.[1] ?? null
+              return {
+                tagName: match[1],
+                tier: readAttribute('tier'),
+                shopCategory: readAttribute('shopcategory'),
+                shopSubcategory1: readAttribute('shopsubcategory1'),
+                craftingCategory: readAttribute('craftingcategory'),
+              }
+            })
           }
 
           const ingredients = ingredientIds.sort().map((id) => {
@@ -91,7 +94,7 @@ jobs:
                     tier: local.tier,
                   }
                 : null,
-              xml: readXmlNode(id),
+              xml: readXmlNodes(id),
               official: official
                 ? {
                     localizationNameVariable:
