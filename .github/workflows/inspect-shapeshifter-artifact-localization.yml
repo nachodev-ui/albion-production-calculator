@@ -40,58 +40,110 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Include alchemy crafting ingredients
+      - name: Include required alchemy ingredients
         shell: bash
         run: |
+          cp src/data/datasets/items.json /tmp/items-before.json
           python - <<'PY'
           from pathlib import Path
 
           path = Path('scripts/generate-dataset.ts')
           text = path.read_text(encoding='utf-8')
-          old = """      if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
-                if (shopSubcategory1 === 'resources') return 'resource'
 
-                // Artefactos de facción"""
-          new = """      if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
-                if (shopSubcategory1 === 'resources') return 'resource'
-                if (shopCategory === 'crafting' && shopSubcategory1 === 'alchemy') {
-                  return 'other'
-                }
+          old_helpers = """const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/
 
-                // Artefactos de facción"""
-          if text.count(old) != 1:
-              raise SystemExit(
-                  f'Se esperaba una coincidencia para simpleitem alchemy y hubo {text.count(old)}'
-              )
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          function isRoyalSigil(uniqueName: string): boolean {
+            return ROYAL_SIGIL_PATTERN.test(uniqueName)
+          }
+"""
+          new_helpers = """const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/
+          const ALCHEMY_CRAFTING_INGREDIENT_PATTERN =
+            /^(?:T1_ALCHEMY_COMMON|T[357]_ALCHEMY_RARE_[A-Z0-9_]+)$/
+
+          function isRoyalSigil(uniqueName: string): boolean {
+            return ROYAL_SIGIL_PATTERN.test(uniqueName)
+          }
+
+          function isAlchemyCraftingIngredient(uniqueName: string): boolean {
+            return ALCHEMY_CRAFTING_INGREDIENT_PATTERN.test(uniqueName)
+          }
+"""
+          old_category = """    const category = isRoyalSigil(id)
+                ? 'other'
+                : mapCategory(tagName, shopCategory, shopSubcategory1)"""
+          new_category = """    const category = isRoyalSigil(id) || isAlchemyCraftingIngredient(id)
+                ? 'other'
+                : mapCategory(tagName, shopCategory, shopSubcategory1)"""
+
+          for old, new, label in (
+              (old_helpers, new_helpers, 'helper de ingredientes de alquimia'),
+              (old_category, new_category, 'clasificación de ingredientes de alquimia'),
+          ):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: se esperaba 1 coincidencia y hubo {count}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Regenerate dataset
         run: pnpm generate:dataset
 
-      - name: Verify reported names
+      - name: Verify focused dataset change
         shell: bash
         run: |
           node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises'
 
-          const items = JSON.parse(
+          const before = JSON.parse(await readFile('/tmp/items-before.json', 'utf8'))
+          const after = JSON.parse(
             await readFile('src/data/datasets/items.json', 'utf8'),
           )
-          const byId = new Map(items.map((item) => [item.id, item]))
+          const beforeIds = new Set(before.map((item) => item.id))
+          const afterIds = new Set(after.map((item) => item.id))
+          const added = after.filter((item) => !beforeIds.has(item.id))
+          const removed = before.filter((item) => !afterIds.has(item.id))
+          const expectedPattern = /^(?:T1_ALCHEMY_COMMON|T[357]_ALCHEMY_RARE_[A-Z0-9_]+)$/
+
+          console.log(
+            JSON.stringify(
+              {
+                before: before.length,
+                after: after.length,
+                added: added.map(({ id, name, category }) => ({ id, name, category })),
+                removed: removed.map(({ id }) => id),
+              },
+              null,
+              2,
+            ),
+          )
+
+          if (added.length !== 22) {
+            throw new Error(`Se esperaban 22 ingredientes añadidos y hubo ${added.length}`)
+          }
+          if (removed.length !== 0) {
+            throw new Error(`La regeneración eliminó ${removed.length} objetos`)
+          }
+          if (
+            added.some(
+              (item) =>
+                !expectedPattern.test(item.id) ||
+                item.category !== 'other' ||
+                item.name === item.id,
+            )
+          ) {
+            throw new Error('La regeneración añadió objetos inesperados o sin localizar')
+          }
+
+          const byId = new Map(after.map((item) => [item.id, item]))
           const expected = new Map([
             ['T5_ALCHEMY_RARE_PANTHER', 'Garras sombrías finas'],
             ['T5_ALCHEMY_RARE_WEREWOLF', 'Colmillos de hombre lobo finos'],
           ])
-
           for (const [id, name] of expected) {
-            const item = byId.get(id)
-            if (!item) throw new Error(`${id} sigue ausente del dataset`)
-            if (item.name !== name) {
-              throw new Error(`${id}: se esperaba "${name}" y se obtuvo "${item.name}"`)
-            }
-            if (item.category !== 'other') {
-              throw new Error(`${id}: categoría inesperada ${item.category}`)
+            if (byId.get(id)?.name !== name) {
+              throw new Error(`${id} no tiene la traducción oficial esperada`)
             }
           }
           NODE
