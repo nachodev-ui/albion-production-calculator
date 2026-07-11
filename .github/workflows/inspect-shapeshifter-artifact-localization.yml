@@ -1,4 +1,4 @@
-name: Inspect shapeshifter artifact localization
+name: Apply shapeshifter artifact localization fix
 
 on:
   pull_request:
@@ -6,133 +6,122 @@ on:
       - develop
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
-    if: github.head_ref == 'fix/shapeshifter-artifact-localization'
+  apply-and-validate:
+    if: github.head_ref == 'fix/shapeshifter-artifact-localization' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
+    env:
+      VITE_CENTRAL_MARKET_API_URL: https://api.example.invalid/api/v1
+      VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout feature branch
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
-      - name: Inspect official localization and dataset coverage
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Include alchemy crafting ingredients
         shell: bash
         run: |
-          mkdir -p artifacts
-          node --input-type=module <<'NODE' > artifacts/shapeshifter-artifact-localization.json
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/generate-dataset.ts')
+          text = path.read_text(encoding='utf-8')
+          old = """      if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
+                if (shopSubcategory1 === 'resources') return 'resource'
+
+                // Artefactos de facción"""
+          new = """      if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
+                if (shopSubcategory1 === 'resources') return 'resource'
+                if (shopCategory === 'crafting' && shopSubcategory1 === 'alchemy') {
+                  return 'other'
+                }
+
+                // Artefactos de facción"""
+          if text.count(old) != 1:
+              raise SystemExit(
+                  f'Se esperaba una coincidencia para simpleitem alchemy y hubo {text.count(old)}'
+              )
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+      - name: Regenerate dataset
+        run: pnpm generate:dataset
+
+      - name: Verify reported names
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises'
 
-          const dataset = JSON.parse(
+          const items = JSON.parse(
             await readFile('src/data/datasets/items.json', 'utf8'),
           )
-          const [localizationResponse, xmlResponse] = await Promise.all([
-            fetch(
-              'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json',
-            ),
-            fetch(
-              'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.xml',
-            ),
+          const byId = new Map(items.map((item) => [item.id, item]))
+          const expected = new Map([
+            ['T5_ALCHEMY_RARE_PANTHER', 'Garras sombrías finas'],
+            ['T5_ALCHEMY_RARE_WEREWOLF', 'Colmillos de hombre lobo finos'],
           ])
-          if (!localizationResponse.ok) {
-            throw new Error(`formatted/items.json: ${localizationResponse.status}`)
-          }
-          if (!xmlResponse.ok) {
-            throw new Error(`items.xml: ${xmlResponse.status}`)
-          }
 
-          const localization = await localizationResponse.json()
-          const xml = await xmlResponse.text()
-          const byId = new Map(localization.map((entry) => [entry.UniqueName, entry]))
-          const datasetById = new Map(dataset.map((item) => [item.id, item]))
-
-          const shapeshifterItems = dataset.filter(
-            (item) => item.category === 'weapon' && item.id.includes('SHAPESHIFTER'),
-          )
-          const ingredientIds = [
-            ...new Set(
-              shapeshifterItems.flatMap((item) =>
-                (item.recipe?.tiers ?? []).flatMap((tier) =>
-                  (tier.ingredients ?? []).map((ingredient) => ingredient.itemId),
-                ),
-              ),
-            ),
-          ].filter((id) => id.includes('ALCHEMY'))
-
-          function readXmlNodes(id) {
-            const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-            const matches = [
-              ...xml.matchAll(
-                new RegExp(`<([a-z]+)\\b[^>]*\\buniquename="${escaped}"[^>]*>`, 'gi'),
-              ),
-            ]
-            return matches.map((match) => {
-              const openingTag = match[0]
-              const readAttribute = (name) =>
-                openingTag.match(new RegExp(`${name}="([^"]*)"`, 'i'))?.[1] ?? null
-              return {
-                tagName: match[1],
-                tier: readAttribute('tier'),
-                shopCategory: readAttribute('shopcategory'),
-                shopSubcategory1: readAttribute('shopsubcategory1'),
-                craftingCategory: readAttribute('craftingcategory'),
-              }
-            })
-          }
-
-          const ingredients = ingredientIds.sort().map((id) => {
-            const official = byId.get(id)
-            const local = datasetById.get(id)
-            return {
-              id,
-              dataset: local
-                ? {
-                    name: local.name,
-                    category: local.category,
-                    tier: local.tier,
-                  }
-                : null,
-              xml: readXmlNodes(id),
-              official: official
-                ? {
-                    localizationNameVariable:
-                      official.LocalizationNameVariable ?? null,
-                    es: official.LocalizedNames?.['ES-ES'] ?? null,
-                    en: official.LocalizedNames?.['EN-US'] ?? null,
-                  }
-                : null,
+          for (const [id, name] of expected) {
+            const item = byId.get(id)
+            if (!item) throw new Error(`${id} sigue ausente del dataset`)
+            if (item.name !== name) {
+              throw new Error(`${id}: se esperaba "${name}" y se obtuvo "${item.name}"`)
             }
-          })
-
-          console.log(
-            JSON.stringify(
-              {
-                shapeshifterItemCount: shapeshifterItems.length,
-                ingredientCount: ingredientIds.length,
-                missingFromDataset: ingredients
-                  .filter((entry) => !entry.dataset)
-                  .map((entry) => entry.id),
-                technicalNamesInDataset: ingredients
-                  .filter((entry) => entry.dataset?.name === entry.id)
-                  .map((entry) => entry.id),
-                missingOfficialSpanish: ingredients
-                  .filter((entry) => !entry.official?.es)
-                  .map((entry) => entry.id),
-                ingredients,
-              },
-              null,
-              2,
-            ),
-          )
+            if (item.category !== 'other') {
+              throw new Error(`${id}: categoría inesperada ${item.category}`)
+            }
+          }
           NODE
 
-          cat artifacts/shapeshifter-artifact-localization.json
+      - name: Validate API contracts
+        run: pnpm contracts:check
 
-      - name: Upload localization report
-        uses: actions/upload-artifact@v4
-        with:
-          name: shapeshifter-artifact-localization
-          path: artifacts/shapeshifter-artifact-localization.json
-          retention-days: 7
+      - name: Validate public security config
+        run: pnpm security:check
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Check bundle budget
+        run: pnpm exec tsx scripts/check-bundle-budget.ts --write-report
+
+      - name: Build documentation
+        run: pnpm docs:build
+
+      - name: Publish validated fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/generate-dataset.ts src/data/datasets/items.json
+          git commit -m "fix: include shapeshifter alchemy ingredients"
+          git push origin HEAD:${{ github.head_ref }}
