@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { JsonItemRepository } from '@data/repositories/JsonItemRepository'
 import {
   buildCategoryCraftingCatalog,
+  getCraftingSpecialtyCategory,
   isGroupedCraftingItem,
   type BranchCategory,
 } from '../craftingBranches'
@@ -29,11 +30,11 @@ function expectUniqueItems(category: BranchCategory) {
 }
 
 describe('ramas de armas', () => {
-  it('agrupa todo el equipamiento reconocido en 20 ramas', () => {
+  it('agrupa todo el equipamiento reconocido en 21 ramas', () => {
     const catalog = build('weapon')
 
-    expect(catalog.branches).toHaveLength(20)
-    expect(catalog.itemCount).toBe(664)
+    expect(catalog.branches).toHaveLength(21)
+    expect(catalog.itemCount).toBe(705)
     expectUniqueItems('weapon')
   })
 
@@ -44,7 +45,7 @@ describe('ramas de armas', () => {
     ).toBe(6)
     expect(
       getBranch('weapon', 'weapon_journeyman_hunter_lodge').itemCount,
-    ).toBe(5)
+    ).toBe(6)
     expect(getBranch('weapon', 'weapon_journeyman_mage_tower').itemCount).toBe(
       5,
     )
@@ -60,6 +61,55 @@ describe('ramas de armas', () => {
         (family) =>
           family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
       ),
+    ).toBe(true)
+  })
+
+  it('agrupa todos los bastones cambiaformas T4 a T8', () => {
+    const shapeshifters = getBranch('weapon', 'weapon_shapeshifter')
+    const sourceItems = repository
+      .getAll('weapon')
+      .filter(
+        (item) =>
+          item.recipe &&
+          item.id.includes('SHAPESHIFTER') &&
+          !item.id.includes('ARTEFACT_') &&
+          item.tier >= 4,
+      )
+    const introductoryItem = repository
+      .getAll('weapon')
+      .find(
+        (item) =>
+          item.id.includes('SHAPESHIFTER') &&
+          !item.id.includes('ARTEFACT_') &&
+          item.tier === 3,
+      )
+
+    expect(introductoryItem).toBeDefined()
+    expect(
+      introductoryItem
+        ? isGroupedCraftingItem('weapon', introductoryItem)
+        : false,
+    ).toBe(true)
+    expect(shapeshifters.stationGroup).toBe('hunter_lodge')
+    expect(shapeshifters.itemCount).toBe(40)
+    expect(shapeshifters.itemCount).toBe(sourceItems.length)
+    expect(shapeshifters.families).toHaveLength(8)
+    expect(
+      shapeshifters.families.every(
+        (family) =>
+          family.items.map((item) => item.tier).join(',') === '4,5,6,7,8',
+      ),
+    ).toBe(true)
+    expect(
+      shapeshifters.families
+        .flatMap((family) => family.items)
+        .every(
+          (item) =>
+            getCraftingSpecialtyCategory(item) === 'shapeshifter_staff' &&
+            item.recipe?.tiers.every(
+              (tier) => tier.station === 'hunter_lodge',
+            ),
+        ),
     ).toBe(true)
   })
 
