@@ -188,9 +188,15 @@ function resolveItemName(id: string, localizationMap: Map<string, string>): stri
  * formar parte de la receta estándar (ej. T1_FACTION_MOUNTAIN_TOKEN_1).
  */
 const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/
+const ALCHEMY_CRAFTING_INGREDIENT_PATTERN =
+  /^(?:T1_ALCHEMY_COMMON|T[357]_ALCHEMY_RARE_[A-Z0-9_]+)$/
 
 function isRoyalSigil(uniqueName: string): boolean {
   return ROYAL_SIGIL_PATTERN.test(uniqueName)
+}
+
+function isAlchemyCraftingIngredient(uniqueName: string): boolean {
+  return ALCHEMY_CRAFTING_INGREDIENT_PATTERN.test(uniqueName)
 }
 
 function isEventOrFactionResource(uniqueName: string): boolean {
@@ -372,7 +378,7 @@ function parseItemNode(
     const tier = node['@_tier'] ? Number(node['@_tier']) : 0
     const shopCategory = node['@_shopcategory']
     const shopSubcategory1 = node['@_shopsubcategory1']
-    const category = isRoyalSigil(id)
+    const category = isRoyalSigil(id) || isAlchemyCraftingIngredient(id)
       ? 'other'
       : mapCategory(tagName, shopCategory, shopSubcategory1)
     if (category === null) return null // Fuera de alcance: gathering, vanity, etc.
@@ -407,7 +413,7 @@ function parseItemNode(
   // Los Sellos Reales se tratan como componentes comprables dentro de
   // esta calculadora. Aunque el juego permita transmutarlos, mantenerlos
   // como hoja evita mezclar ese sistema con el costo de equipo real.
-  const recipe = isRoyalSigil(id)
+  const recipe = isRoyalSigil(id) || isAlchemyCraftingIngredient(id)
     ? null
     : tiers.length > 0
       ? { tiers }
