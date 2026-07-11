@@ -212,7 +212,7 @@ function isEventOrFactionResource(uniqueName: string): boolean {
 function inferStation(shopSubcategory1: string | undefined): string {
   if (!shopSubcategory1) return 'unknown'
   const meleeWeapons = ['sword', 'axe', 'mace', 'hammer', 'dagger', 'spear']
-  const rangedWeapons = ['bow', 'crossbow']
+  const rangedWeapons = ['bow', 'crossbow', 'shapeshifterstaff']
   const magicWeapons = ['arcane_staff', 'fire_staff', 'frost_staff', 'holy_staff', 'nature_staff', 'cursed_staff']
   const plateArmor = ['plate_armor', 'plate_helmet', 'plate_shoes']
   const leatherArmor = ['leather_armor', 'leather_helmet', 'leather_shoes']
@@ -246,7 +246,7 @@ function mapCategory(
     shopCategory: string | undefined,
     shopSubcategory1: string | undefined,
   ): OutputCategory | null {
-    if (tagName === 'weapon') {
+    if (tagName === 'weapon' || tagName === 'transformationweapon') {
       // Solo armas de combate real; gathering/vanity/other/magic quedan fuera.
       return shopCategory === 'weapons' ? 'weapon' : null
     }
@@ -452,7 +452,7 @@ async function main(): Promise<void> {
     const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
     const parsed = parser.parse(xml)
 
-    const relevantTags = ['weapon', 'equipmentitem', 'simpleitem'] as const
+    const relevantTags = ['weapon', 'transformationweapon', 'equipmentitem', 'simpleitem'] as const
     const items: OutputItem[] = []
 
     for (const tagName of relevantTags) {

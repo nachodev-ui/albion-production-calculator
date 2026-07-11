@@ -419,6 +419,16 @@ const WEAPON_FAMILIES = {
     'MAIN_CURSEDSTAFF_AVALON',
     'MAIN_CURSEDSTAFF_CRYSTAL',
   ]),
+  shapeshifter: new Set([
+    '2H_SHAPESHIFTER_SET1',
+    '2H_SHAPESHIFTER_SET2',
+    '2H_SHAPESHIFTER_SET3',
+    '2H_SHAPESHIFTER_MORGANA',
+    '2H_SHAPESHIFTER_HELL',
+    '2H_SHAPESHIFTER_KEEPER',
+    '2H_SHAPESHIFTER_AVALON',
+    '2H_SHAPESHIFTER_CRYSTAL',
+  ]),
 } as const
 
 const WEAPON_LINE_STATION: Readonly<Record<keyof typeof WEAPON_FAMILIES, CraftingStationGroup>> = {
@@ -438,6 +448,7 @@ const WEAPON_LINE_STATION: Readonly<Record<keyof typeof WEAPON_FAMILIES, Craftin
   arcane: 'mage_tower',
   frost: 'mage_tower',
   cursed: 'mage_tower',
+  shapeshifter: 'hunter_lodge',
 }
 
 const WEAPON_BRANCH_ORDER: readonly CraftingBranchId[] = [
@@ -461,6 +472,7 @@ const WEAPON_BRANCH_ORDER: readonly CraftingBranchId[] = [
   'weapon_arcane',
   'weapon_frost',
   'weapon_cursed',
+  'weapon_shapeshifter',
 ]
 
 function createWeaponBranch(
@@ -563,6 +575,11 @@ const WEAPON_BRANCHES: Readonly<Record<CraftingBranchId, BranchDefinition>> = {
     'cursed',
     'Cursed Staff Crafter',
     'Bastones malditos y sus variantes',
+  ),
+  weapon_shapeshifter: createWeaponBranch(
+    'shapeshifter',
+    'Shapeshifter Staff Crafter',
+    'Bastones cambiaformas y sus variantes',
   ),
 }
 
@@ -1190,6 +1207,7 @@ export function getCraftingSpecialtyCategory(
       arcane: 'arcane_staff',
       frost: 'frost_staff',
       cursed: 'cursed_staff',
+      shapeshifter: 'shapeshifter_staff',
     }
 
     return line ? categoryByLine[line] : null
