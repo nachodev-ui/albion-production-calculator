@@ -1,0 +1,65 @@
+name: Apply shapeshifter crafting fix
+
+on:
+  push:
+    branches:
+      - fix/shapeshifter-crafting-catalog
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply catalog, dataset, generator and test changes
+        run: node scripts/apply-shapeshifter-fix.mjs
+
+      - name: Format changed source files
+        run: >-
+          pnpm exec prettier --write
+          scripts/generate-dataset.ts
+          src/features/item-browser/data/craftingBranches.ts
+          src/features/item-browser/data/__tests__/craftingBranches.test.ts
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Commit final fix
+        shell: bash
+        run: |
+          git rm .github/workflows/apply-shapeshifter-fix.yml
+          git rm scripts/apply-shapeshifter-fix.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/generate-dataset.ts
+          git add src/data/datasets/items.json
+          git add src/features/item-browser/data/craftingBranches.ts
+          git add src/features/item-browser/data/__tests__/craftingBranches.test.ts
+          git commit -m "fix: add shapeshifter crafting catalog"
+          git push
