@@ -187939,6 +187939,6383 @@
     "recipe": null
   },
   {
+    "id": "T3_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del obrero",
+    "tier": 3,
+    "category": "weapon",
+    "maxEnchantment": 0,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T3_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T3_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T1_ALCHEMY_COMMON",
+              "enchantment": 0,
+              "quantity": 5
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 980,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_SET1",
+    "name": "Bastón de merodeador del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_PANTHER",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_SET2",
+    "name": "Bastón enraizado del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_SET2",
+    "name": "Bastón enraizado del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_SET2",
+    "name": "Bastón enraizado del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_SET2",
+    "name": "Bastón enraizado del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_SET2",
+    "name": "Bastón enraizado del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ENT",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_SET3",
+    "name": "Bastón primitivo del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_SET3",
+    "name": "Bastón primitivo del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_SET3",
+    "name": "Bastón primitivo del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_SET3",
+    "name": "Bastón primitivo del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_SET3",
+    "name": "Bastón primitivo del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_MORGANA",
+    "name": "Bastón de luna sangrienta del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_MORGANA",
+    "name": "Bastón de luna sangrienta del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_MORGANA",
+    "name": "Bastón de luna sangrienta del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_MORGANA",
+    "name": "Bastón de luna sangrienta del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_MORGANA",
+    "name": "Bastón de luna sangrienta del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_MORGANA",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_HELL",
+    "name": "Bastón de criatura infernal del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_HELL",
+    "name": "Bastón de criatura infernal del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_HELL",
+    "name": "Bastón de criatura infernal del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_HELL",
+    "name": "Bastón de criatura infernal del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_HELL",
+    "name": "Bastón de criatura infernal del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_HELL",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_IMP",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_KEEPER",
+    "name": "Bastón terrúnico del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_KEEPER",
+    "name": "Bastón terrúnico del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_KEEPER",
+    "name": "Bastón terrúnico del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_KEEPER",
+    "name": "Bastón terrúnico del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_KEEPER",
+    "name": "Bastón terrúnico del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_KEEPER",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_AVALON",
+    "name": "Invocador de luz del iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T3_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_AVALON",
+    "name": "Invocador de luz del experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_AVALON",
+    "name": "Invocador de luz del maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T5_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_AVALON",
+    "name": "Invocador de luz del gran maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_AVALON",
+    "name": "Invocador de luz del anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_AVALON",
+              "enchantment": 0,
+              "quantity": 1
+            },
+            {
+              "itemId": "T7_ALCHEMY_RARE_EAGLE",
+              "enchantment": 0,
+              "quantity": 2
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T4_2H_SHAPESHIFTER_CRYSTAL",
+    "name": "Bastón de Mirada Firme del Iniciado",
+    "tier": 4,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 1715,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": {
+            "itemId": "T4_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T4_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T4_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T4_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T4_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T4_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T5_2H_SHAPESHIFTER_CRYSTAL",
+    "name": "Bastón de Mirada Firme del Experto",
+    "tier": 5,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 3001,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": {
+            "itemId": "T5_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T5_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T5_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T5_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T5_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T5_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T6_2H_SHAPESHIFTER_CRYSTAL",
+    "name": "Bastón de Mirada Firme del Maestro",
+    "tier": 6,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 5252,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": {
+            "itemId": "T6_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T6_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T6_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T6_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T6_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T6_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T7_2H_SHAPESHIFTER_CRYSTAL",
+    "name": "Bastón de Mirada Firme del Gran Maestro",
+    "tier": 7,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 9191,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": {
+            "itemId": "T7_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T7_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T7_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T7_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T7_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T7_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "T8_2H_SHAPESHIFTER_CRYSTAL",
+    "name": "Bastón de Mirada Firme del Anciano",
+    "tier": 8,
+    "category": "weapon",
+    "maxEnchantment": 4,
+    "itemValue": null,
+    "recipe": {
+      "tiers": [
+        {
+          "enchantment": 0,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS",
+              "enchantment": 0,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER",
+              "enchantment": 0,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 16085,
+          "upgradeFrom": null
+        },
+        {
+          "enchantment": 1,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL1",
+              "enchantment": 1,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL1",
+              "enchantment": 1,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 28148,
+          "upgradeFrom": {
+            "itemId": "T8_RUNE",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 2,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL2",
+              "enchantment": 2,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL2",
+              "enchantment": 2,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 49260,
+          "upgradeFrom": {
+            "itemId": "T8_SOUL",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 3,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL3",
+              "enchantment": 3,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL3",
+              "enchantment": 3,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 86205,
+          "upgradeFrom": {
+            "itemId": "T8_RELIC",
+            "quantity": 384
+          }
+        },
+        {
+          "enchantment": 4,
+          "station": "hunter_lodge",
+          "ingredients": [
+            {
+              "itemId": "T8_PLANKS_LEVEL4",
+              "enchantment": 4,
+              "quantity": 20
+            },
+            {
+              "itemId": "T8_LEATHER_LEVEL4",
+              "enchantment": 4,
+              "quantity": 12
+            },
+            {
+              "itemId": "T8_ARTEFACT_2H_SHAPESHIFTER_CRYSTAL",
+              "enchantment": 0,
+              "quantity": 1
+            }
+          ],
+          "outputQuantity": 1,
+          "silverFee": 0,
+          "craftingFocus": 150858,
+          "upgradeFrom": null
+        }
+      ]
+    }
+  },
+  {
     "id": "T4_ARTEFACT_OFF_TOWERSHIELD_UNDEAD",
     "name": "Núcleo de escudo antiguo del iniciado",
     "tier": 4,

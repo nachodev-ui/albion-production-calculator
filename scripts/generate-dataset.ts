@@ -6,67 +6,68 @@
  *
  * Uso: pnpm run generate:dataset
  */
-import { writeFileSync, mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
-import { XMLParser } from 'fast-xml-parser'
+import { writeFileSync, mkdirSync } from "node:fs";
+import { dirname } from "node:path";
+import { XMLParser } from "fast-xml-parser";
 
-const ITEMS_XML_URL = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.xml'
+const ITEMS_XML_URL =
+  "https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.xml";
 const ITEMS_LOCALIZATION_URL =
-  'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json'
-const OUTPUT_PATH = './src/data/datasets/items.json'
-const LOCALE = 'ES-ES'
+  "https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json";
+const OUTPUT_PATH = "./src/data/datasets/items.json";
+const LOCALE = "ES-ES";
 
 // ---------------------------------------------------------------------------
 // Tipos del XML crudo (solo los campos que usamos, el XML tiene muchos más)
 // ---------------------------------------------------------------------------
 
 interface RawCraftResource {
-  '@_uniquename': string
-  '@_count': string
-  '@_enchantmentlevel'?: string
+  "@_uniquename": string;
+  "@_count": string;
+  "@_enchantmentlevel"?: string;
 }
 
 interface RawUpgradeResource {
-  '@_uniquename': string
-  '@_count': string
+  "@_uniquename": string;
+  "@_count": string;
 }
 
 interface RawCraftingRequirements {
-  '@_silver'?: string
-  '@_time'?: string
-  '@_craftingfocus'?: string
-  '@_amountcrafted'?: string
-  craftresource?: RawCraftResource | RawCraftResource[]
+  "@_silver"?: string;
+  "@_time"?: string;
+  "@_craftingfocus"?: string;
+  "@_amountcrafted"?: string;
+  craftresource?: RawCraftResource | RawCraftResource[];
 }
 
 interface RawUpgradeRequirements {
-  upgraderesource?: RawUpgradeResource | RawUpgradeResource[]
+  upgraderesource?: RawUpgradeResource | RawUpgradeResource[];
 }
 
 interface RawEnchantment {
-  '@_enchantmentlevel': string
-  craftingrequirements?: RawCraftingRequirements | RawCraftingRequirements[]
-  upgraderequirements?: RawUpgradeRequirements
+  "@_enchantmentlevel": string;
+  craftingrequirements?: RawCraftingRequirements | RawCraftingRequirements[];
+  upgraderequirements?: RawUpgradeRequirements;
 }
 
 interface RawEnchantments {
-  enchantment?: RawEnchantment | RawEnchantment[]
+  enchantment?: RawEnchantment | RawEnchantment[];
 }
 
 interface RawItemNode {
-    '@_uniquename': string
-    '@_tier'?: string
-    '@_itemvalue'?: string
-    '@_craftingcategory'?: string
-    '@_shopcategory'?: string
-    '@_shopsubcategory1'?: string
-    craftingrequirements?: RawCraftingRequirements | RawCraftingRequirements[]
-    enchantments?: RawEnchantments
-  }
+  "@_uniquename": string;
+  "@_tier"?: string;
+  "@_itemvalue"?: string;
+  "@_craftingcategory"?: string;
+  "@_shopcategory"?: string;
+  "@_shopsubcategory1"?: string;
+  craftingrequirements?: RawCraftingRequirements | RawCraftingRequirements[];
+  enchantments?: RawEnchantments;
+}
 
 interface RawLocalizationEntry {
-    UniqueName: string
-    LocalizedNames?: Record<string, string>
+  UniqueName: string;
+  LocalizedNames?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -75,48 +76,48 @@ interface RawLocalizationEntry {
 // ---------------------------------------------------------------------------
 
 type OutputCategory =
-  | 'weapon'
-  | 'armor'
-  | 'offhand'
-  | 'accessory'
-  | 'resource'
-  | 'refined_resource'
-  | 'other'
+  | "weapon"
+  | "armor"
+  | "offhand"
+  | "accessory"
+  | "resource"
+  | "refined_resource"
+  | "other";
 
 interface OutputIngredient {
-  itemId: string
-  enchantment: number
-  quantity: number
+  itemId: string;
+  enchantment: number;
+  quantity: number;
 }
 
 interface OutputUpgradeRequirement {
-  itemId: string
-  quantity: number
+  itemId: string;
+  quantity: number;
 }
 
 interface OutputRecipeOption {
-  ingredients: OutputIngredient[]
-  outputQuantity: number
-  silverFee: number
-  craftingFocus: number
+  ingredients: OutputIngredient[];
+  outputQuantity: number;
+  silverFee: number;
+  craftingFocus: number;
 }
 
 interface OutputRecipeTier extends OutputRecipeOption {
-  enchantment: number
-  station: string
-  alternatives?: OutputRecipeOption[]
-  upgradeFrom: OutputUpgradeRequirement | null
+  enchantment: number;
+  station: string;
+  alternatives?: OutputRecipeOption[];
+  upgradeFrom: OutputUpgradeRequirement | null;
 }
 
 interface OutputItem {
-    id: string
-    name: string
-    tier: number
-    category: OutputCategory
-    maxEnchantment: number
-    itemValue: number | null
-    recipe: { tiers: OutputRecipeTier[] } | null
-  }
+  id: string;
+  name: string;
+  tier: number;
+  category: OutputCategory;
+  maxEnchantment: number;
+  itemValue: number | null;
+  recipe: { tiers: OutputRecipeTier[] } | null;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers de normalización
@@ -124,8 +125,8 @@ interface OutputItem {
 
 /** Las propiedades del XML pueden venir como objeto único o array; normalizamos a array. */
 function toArray<T>(value: T | T[] | undefined): T[] {
-  if (value === undefined) return []
-  return Array.isArray(value) ? value : [value]
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 /**
@@ -133,21 +134,24 @@ function toArray<T>(value: T | T[] | undefined): T[] {
  * dataset de localización. Si un ítem no tiene nombre en el locale
  * pedido, se usa EN-US como respaldo, y si tampoco existe, el propio id.
  */
-function buildLocalizationMap(entries: RawLocalizationEntry[]): Map<string, string> {
-    const map = new Map<string, string>()
-    for (const entry of entries) {
-      const name = entry.LocalizedNames?.[LOCALE] ?? entry.LocalizedNames?.['EN-US']
-      if (name) map.set(entry.UniqueName, name)
-    }
-    return map
+function buildLocalizationMap(
+  entries: RawLocalizationEntry[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const entry of entries) {
+    const name =
+      entry.LocalizedNames?.[LOCALE] ?? entry.LocalizedNames?.["EN-US"];
+    if (name) map.set(entry.UniqueName, name);
   }
+  return map;
+}
 
 /**
  * Detecta ítems de debug/desarrollo que no son contenido real del
  * juego (ej. T4_DEBUG_ARMOR_HIDDEN) y no deben aparecer en el dataset.
  */
 function isDebugItem(uniqueName: string): boolean {
-  return uniqueName.includes('_DEBUG_')
+  return uniqueName.includes("_DEBUG_");
 }
 
 /**
@@ -167,41 +171,44 @@ function isDebugItem(uniqueName: string): boolean {
  * @see verificado contra ao-bin-dumps/formatted/items.json: existe
  * "T8_PLANKS" pero no "T8_PLANKS_LEVEL1..4".
  */
-const RESOURCE_LEVEL_SUFFIX = /^(.+)_LEVEL([1-4])$/
+const RESOURCE_LEVEL_SUFFIX = /^(.+)_LEVEL([1-4])$/;
 
-function resolveItemName(id: string, localizationMap: Map<string, string>): string {
-  const directMatch = localizationMap.get(id)
-  if (directMatch) return directMatch
+function resolveItemName(
+  id: string,
+  localizationMap: Map<string, string>,
+): string {
+  const directMatch = localizationMap.get(id);
+  if (directMatch) return directMatch;
 
-  const levelMatch = RESOURCE_LEVEL_SUFFIX.exec(id)
+  const levelMatch = RESOURCE_LEVEL_SUFFIX.exec(id);
   if (levelMatch) {
-    const [, baseId] = levelMatch
-    const baseName = localizationMap.get(baseId as string)
-    if (baseName) return baseName
+    const [, baseId] = levelMatch;
+    const baseName = localizationMap.get(baseId as string);
+    if (baseName) return baseName;
   }
 
-  return id
+  return id;
 }
 
 /**
  * Heurística para detectar recursos de "evento"/facción que no deben
  * formar parte de la receta estándar (ej. T1_FACTION_MOUNTAIN_TOKEN_1).
  */
-const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/
+const ROYAL_SIGIL_PATTERN = /^QUESTITEM_TOKEN_ROYAL_T[4-8]$/;
 
 function isRoyalSigil(uniqueName: string): boolean {
-  return ROYAL_SIGIL_PATTERN.test(uniqueName)
+  return ROYAL_SIGIL_PATTERN.test(uniqueName);
 }
 
 function isEventOrFactionResource(uniqueName: string): boolean {
-  if (isRoyalSigil(uniqueName)) return false
+  if (isRoyalSigil(uniqueName)) return false;
 
   return (
-    uniqueName.includes('FACTION_') ||
-    uniqueName.includes('TOKEN') ||
-    uniqueName.includes('EVENT_') ||
-    uniqueName.includes('CRYSTAL_LEAGUE')
-  )
+    uniqueName.includes("FACTION_") ||
+    uniqueName.includes("TOKEN") ||
+    uniqueName.includes("EVENT_") ||
+    uniqueName.includes("CRYSTAL_LEAGUE")
+  );
 }
 
 /**
@@ -209,28 +216,67 @@ function isEventOrFactionResource(uniqueName: string): boolean {
  * craftingcategory. Mapeo aproximado basado en las categorías reales
  * del juego — se amplía a medida que aparecen casos no contemplados.
  */
-function inferStation(shopSubcategory1: string | undefined): string {
-  if (!shopSubcategory1) return 'unknown'
-  const meleeWeapons = ['sword', 'axe', 'mace', 'hammer', 'dagger', 'spear']
-  const rangedWeapons = ['bow', 'crossbow']
-  const magicWeapons = ['arcane_staff', 'fire_staff', 'frost_staff', 'holy_staff', 'nature_staff', 'cursed_staff']
-  const plateArmor = ['plate_armor', 'plate_helmet', 'plate_shoes']
-  const leatherArmor = ['leather_armor', 'leather_helmet', 'leather_shoes']
-  const clothArmor = ['cloth_armor', 'cloth_helmet', 'cloth_shoes']
+function inferStation(
+  shopSubcategory1: string | undefined,
+  craftingCategory: string | undefined,
+): string {
+  const normalizedShopSubcategory = shopSubcategory1?.toLowerCase() ?? "";
+  const normalizedCraftingCategory = craftingCategory?.toLowerCase() ?? "";
 
-  if (meleeWeapons.includes(shopSubcategory1) || plateArmor.includes(shopSubcategory1)) {
-    return 'warrior_forge'
+  // Albion modela esta línea como <transformationweapon> y usa
+  // shapeshifterstaff tanto en shopsubcategory1 como en craftingcategory.
+  if (
+    normalizedShopSubcategory === "shapeshifterstaff" ||
+    normalizedCraftingCategory === "shapeshifterstaff"
+  ) {
+    return "hunter_lodge";
   }
-  if (rangedWeapons.includes(shopSubcategory1) || leatherArmor.includes(shopSubcategory1)) {
-    return 'hunter_lodge'
+
+  if (normalizedCraftingCategory.includes("warrior")) return "warrior_forge";
+  if (normalizedCraftingCategory.includes("hunter")) return "hunter_lodge";
+  if (normalizedCraftingCategory.includes("mage")) return "mage_tower";
+  if (normalizedCraftingCategory.includes("toolmaker")) return "toolmaker";
+  if (normalizedCraftingCategory.includes("refin")) return "refining";
+
+  if (!shopSubcategory1) return "unknown";
+  const meleeWeapons = ["sword", "axe", "mace", "hammer", "dagger", "spear"];
+  const hunterWeapons = ["bow", "crossbow", "nature_staff"];
+  const magicWeapons = [
+    "arcane_staff",
+    "fire_staff",
+    "frost_staff",
+    "holy_staff",
+    "cursed_staff",
+  ];
+  const plateArmor = ["plate_armor", "plate_helmet", "plate_shoes"];
+  const leatherArmor = ["leather_armor", "leather_helmet", "leather_shoes"];
+  const clothArmor = ["cloth_armor", "cloth_helmet", "cloth_shoes"];
+
+  if (
+    meleeWeapons.includes(shopSubcategory1) ||
+    plateArmor.includes(shopSubcategory1)
+  ) {
+    return "warrior_forge";
   }
-  if (magicWeapons.includes(shopSubcategory1) || clothArmor.includes(shopSubcategory1)) {
-    return 'mage_tower'
+  if (
+    hunterWeapons.includes(shopSubcategory1) ||
+    leatherArmor.includes(shopSubcategory1)
+  ) {
+    return "hunter_lodge";
   }
-  if (shopSubcategory1.includes('refinedresources') || shopSubcategory1.includes('resources')) {
-    return 'refining'
+  if (
+    magicWeapons.includes(shopSubcategory1) ||
+    clothArmor.includes(shopSubcategory1)
+  ) {
+    return "mage_tower";
   }
-  return 'toolmaker'
+  if (
+    shopSubcategory1.includes("refinedresources") ||
+    shopSubcategory1.includes("resources")
+  ) {
+    return "refining";
+  }
+  return "toolmaker";
 }
 
 /**
@@ -242,84 +288,90 @@ function inferStation(shopSubcategory1: string | undefined): string {
  * NO en heurísticas sobre el nombre de `shopsubcategory1`.
  */
 function mapCategory(
-    tagName: string,
-    shopCategory: string | undefined,
-    shopSubcategory1: string | undefined,
-  ): OutputCategory | null {
-    if (tagName === 'weapon') {
-      // Solo armas de combate real; gathering/vanity/other/magic quedan fuera.
-      return shopCategory === 'weapons' ? 'weapon' : null
-    }
-
-    if (tagName === 'equipmentitem') {
-      if (shopCategory === 'armors' || shopCategory === 'head' || shopCategory === 'shoes') {
-        return 'armor'
-      }
-      if (shopCategory === 'offhands') return 'offhand'
-      if (shopCategory === 'capes' || shopCategory === 'bags') return 'accessory'
-      // gathering, vanity, y cualquier otro shopcategory no contemplado: fuera de alcance.
-      return null
-    }
-
-    if (tagName === 'simpleitem') {
-      if (shopSubcategory1 === 'refinedresources') return 'refined_resource'
-      if (shopSubcategory1 === 'resources') return 'resource'
-
-      // Artefactos de facción (materiales de calabozo para equipo T4-T8)
-      // y blueprints de capa (obtenidos por reputación): el juego los
-      // modela como <simpleitem shopcategory="artefacts">, distinto del
-      // equipo real que craftean, pero SÍ son ítems propios resolubles
-      // (con nombre e ícono), no deberían descartarse del dataset.
-      //
-      // @see investigación del caso T5_ARTEFACT_MAIN_CURSEDSTAFF_CRYSTAL:
-      // existía en items.xml con nombre localizado completo, pero
-      // mapCategory lo descartaba por no contemplar shopcategory="artefacts"
-      // en absoluto — afectaba a las 860 entradas de esa categoría.
-      if (shopCategory === 'artefacts') {
-        if (shopSubcategory1 === 'weapons') return 'weapon'
-        if (shopSubcategory1 === 'offhands') return 'offhand'
-        if (
-          shopSubcategory1 === 'armors' ||
-          shopSubcategory1 === 'head' ||
-          shopSubcategory1 === 'shoes'
-        ) {
-          return 'armor'
-        }
-        if (shopSubcategory1 === 'capes') return 'accessory'
-        // favor (tokens de favor de facción) y fragments (Runa/Alma/
-        // Reliquia, ya referenciados aparte vía upgradeFrom): no son
-        // equipo, quedan como categoría genérica.
-        return 'other'
-      }
-
-      return null
-    }
-
-    return null
+  tagName: string,
+  shopCategory: string | undefined,
+  shopSubcategory1: string | undefined,
+): OutputCategory | null {
+  if (tagName === "weapon" || tagName === "transformationweapon") {
+    // Solo armas de combate real; gathering/vanity/other/magic quedan fuera.
+    return shopCategory === "weapons" ? "weapon" : null;
   }
+
+  if (tagName === "equipmentitem") {
+    if (
+      shopCategory === "armors" ||
+      shopCategory === "head" ||
+      shopCategory === "shoes"
+    ) {
+      return "armor";
+    }
+    if (shopCategory === "offhands") return "offhand";
+    if (shopCategory === "capes" || shopCategory === "bags") return "accessory";
+    // gathering, vanity, y cualquier otro shopcategory no contemplado: fuera de alcance.
+    return null;
+  }
+
+  if (tagName === "simpleitem") {
+    if (shopSubcategory1 === "refinedresources") return "refined_resource";
+    if (shopSubcategory1 === "resources") return "resource";
+
+    // Artefactos de facción (materiales de calabozo para equipo T4-T8)
+    // y blueprints de capa (obtenidos por reputación): el juego los
+    // modela como <simpleitem shopcategory="artefacts">, distinto del
+    // equipo real que craftean, pero SÍ son ítems propios resolubles
+    // (con nombre e ícono), no deberían descartarse del dataset.
+    //
+    // @see investigación del caso T5_ARTEFACT_MAIN_CURSEDSTAFF_CRYSTAL:
+    // existía en items.xml con nombre localizado completo, pero
+    // mapCategory lo descartaba por no contemplar shopcategory="artefacts"
+    // en absoluto — afectaba a las 860 entradas de esa categoría.
+    if (shopCategory === "artefacts") {
+      if (shopSubcategory1 === "weapons") return "weapon";
+      if (shopSubcategory1 === "offhands") return "offhand";
+      if (
+        shopSubcategory1 === "armors" ||
+        shopSubcategory1 === "head" ||
+        shopSubcategory1 === "shoes"
+      ) {
+        return "armor";
+      }
+      if (shopSubcategory1 === "capes") return "accessory";
+      // favor (tokens de favor de facción) y fragments (Runa/Alma/
+      // Reliquia, ya referenciados aparte vía upgradeFrom): no son
+      // equipo, quedan como categoría genérica.
+      return "other";
+    }
+
+    return null;
+  }
+
+  return null;
+}
 
 // ---------------------------------------------------------------------------
 // Parseo de un bloque <craftingrequirements> a OutputRecipeTier (sin upgrade)
 // ---------------------------------------------------------------------------
 
 function parseIngredients(req: RawCraftingRequirements): OutputIngredient[] {
-  const resources = toArray(req.craftresource)
+  const resources = toArray(req.craftresource);
   return resources
-    .filter((r) => !isEventOrFactionResource(r['@_uniquename']))
+    .filter((r) => !isEventOrFactionResource(r["@_uniquename"]))
     .map((r) => ({
-      itemId: r['@_uniquename'],
-      enchantment: r['@_enchantmentlevel'] ? Number(r['@_enchantmentlevel']) : 0,
-      quantity: Number(r['@_count']),
-    }))
+      itemId: r["@_uniquename"],
+      enchantment: r["@_enchantmentlevel"]
+        ? Number(r["@_enchantmentlevel"])
+        : 0,
+      quantity: Number(r["@_count"]),
+    }));
 }
 
 function parseRecipeOption(req: RawCraftingRequirements): OutputRecipeOption {
   return {
     ingredients: parseIngredients(req),
-    outputQuantity: req['@_amountcrafted'] ? Number(req['@_amountcrafted']) : 1,
-    silverFee: req['@_silver'] ? Number(req['@_silver']) : 0,
-    craftingFocus: req['@_craftingfocus'] ? Number(req['@_craftingfocus']) : 0,
-  }
+    outputQuantity: req["@_amountcrafted"] ? Number(req["@_amountcrafted"]) : 1,
+    silverFee: req["@_silver"] ? Number(req["@_silver"]) : 0,
+    craftingFocus: req["@_craftingfocus"] ? Number(req["@_craftingfocus"]) : 0,
+  };
 }
 
 function buildRecipeTier(
@@ -328,9 +380,9 @@ function buildRecipeTier(
   requirements: readonly RawCraftingRequirements[],
   upgradeFrom: OutputUpgradeRequirement | null,
 ): OutputRecipeTier | null {
-  const options = requirements.map(parseRecipeOption)
-  const primary = options[0]
-  if (!primary) return null
+  const options = requirements.map(parseRecipeOption);
+  const primary = options[0];
+  if (!primary) return null;
 
   return {
     enchantment,
@@ -338,18 +390,20 @@ function buildRecipeTier(
     ...primary,
     alternatives: options.length > 1 ? options.slice(1) : undefined,
     upgradeFrom,
-  }
+  };
 }
 
-function parseUpgradeFrom(upgradeReq: RawUpgradeRequirements | undefined): OutputUpgradeRequirement | null {
-  if (!upgradeReq) return null
-  const resources = toArray(upgradeReq.upgraderesource)
-  const first = resources[0]
-  if (!first) return null
+function parseUpgradeFrom(
+  upgradeReq: RawUpgradeRequirements | undefined,
+): OutputUpgradeRequirement | null {
+  if (!upgradeReq) return null;
+  const resources = toArray(upgradeReq.upgraderesource);
+  const first = resources[0];
+  if (!first) return null;
   return {
-    itemId: first['@_uniquename'],
-    quantity: Number(first['@_count']),
-  }
+    itemId: first["@_uniquename"],
+    quantity: Number(first["@_count"]),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -357,48 +411,48 @@ function parseUpgradeFrom(upgradeReq: RawUpgradeRequirements | undefined): Outpu
 // ---------------------------------------------------------------------------
 
 function parseItemNode(
-    tagName: string,
-    node: RawItemNode,
-    localizationMap: Map<string, string>,
-  ): OutputItem | null {
-    const id = node['@_uniquename']
-    // Excluir variantes @1-@4 explícitas si existieran como nodos propios
-    // (no debería pasar según lo investigado, pero por seguridad las saltamos).
-    if (id.includes('@')) return null
-    // Excluir ítems de debug/desarrollo (ej. T4_DEBUG_ARMOR_HIDDEN): no son
-    // contenido real, y su nombre localizado tampoco existe.
-    if (isDebugItem(id)) return null
+  tagName: string,
+  node: RawItemNode,
+  localizationMap: Map<string, string>,
+): OutputItem | null {
+  const id = node["@_uniquename"];
+  // Excluir variantes @1-@4 explícitas si existieran como nodos propios
+  // (no debería pasar según lo investigado, pero por seguridad las saltamos).
+  if (id.includes("@")) return null;
+  // Excluir ítems de debug/desarrollo (ej. T4_DEBUG_ARMOR_HIDDEN): no son
+  // contenido real, y su nombre localizado tampoco existe.
+  if (isDebugItem(id)) return null;
 
-    const tier = node['@_tier'] ? Number(node['@_tier']) : 0
-    const shopCategory = node['@_shopcategory']
-    const shopSubcategory1 = node['@_shopsubcategory1']
-    const category = isRoyalSigil(id)
-      ? 'other'
-      : mapCategory(tagName, shopCategory, shopSubcategory1)
-    if (category === null) return null // Fuera de alcance: gathering, vanity, etc.
+  const tier = node["@_tier"] ? Number(node["@_tier"]) : 0;
+  const shopCategory = node["@_shopcategory"];
+  const shopSubcategory1 = node["@_shopsubcategory1"];
+  const category = isRoyalSigil(id)
+    ? "other"
+    : mapCategory(tagName, shopCategory, shopSubcategory1);
+  if (category === null) return null; // Fuera de alcance: gathering, vanity, etc.
 
-    const station = inferStation(shopSubcategory1)
+  const station = inferStation(shopSubcategory1, node["@_craftingcategory"]);
 
-  const tiers: OutputRecipeTier[] = []
+  const tiers: OutputRecipeTier[] = [];
   const baseTier = buildRecipeTier(
     0,
     station,
     toArray(node.craftingrequirements),
     null,
-  )
+  );
 
-  if (baseTier) tiers.push(baseTier)
+  if (baseTier) tiers.push(baseTier);
 
-  const enchantmentNodes = toArray(node.enchantments?.enchantment)
+  const enchantmentNodes = toArray(node.enchantments?.enchantment);
   for (const ench of enchantmentNodes) {
     const enchantmentTier = buildRecipeTier(
-      Number(ench['@_enchantmentlevel']),
+      Number(ench["@_enchantmentlevel"]),
       station,
       toArray(ench.craftingrequirements),
       parseUpgradeFrom(ench.upgraderequirements),
-    )
+    );
 
-    if (enchantmentTier) tiers.push(enchantmentTier)
+    if (enchantmentTier) tiers.push(enchantmentTier);
   }
 
   // Ítems sin ninguna receta (recursos crudos farmeables, ej. T4_ORE) son
@@ -407,12 +461,9 @@ function parseItemNode(
   // Los Sellos Reales se tratan como componentes comprables dentro de
   // esta calculadora. Aunque el juego permita transmutarlos, mantenerlos
   // como hoja evita mezclar ese sistema con el costo de equipo real.
-  const recipe = isRoyalSigil(id)
-    ? null
-    : tiers.length > 0
-      ? { tiers }
-      : null
-  const maxEnchantment = tiers.length > 0 ? Math.max(...tiers.map((t) => t.enchantment)) : 0
+  const recipe = isRoyalSigil(id) ? null : tiers.length > 0 ? { tiers } : null;
+  const maxEnchantment =
+    tiers.length > 0 ? Math.max(...tiers.map((t) => t.enchantment)) : 0;
 
   return {
     id,
@@ -420,9 +471,9 @@ function parseItemNode(
     tier,
     category,
     maxEnchantment,
-    itemValue: node['@_itemvalue'] ? Number(node['@_itemvalue']) : null,
+    itemValue: node["@_itemvalue"] ? Number(node["@_itemvalue"]) : null,
     recipe,
-  }
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -430,49 +481,62 @@ function parseItemNode(
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-    console.log('Descargando items.xml desde ao-data/ao-bin-dumps...')
-    const xmlResponse = await fetch(ITEMS_XML_URL)
-    if (!xmlResponse.ok) {
-      throw new Error(`No se pudo descargar items.xml: ${xmlResponse.status} ${xmlResponse.statusText}`)
+  console.log("Descargando items.xml desde ao-data/ao-bin-dumps...");
+  const xmlResponse = await fetch(ITEMS_XML_URL);
+  if (!xmlResponse.ok) {
+    throw new Error(
+      `No se pudo descargar items.xml: ${xmlResponse.status} ${xmlResponse.statusText}`,
+    );
+  }
+  const xml = await xmlResponse.text();
+  console.log(
+    `Descargado (${(xml.length / 1024 / 1024).toFixed(1)} MB). Parseando...`,
+  );
+
+  console.log("Descargando nombres localizados (items.json)...");
+  const localizationResponse = await fetch(ITEMS_LOCALIZATION_URL);
+  if (!localizationResponse.ok) {
+    throw new Error(
+      `No se pudo descargar items.json: ${localizationResponse.status} ${localizationResponse.statusText}`,
+    );
+  }
+  const localizationEntries: RawLocalizationEntry[] =
+    await localizationResponse.json();
+  const localizationMap = buildLocalizationMap(localizationEntries);
+  console.log(`Mapa de nombres construido (${localizationMap.size} entradas).`);
+
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: "@_",
+  });
+  const parsed = parser.parse(xml);
+
+  const relevantTags = [
+    "weapon",
+    "transformationweapon",
+    "equipmentitem",
+    "simpleitem",
+  ] as const;
+  const items: OutputItem[] = [];
+
+  for (const tagName of relevantTags) {
+    const nodes = toArray<RawItemNode>(parsed.items[tagName]);
+    console.log(`Procesando ${nodes.length} nodos <${tagName}>...`);
+    for (const node of nodes) {
+      const item = parseItemNode(tagName, node, localizationMap);
+      if (item) items.push(item);
     }
-    const xml = await xmlResponse.text()
-    console.log(`Descargado (${(xml.length / 1024 / 1024).toFixed(1)} MB). Parseando...`)
-
-    console.log('Descargando nombres localizados (items.json)...')
-    const localizationResponse = await fetch(ITEMS_LOCALIZATION_URL)
-    if (!localizationResponse.ok) {
-      throw new Error(
-        `No se pudo descargar items.json: ${localizationResponse.status} ${localizationResponse.statusText}`,
-      )
-    }
-    const localizationEntries: RawLocalizationEntry[] = await localizationResponse.json()
-    const localizationMap = buildLocalizationMap(localizationEntries)
-    console.log(`Mapa de nombres construido (${localizationMap.size} entradas).`)
-
-    const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_' })
-    const parsed = parser.parse(xml)
-
-    const relevantTags = ['weapon', 'equipmentitem', 'simpleitem'] as const
-    const items: OutputItem[] = []
-
-    for (const tagName of relevantTags) {
-      const nodes = toArray<RawItemNode>(parsed.items[tagName])
-      console.log(`Procesando ${nodes.length} nodos <${tagName}>...`)
-      for (const node of nodes) {
-        const item = parseItemNode(tagName, node, localizationMap)
-        if (item) items.push(item)
-      }
-    }
+  }
 
   // Filtrar a las categorías en alcance: weapon, armor, accessory, resource, refined_resource
-  console.log(`Total de ítems en alcance: ${items.length}`)
+  console.log(`Total de ítems en alcance: ${items.length}`);
 
-  mkdirSync(dirname(OUTPUT_PATH), { recursive: true })
-  writeFileSync(OUTPUT_PATH, JSON.stringify(items, null, 2), 'utf-8')
-  console.log(`Dataset escrito en ${OUTPUT_PATH}`)
+  mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
+  writeFileSync(OUTPUT_PATH, JSON.stringify(items, null, 2), "utf-8");
+  console.log(`Dataset escrito en ${OUTPUT_PATH}`);
 }
 
 main().catch((error) => {
-  console.error('Error generando el dataset:', error)
-  process.exit(1)
-})
+  console.error("Error generando el dataset:", error);
+  process.exit(1);
+});
