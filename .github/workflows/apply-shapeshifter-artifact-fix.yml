@@ -43,8 +43,11 @@ jobs:
       - name: Apply generator change
         run: node scripts/apply-shapeshifter-artifact-fix.mjs apply
 
-      - name: Regenerate dataset
+      - name: Regenerate source dataset
         run: pnpm generate:dataset
+
+      - name: Isolate required additions
+        run: node scripts/apply-shapeshifter-artifact-fix.mjs isolate
 
       - name: Verify focused dataset change
         run: node scripts/apply-shapeshifter-artifact-fix.mjs verify
@@ -65,22 +68,7 @@ jobs:
         run: pnpm build
 
       - name: Check bundle budget
-        id: bundle_budget
-        continue-on-error: true
         run: pnpm exec tsx scripts/check-bundle-budget.ts --write-report
-
-      - name: Upload bundle report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: shapeshifter-artifact-bundle-report
-          path: artifacts/performance/bundle-report.json
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Enforce bundle budget
-        if: steps.bundle_budget.outcome == 'failure'
-        run: exit 1
 
       - name: Build documentation
         run: pnpm docs:build
