@@ -413,7 +413,7 @@ function parseItemNode(
   // Los Sellos Reales se tratan como componentes comprables dentro de
   // esta calculadora. Aunque el juego permita transmutarlos, mantenerlos
   // como hoja evita mezclar ese sistema con el costo de equipo real.
-  const recipe = isRoyalSigil(id)
+  const recipe = isRoyalSigil(id) || isAlchemyCraftingIngredient(id)
     ? null
     : tiers.length > 0
       ? { tiers }

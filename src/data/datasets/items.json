@@ -204036,25 +204036,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_PANTHER",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_PANTHER",
@@ -204063,25 +204045,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_PANTHER",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_PANTHER",
@@ -204099,25 +204063,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_ENT",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_ENT",
@@ -204126,25 +204072,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_ENT",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_ENT",
@@ -204162,25 +204090,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_DIREBEAR",
@@ -204189,25 +204099,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_DIREBEAR",
@@ -204225,25 +204117,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_WEREWOLF",
@@ -204252,25 +204126,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_WEREWOLF",
@@ -204288,25 +204144,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_IMP",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_IMP",
@@ -204315,25 +204153,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_IMP",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_IMP",
@@ -204351,25 +204171,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_ELEMENTAL",
@@ -204378,25 +204180,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_ELEMENTAL",
@@ -204414,25 +204198,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T5_ALCHEMY_RARE_EAGLE",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T5_ALCHEMY_RARE_EAGLE",
@@ -204441,25 +204207,7 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T7_ALCHEMY_RARE_EAGLE",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 2,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   },
   {
     "id": "T7_ALCHEMY_RARE_EAGLE",
@@ -204477,266 +204225,6 @@
     "category": "other",
     "maxEnchantment": 0,
     "itemValue": null,
-    "recipe": {
-      "tiers": [
-        {
-          "enchantment": 0,
-          "station": "toolmaker",
-          "ingredients": [
-            {
-              "itemId": "T3_ALCHEMY_RARE_PANTHER",
-              "enchantment": 0,
-              "quantity": 1
-            }
-          ],
-          "outputQuantity": 5,
-          "silverFee": 0,
-          "craftingFocus": 0,
-          "alternatives": [
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_PANTHER",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_PANTHER",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_ENT",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_ENT",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_ENT",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_DIREBEAR",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_DIREBEAR",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_DIREBEAR",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_WEREWOLF",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_WEREWOLF",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_WEREWOLF",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_IMP",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_IMP",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_IMP",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_ELEMENTAL",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_ELEMENTAL",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_ELEMENTAL",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T3_ALCHEMY_RARE_EAGLE",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 5,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T5_ALCHEMY_RARE_EAGLE",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 10,
-              "silverFee": 0,
-              "craftingFocus": 0
-            },
-            {
-              "ingredients": [
-                {
-                  "itemId": "T7_ALCHEMY_RARE_EAGLE",
-                  "enchantment": 0,
-                  "quantity": 1
-                }
-              ],
-              "outputQuantity": 25,
-              "silverFee": 0,
-              "craftingFocus": 0
-            }
-          ],
-          "upgradeFrom": null
-        }
-      ]
-    }
+    "recipe": null
   }
 ]
