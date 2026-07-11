@@ -58,7 +58,8 @@ jobs:
         run: |
           mkdir -p artifacts
           set -o pipefail
-          node scripts/apply-shapeshifter-fix.mjs 2>&1 | tee artifacts/shapeshifter-apply.log
+          node scripts/inspect-shapeshifters.mjs 2>&1 | tee artifacts/shapeshifter-apply.log
+          node scripts/apply-shapeshifter-fix.mjs 2>&1 | tee -a artifacts/shapeshifter-apply.log
 
       - name: Upload shapeshifter apply log
         if: always() && github.event_name == 'pull_request' && github.head_ref == 'fix/shapeshifter-crafting-catalog'
@@ -128,6 +129,7 @@ jobs:
         run: |
           git rm .github/workflows/apply-shapeshifter-fix.yml
           git rm scripts/apply-shapeshifter-fix.mjs
+          git rm scripts/inspect-shapeshifters.mjs
           git show origin/develop:.github/workflows/ci.yml > .github/workflows/ci.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
