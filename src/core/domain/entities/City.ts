@@ -19,10 +19,7 @@ export interface City {
   readonly name: string
 }
 
-/**
- * Ciudades e isla usadas por selectores existentes. Hideout se añade solo en
- * configuración de producción para evitar tratarlo como mercado consultable.
- */
+/** Ciudades e isla usadas por los selectores de mercado existentes. */
 export const CITIES: readonly City[] = [
   { id: 'martlock', name: 'Martlock' },
   { id: 'bridgewatch', name: 'Bridgewatch' },
@@ -32,6 +29,15 @@ export const CITIES: readonly City[] = [
   { id: 'caerleon', name: 'Caerleon' },
   { id: 'brecilien', name: 'Brecilien' },
   { id: 'island', name: 'Isla personal/de gremio' },
+]
+
+/**
+ * Opciones válidas para producir. El Hideout no se incorpora a `CITIES` para
+ * impedir que clientes de mercado intenten consultarlo como una ciudad.
+ */
+export const PRODUCTION_LOCATIONS: readonly City[] = [
+  ...CITIES,
+  { id: 'hideout', name: 'Hideout (HO)' },
 ]
 
 /** Bono base de Producción Local de cualquier ciudad real. */
