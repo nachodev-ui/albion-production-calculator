@@ -23,7 +23,6 @@ describe('Hideout zone quality', () => {
 
     expect(
       calculateReturnRate({
-        cityId: 'hideout',
         isIsland: false,
         isHideout: true,
         hideoutPowerLevel: 7,
