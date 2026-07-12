@@ -21,6 +21,14 @@ function formatNumber(amount: number, maximumFractionDigits = 0): string {
   }).format(amount)
 }
 
+function formatPercent(value: number): string {
+  return new Intl.NumberFormat('es-CL', {
+    style: 'percent',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 export function CraftingSpecializationPanel({
   config,
   breakdown,
@@ -39,7 +47,7 @@ export function CraftingSpecializationPanel({
 
         <InfoHint
           label="Passive Bonus del Destiny Board"
-          text="Ingresa el total de Bonus to Focus Cost Efficiency mostrado para el objeto. Cada 10.000 puntos reducen a la mitad el costo de foco. Increase in Quality se guarda como referencia, pero todavía no modifica el precio esperado."
+          text="Ingresa el total de Bonus to Focus Cost Efficiency mostrado para el objeto. Cada 10.000 puntos reducen a la mitad el costo de foco. Si el HO está especializado, su bono se combina automáticamente. Increase in Quality se guarda como referencia, pero todavía no modifica el precio esperado."
           align="left"
         />
       </div>
@@ -94,6 +102,26 @@ export function CraftingSpecializationPanel({
         </label>
       </div>
 
+      {breakdown.hideoutSpecialistBonus > 0 && (
+        <div className="mt-3 rounded-md border border-accent-border bg-accent-muted/40 p-3 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="font-medium text-accent">
+              Especialización del Hideout activa
+            </span>
+            <span className="font-mono text-accent">
+              +{formatPercent(breakdown.hideoutSpecialistBonus)}
+            </span>
+          </div>
+          <p className="mt-1 leading-relaxed text-text-faint">
+            Foco antes del HO: {formatNumber(
+              breakdown.baseEffectiveFocusPerCraft,
+            )} por tirada. Ahorro del HO: {formatNumber(
+              breakdown.focusSavedByHideoutPerCraft,
+            )} por tirada.
+          </p>
+        </div>
+      )}
+
       <div className="mt-3 grid gap-2 border-t border-border pt-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-md border border-border bg-surface p-2.5">
           <span className="text-text-faint">Foco base / tirada</span>
@@ -109,9 +137,11 @@ export function CraftingSpecializationPanel({
         </div>
         <div className="rounded-md border border-border bg-surface p-2.5">
           <span className="text-text-faint">Foco para este lote</span>
-          <p className={`mt-1 font-medium tabular ${
-            breakdown.useFocus ? 'text-accent' : 'text-text-faint'
-          }`}>
+          <p
+            className={`mt-1 font-medium tabular ${
+              breakdown.useFocus ? 'text-accent' : 'text-text-faint'
+            }`}
+          >
             {breakdown.useFocus
               ? formatNumber(breakdown.totalFocusRequired)
               : 'Foco desactivado'}

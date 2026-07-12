@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import type { BaseItemId } from '@core/domain/entities/Item'
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
+import {
+  DEFAULT_HIDEOUT_POWER_LEVEL,
+  getHideoutPowerProfile,
+} from '@core/domain/entities/Hideout'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import type { CraftTreeConfig } from '@core/usecases/calculateCraftCost'
 import { calculateCraftCost } from '@core/usecases/calculateCraftCost'
@@ -41,6 +45,18 @@ export function useCraftCalculation(
   )
 
   return useMemo(() => {
+    const hideoutProfile = getHideoutPowerProfile(
+      productionConfig.hideoutPowerLevel ?? DEFAULT_HIDEOUT_POWER_LEVEL,
+    )
+    const hideoutSpecialistBonus =
+      productionConfig.isHideout === true &&
+      productionConfig.hideoutSpecialized === true
+        ? hideoutProfile.specialistCraftingBonus
+        : 0
+    const effectiveSpecializationConfig = {
+      ...craftingSpecializationConfig,
+      hideoutSpecialistBonus,
+    }
     const config: CraftTreeConfig = {
       expandedPaths,
       manualPrices,
@@ -48,7 +64,7 @@ export function useCraftCalculation(
       productionConfig,
       selectedRecipeOptions,
       stationFeeConfig,
-      craftingSpecializationConfig,
+      craftingSpecializationConfig: effectiveSpecializationConfig,
       itemValueOverride,
       stationUsageFeeOverride,
     }
