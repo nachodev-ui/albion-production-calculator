@@ -1,7 +1,7 @@
 import {
-  CITIES,
   HIDEOUT_POWER_LEVELS,
   HIDEOUT_ZONE_QUALITIES,
+  PRODUCTION_LOCATIONS,
   calculateReturnRate,
   getHideoutBaseReturnRate,
   returnRateToProductionBonus,
@@ -163,7 +163,7 @@ export function ProductionConfigCard({
             onChange={(event) => handleCityChange(event.target.value as CityId)}
             className="min-w-48 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
-            {CITIES.map((city) => (
+            {PRODUCTION_LOCATIONS.map((city) => (
               <option key={city.id} value={city.id}>
                 {city.name}
                 {recommendation?.cityId === city.id ? ' · Recomendada' : ''}
@@ -200,7 +200,11 @@ export function ProductionConfigCard({
                 : 'border-border bg-surface text-text-faint'
             }`}
           >
-            {isHideout ? 'Configurable' : isRecommendedCity ? 'Activo' : 'No aplica'}
+            {isHideout
+              ? 'Configurable'
+              : isRecommendedCity
+                ? 'Activo'
+                : 'No aplica'}
           </span>
         </div>
 
@@ -246,7 +250,9 @@ export function ProductionConfigCard({
                 value={hideoutZoneQuality}
                 onChange={(event) =>
                   update({
-                    hideoutZoneQuality: Number(event.target.value) as HideoutZoneQuality,
+                    hideoutZoneQuality: Number(
+                      event.target.value,
+                    ) as HideoutZoneQuality,
                   })
                 }
                 className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
@@ -265,7 +271,9 @@ export function ProductionConfigCard({
                 value={hideoutPowerLevel}
                 onChange={(event) =>
                   update({
-                    hideoutPowerLevel: Number(event.target.value) as HideoutPowerLevel,
+                    hideoutPowerLevel: Number(
+                      event.target.value,
+                    ) as HideoutPowerLevel,
                   })
                 }
                 className="w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
