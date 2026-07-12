@@ -1,6 +1,10 @@
 import type { Item } from '@core/domain/entities/Item'
 import type { CityId, NodeReturnRateConfig } from '@core/domain/entities'
-import { CITY_CRAFTING_SPECIALTIES } from '@core/domain/entities'
+import {
+  CITY_CRAFTING_SPECIALTIES,
+  DEFAULT_HIDEOUT_POWER_LEVEL,
+  isHideoutPowerLevel,
+} from '@core/domain/entities'
 import {
   getCraftingSpecialtyCategory,
   type CraftingSpecialtyCategory,
@@ -22,6 +26,7 @@ const CITY_NAME_BY_ID: Readonly<Record<CityId, string>> = {
   thetford: 'Thetford',
   caerleon: 'Caerleon',
   brecilien: 'Brecilien',
+  hideout: 'Hideout (HO)',
   island: 'Isla personal/de gremio',
 }
 
@@ -144,11 +149,20 @@ export function normalizeProductionConfigForRecommendation(
   recommendation: ProductionCityRecommendation | null,
 ): NodeReturnRateConfig {
   const isIsland = config.cityId === 'island'
+  const isHideout = config.cityId === 'hideout'
 
   return {
     ...config,
     isIsland,
-    hasSpecialtyBonus: !isIsland && recommendation?.cityId === config.cityId,
+    isHideout,
+    hideoutPowerLevel: isHideoutPowerLevel(config.hideoutPowerLevel)
+      ? config.hideoutPowerLevel
+      : DEFAULT_HIDEOUT_POWER_LEVEL,
+    hideoutSpecialized: isHideout && config.hideoutSpecialized === true,
+    hasSpecialtyBonus:
+      !isIsland &&
+      !isHideout &&
+      recommendation?.cityId === config.cityId,
     specialtyKind: recommendation?.specialtyKind ?? config.specialtyKind,
   }
 }
@@ -173,6 +187,8 @@ export function applyRecommendedProductionCity(
       ...config,
       cityId: recommendation.cityId,
       isIsland: false,
+      isHideout: false,
+      hideoutSpecialized: false,
       specialtyKind: recommendation.specialtyKind,
     },
     recommendation,
