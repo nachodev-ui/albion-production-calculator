@@ -697,6 +697,7 @@ export function ItemRecipeCard({
           <ReturnedMaterialsCard
             materials={calculation.returnedMaterials}
             repository={repository}
+            rootNode={calculation.root}
           />
 
           <ProfitabilityOptimizerCard
