@@ -2,6 +2,11 @@ import { CITIES } from '@core/domain/entities/City'
 import type { CityId } from '@core/domain/entities/City'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
 import {
+  DEFAULT_HIDEOUT_POWER_LEVEL,
+  isHideoutPowerLevel,
+} from '@core/domain/entities/Hideout'
+import type { HideoutPowerLevel } from '@core/domain/entities/Hideout'
+import {
   DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
   DEFAULT_STATION_FEE_CONFIG,
 } from '@core/domain/entities/ProductionEconomy'
@@ -14,7 +19,7 @@ import type {
 export const CRAFT_PRESET_STORAGE_KEY =
   'albion-craft-calculator:craft-presets:v1'
 
-const STORAGE_VERSION = 2
+const STORAGE_VERSION = 3
 const VALID_CITY_IDS = new Set<CityId>(CITIES.map((city) => city.id))
 const VALID_ACCESS_TYPES = new Set<StationAccessType>([
   'user',
@@ -25,6 +30,9 @@ const VALID_ACCESS_TYPES = new Set<StationAccessType>([
 export interface CraftPresetProductionConfig {
   readonly cityId: CityId
   readonly isIsland: boolean
+  readonly isHideout: boolean
+  readonly hideoutPowerLevel: HideoutPowerLevel
+  readonly hideoutSpecialized: boolean
   readonly hasSpecialtyBonus: boolean
   readonly useFocus: boolean
   readonly hasDailyBonus: boolean
@@ -80,8 +88,6 @@ function parseProductionConfig(
   if (!isRecord(value) || !isCityId(value['cityId'])) return null
 
   if (
-    typeof value['isIsland'] !== 'boolean' ||
-    typeof value['hasSpecialtyBonus'] !== 'boolean' ||
     typeof value['useFocus'] !== 'boolean' ||
     typeof value['hasDailyBonus'] !== 'boolean' ||
     !isDailyBonusAmount(value['dailyBonusAmount'])
@@ -89,12 +95,28 @@ function parseProductionConfig(
     return null
   }
 
-  const isIsland = value['cityId'] === 'island'
+  const cityId = value['cityId']
+  const isIsland = cityId === 'island'
+  const isHideout = cityId === 'hideout'
+  const hideoutPowerLevel = isHideoutPowerLevel(value['hideoutPowerLevel'])
+    ? value['hideoutPowerLevel']
+    : DEFAULT_HIDEOUT_POWER_LEVEL
+  const hideoutSpecialized =
+    isHideout && value['hideoutSpecialized'] === true
+  const hasSpecialtyBonus =
+    !isIsland &&
+    !isHideout &&
+    typeof value['hasSpecialtyBonus'] === 'boolean'
+      ? value['hasSpecialtyBonus']
+      : false
 
   return {
-    cityId: value['cityId'],
+    cityId,
     isIsland,
-    hasSpecialtyBonus: isIsland ? false : value['hasSpecialtyBonus'],
+    isHideout,
+    hideoutPowerLevel,
+    hideoutSpecialized,
+    hasSpecialtyBonus,
     useFocus: value['useFocus'],
     hasDailyBonus: value['hasDailyBonus'],
     dailyBonusAmount: value['dailyBonusAmount'],
@@ -130,6 +152,9 @@ function parseSpecializationConfig(
     focusCostEfficiency: sanitizeNonNegative(value['focusCostEfficiency']),
     availableFocus: sanitizeNonNegative(value['availableFocus']),
     qualityIncrease: sanitizeNonNegative(value['qualityIncrease']),
+    hideoutSpecialistBonus: sanitizeNonNegative(
+      value['hideoutSpecialistBonus'],
+    ),
   }
 }
 
@@ -167,11 +192,18 @@ export function toPresetProductionConfig(
 ): CraftPresetProductionConfig {
   const cityId = isCityId(config.cityId) ? config.cityId : 'island'
   const isIsland = cityId === 'island'
+  const isHideout = cityId === 'hideout'
 
   return {
     cityId,
     isIsland,
-    hasSpecialtyBonus: isIsland ? false : config.hasSpecialtyBonus,
+    isHideout,
+    hideoutPowerLevel: isHideoutPowerLevel(config.hideoutPowerLevel)
+      ? config.hideoutPowerLevel
+      : DEFAULT_HIDEOUT_POWER_LEVEL,
+    hideoutSpecialized: isHideout && config.hideoutSpecialized === true,
+    hasSpecialtyBonus:
+      !isIsland && !isHideout ? config.hasSpecialtyBonus : false,
     useFocus: config.useFocus,
     hasDailyBonus: config.hasDailyBonus,
     dailyBonusAmount: config.dailyBonusAmount,
@@ -207,7 +239,9 @@ function equalSpecializationConfig(
   return (
     left.focusCostEfficiency === right.focusCostEfficiency &&
     left.availableFocus === right.availableFocus &&
-    left.qualityIncrease === right.qualityIncrease
+    left.qualityIncrease === right.qualityIncrease &&
+    (left.hideoutSpecialistBonus ?? 0) ===
+      (right.hideoutSpecialistBonus ?? 0)
   )
 }
 
@@ -225,6 +259,9 @@ export function doesPresetMatchCurrentConfig(
   return (
     normalized.cityId === saved.cityId &&
     normalized.isIsland === saved.isIsland &&
+    normalized.isHideout === saved.isHideout &&
+    normalized.hideoutPowerLevel === saved.hideoutPowerLevel &&
+    normalized.hideoutSpecialized === saved.hideoutSpecialized &&
     normalized.hasSpecialtyBonus === saved.hasSpecialtyBonus &&
     normalized.useFocus === saved.useFocus &&
     normalized.hasDailyBonus === saved.hasDailyBonus &&
@@ -265,7 +302,7 @@ export function loadCraftPresetStorage(): CraftPresetStorageState {
 
     if (
       !isRecord(parsed) ||
-      (parsed['version'] !== 1 && parsed['version'] !== STORAGE_VERSION)
+      ![1, 2, STORAGE_VERSION].includes(parsed['version'] as number)
     ) {
       return EMPTY_STATE
     }

@@ -108,5 +108,28 @@ describe('ProductionEconomy', () => {
     expect(result.effectiveFocusPerCraft).toBe(500)
     expect(result.totalFocusRequired).toBe(5_000)
     expect(result.maxItemsWithAvailableFocus).toBe(20)
+    expect(result.focusSavedByHideoutPerCraft).toBe(0)
+  })
+
+  it('combina la especialización de Hideout con la eficiencia del Destiny Board', () => {
+    const result = calculateFocusCostBreakdown({
+      baseFocusPerCraft: 1_000,
+      craftsNeeded: 10,
+      outputQuantity: 1,
+      useFocus: true,
+      config: {
+        focusCostEfficiency: 10_000,
+        availableFocus: 10_000,
+        qualityIncrease: 0,
+        hideoutSpecialistBonus: 0.3,
+      },
+    })
+
+    expect(result.baseEffectiveFocusPerCraft).toBe(500)
+    expect(result.effectiveFocusCostEfficiency).toBe(13_000)
+    expect(result.effectiveFocusPerCraft).toBe(407)
+    expect(result.focusSavedByHideoutPerCraft).toBe(93)
+    expect(result.totalFocusRequired).toBe(4_070)
+    expect(result.maxItemsWithAvailableFocus).toBe(24)
   })
 })
