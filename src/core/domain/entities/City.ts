@@ -1,7 +1,7 @@
 /**
- * Ciudades reales de Albion Online relevantes para crafteo/refinado.
- * "island" representa una isla personal/de gremio (sin bono de
- * especialidad, pero sin tarifa de estación).
+ * Ubicaciones relevantes para crafteo/refinado. `island` representa una isla
+ * personal/de gremio y `hideout` una ubicación configurable por calidad de
+ * zona y nivel de poder.
  */
 export type CityId =
   | 'martlock'
@@ -12,6 +12,7 @@ export type CityId =
   | 'caerleon'
   | 'brecilien'
   | 'island'
+  | 'hideout'
 
 export interface City {
   readonly id: CityId
@@ -27,35 +28,18 @@ export const CITIES: readonly City[] = [
   { id: 'caerleon', name: 'Caerleon' },
   { id: 'brecilien', name: 'Brecilien' },
   { id: 'island', name: 'Isla personal/de gremio' },
+  { id: 'hideout', name: 'Hideout (HO)' },
 ]
 
-/**
- * Bono base de Producción Local (LPB) que da CUALQUIER ciudad real
- * (no isla) a refinado y crafteo, sin necesidad de especialidad.
- *
- * @see https://wiki.albiononline.com/wiki/Resource_return_rate
- */
+/** Bono base de Producción Local de cualquier ciudad real. */
 export const BASE_CITY_PRODUCTION_BONUS = 0.18
-
-/**
- * Bono extra de especialidad cuando la ciudad SÍ tiene bono para
- * la categoría de REFINADO siendo trabajada (ej. Lymhurst + fibra).
- */
+/** Bono extra de especialidad para refinado. */
 export const REFINING_SPECIALTY_BONUS = 0.4
-
-/**
- * Bono extra de especialidad cuando la ciudad SÍ tiene bono para
- * la categoría de CRAFTEO siendo trabajada (ej. Lymhurst + espada).
- */
+/** Bono extra de especialidad para crafteo de equipo. */
 export const CRAFTING_SPECIALTY_BONUS = 0.15
-
 /** Bono flat por usar Foco de Crafteo. */
 export const FOCUS_BONUS = 0.59
 
-/**
- * Tabla de especialidades de REFINADO por ciudad: qué tipo de
- * recurso crudo tiene bono ahí.
- */
 export const REFINING_SPECIALTY_BY_CITY: Partial<Record<CityId, string>> = {
   martlock: 'hide',
   bridgewatch: 'rock',
@@ -64,13 +48,6 @@ export const REFINING_SPECIALTY_BY_CITY: Partial<Record<CityId, string>> = {
   thetford: 'ore',
 }
 
-/**
- * Tabla de especialidades de CRAFTEO por ciudad, mapeada por
- * "craftingcategory" tal como aparece en el dataset del juego
- * (ej. "sword", "axe", "plate_armor").
- *
- * @see verificado contra wiki.albiononline.com/wiki/Resource_return_rate
- */
 export interface CitySpecialty {
   readonly city: CityId
   readonly craftingCategories: readonly string[]
