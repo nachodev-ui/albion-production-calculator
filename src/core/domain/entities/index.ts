@@ -38,8 +38,20 @@ export {
   CITY_CRAFTING_SPECIALTIES,
 } from './City'
 
-export type { ReturnRateParams } from './ReturnRate'
-export { calculateReturnRate } from './ReturnRate'
+export type { HideoutPowerLevel, HideoutPowerProfile } from './Hideout'
+export {
+  HIDEOUT_BASE_PRODUCTION_BONUS,
+  DEFAULT_HIDEOUT_POWER_LEVEL,
+  HIDEOUT_POWER_PROFILES,
+  isHideoutPowerLevel,
+  getHideoutPowerProfile,
+} from './Hideout'
+
+export type { ReturnRateParams, ReturnRateBreakdown } from './ReturnRate'
+export {
+  calculateReturnRate,
+  calculateReturnRateBreakdown,
+} from './ReturnRate'
 export type {
   StationAccessType,
   StationFeeConfig,
