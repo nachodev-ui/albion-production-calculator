@@ -72,7 +72,10 @@ export function buildRoyalRecipeRequirements(
   }
 
   const requirements = Array.from(aggregated.values()).sort((left, right) => {
-    if (left.kind === right.kind) return String(left.itemId).localeCompare(String(right.itemId))
+    if (left.kind === right.kind) {
+      return String(left.itemId).localeCompare(String(right.itemId))
+    }
+
     return left.kind === 'base_piece' ? -1 : 1
   })
 
