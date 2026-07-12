@@ -7,16 +7,22 @@
 - Cantidad de fabricación y árbol de materiales.
 - Retorno de recursos global y recursos retornables.
 - Tarifas de estación, nutrición, foco y especialización.
-- Producción en ciudades, islas y Hideouts de zona negra.
+- Producción en ciudades, islas y Hideouts.
 - Fama de fabricación, estudio, diarios y proyección de especialización.
 - Presets de producción y venta.
 
 ## Producción en Hideout
 
-Al seleccionar **Hideout (HO)** como lugar de producción, la configuración
-permite elegir el nivel de energía o poder actual, del 1 al 9. Cada nivel muestra
-la energía acumulada, el bono general que participa en el RRR y el bono
-especialista disponible para reducir el foco.
+Al seleccionar **Hideout (HO)** como lugar de producción aparecen dos parámetros:
+
+- **Calidad de zona**, del 1 al 6.
+- **Nivel de energía o poder**, del 1 al 9.
+
+La combinación de ambos determina el Resource Return Rate base del HO. La interfaz
+muestra simultáneamente el RRR sin foco, el RRR con foco y el bono de producción
+equivalente para la selección actual.
+
+El nivel de energía mantiene además sus datos operativos:
 
 | Nivel | Energía acumulada | Bono general | Bono especialista |
 |---:|---:|---:|---:|
@@ -30,28 +36,22 @@ especialista disponible para reducir el foco.
 | 8 | 45.000 | 24% | 26,25% |
 | 9 | 60.000 | 26% | 30% |
 
-La fórmula aplicada es:
+El bono especialista no se suma nuevamente al RRR. Cuando se marca **HO
+especializado para este objeto**, se combina con la eficiencia del Destiny Board
+para reducir el foco requerido.
+
+Los bonos diarios se aplican sobre el bono de producción equivalente del RRR de
+la tabla:
 
 ```text
-RRR = bono de producción total / (1 + bono de producción total)
+Production Bonus equivalente = RRR / (1 - RRR)
+Production Bonus total = equivalente + bono diario
+RRR final = Production Bonus total / (1 + Production Bonus total)
 ```
 
-El cálculo distingue dos efectos:
-
-1. El bono base del HO (`15%`) y el bono general del nivel se incorporan al
-   bono de producción usado por el RRR.
-2. El bono especialista no se suma nuevamente al RRR. Cuando se marca
-   **HO especializado para este objeto**, se combina con la eficiencia del
-   Destiny Board para reducir el foco requerido.
-
-Por ejemplo, un HO nivel 9 sin foco utiliza `15% + 26% = 41%` de bono local,
-lo que produce aproximadamente `29,1%` de retorno. Con foco, el bono total llega
-a `100%` y el RRR resultante es `50%` antes de considerar un bono diario.
-
-Los niveles y bonos se modelan desde los valores de `hideouts.xml` del cliente
-de Albion Online. Los presets guardan el lugar de producción, nivel del HO,
-especialización, foco, bono diario y configuración económica asociada. Los
-presets antiguos se migran con HO nivel 1 y especialización desactivada.
+Los presets guardan calidad de zona, nivel de energía, especialización, foco,
+bono diario y configuración económica asociada. Los presets anteriores se migran
+con calidad de zona 1.
 
 ## Resultado económico
 
