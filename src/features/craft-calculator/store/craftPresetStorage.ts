@@ -3,9 +3,14 @@ import type { CityId } from '@core/domain/entities/City'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
 import {
   DEFAULT_HIDEOUT_POWER_LEVEL,
+  DEFAULT_HIDEOUT_ZONE_QUALITY,
   isHideoutPowerLevel,
+  isHideoutZoneQuality,
 } from '@core/domain/entities/Hideout'
-import type { HideoutPowerLevel } from '@core/domain/entities/Hideout'
+import type {
+  HideoutPowerLevel,
+  HideoutZoneQuality,
+} from '@core/domain/entities/Hideout'
 import {
   DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
   DEFAULT_STATION_FEE_CONFIG,
@@ -19,7 +24,7 @@ import type {
 export const CRAFT_PRESET_STORAGE_KEY =
   'albion-craft-calculator:craft-presets:v1'
 
-const STORAGE_VERSION = 3
+const STORAGE_VERSION = 4
 const VALID_CITY_IDS = new Set<CityId>(CITIES.map((city) => city.id))
 const VALID_ACCESS_TYPES = new Set<StationAccessType>([
   'user',
@@ -32,6 +37,7 @@ export interface CraftPresetProductionConfig {
   readonly isIsland: boolean
   readonly isHideout: boolean
   readonly hideoutPowerLevel: HideoutPowerLevel
+  readonly hideoutZoneQuality: HideoutZoneQuality
   readonly hideoutSpecialized: boolean
   readonly hasSpecialtyBonus: boolean
   readonly useFocus: boolean
@@ -101,6 +107,9 @@ function parseProductionConfig(
   const hideoutPowerLevel = isHideoutPowerLevel(value['hideoutPowerLevel'])
     ? value['hideoutPowerLevel']
     : DEFAULT_HIDEOUT_POWER_LEVEL
+  const hideoutZoneQuality = isHideoutZoneQuality(value['hideoutZoneQuality'])
+    ? value['hideoutZoneQuality']
+    : DEFAULT_HIDEOUT_ZONE_QUALITY
   const hideoutSpecialized =
     isHideout && value['hideoutSpecialized'] === true
   const hasSpecialtyBonus =
@@ -115,6 +124,7 @@ function parseProductionConfig(
     isIsland,
     isHideout,
     hideoutPowerLevel,
+    hideoutZoneQuality,
     hideoutSpecialized,
     hasSpecialtyBonus,
     useFocus: value['useFocus'],
@@ -201,6 +211,9 @@ export function toPresetProductionConfig(
     hideoutPowerLevel: isHideoutPowerLevel(config.hideoutPowerLevel)
       ? config.hideoutPowerLevel
       : DEFAULT_HIDEOUT_POWER_LEVEL,
+    hideoutZoneQuality: isHideoutZoneQuality(config.hideoutZoneQuality)
+      ? config.hideoutZoneQuality
+      : DEFAULT_HIDEOUT_ZONE_QUALITY,
     hideoutSpecialized: isHideout && config.hideoutSpecialized === true,
     hasSpecialtyBonus:
       !isIsland && !isHideout ? config.hasSpecialtyBonus : false,
@@ -261,6 +274,7 @@ export function doesPresetMatchCurrentConfig(
     normalized.isIsland === saved.isIsland &&
     normalized.isHideout === saved.isHideout &&
     normalized.hideoutPowerLevel === saved.hideoutPowerLevel &&
+    normalized.hideoutZoneQuality === saved.hideoutZoneQuality &&
     normalized.hideoutSpecialized === saved.hideoutSpecialized &&
     normalized.hasSpecialtyBonus === saved.hasSpecialtyBonus &&
     normalized.useFocus === saved.useFocus &&
@@ -302,7 +316,7 @@ export function loadCraftPresetStorage(): CraftPresetStorageState {
 
     if (
       !isRecord(parsed) ||
-      ![1, 2, STORAGE_VERSION].includes(parsed['version'] as number)
+      ![1, 2, 3, STORAGE_VERSION].includes(parsed['version'] as number)
     ) {
       return EMPTY_STATE
     }
