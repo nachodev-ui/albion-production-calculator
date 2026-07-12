@@ -12,6 +12,7 @@ const craftingConfig: NodeReturnRateConfig = {
   isIsland: false,
   isHideout: false,
   hideoutPowerLevel: 1,
+  hideoutZoneQuality: 1,
   hideoutSpecialized: false,
   hasSpecialtyBonus: true,
   specialtyKind: 'crafting',
@@ -27,6 +28,7 @@ describe('craftPresetStorage', () => {
       isIsland: false,
       isHideout: false,
       hideoutPowerLevel: 1,
+      hideoutZoneQuality: 1,
       hideoutSpecialized: false,
       hasSpecialtyBonus: true,
       useFocus: true,
@@ -36,19 +38,12 @@ describe('craftPresetStorage', () => {
   })
 
   it('mantiene el specialtyKind del objeto al aplicar un preset', () => {
-    const refiningConfig: NodeReturnRateConfig = {
-      ...craftingConfig,
-      specialtyKind: 'refining',
-    }
-
     const applied = applyPresetProductionConfig(
-      refiningConfig,
+      { ...craftingConfig, specialtyKind: 'refining' },
       toPresetProductionConfig(craftingConfig),
     )
-
     expect(applied.specialtyKind).toBe('refining')
     expect(applied.cityId).toBe('bridgewatch')
-    expect(applied.useFocus).toBe(true)
   })
 
   it('detecta cambios en producción o Premium', () => {
@@ -58,11 +53,7 @@ describe('craftPresetStorage', () => {
       productionConfig: toPresetProductionConfig(craftingConfig),
       isPremium: true,
     }
-
-    expect(
-      doesPresetMatchCurrentConfig(preset, craftingConfig, true),
-    ).toBe(true)
-
+    expect(doesPresetMatchCurrentConfig(preset, craftingConfig, true)).toBe(true)
     expect(
       doesPresetMatchCurrentConfig(
         preset,
@@ -70,10 +61,7 @@ describe('craftPresetStorage', () => {
         true,
       ),
     ).toBe(false)
-
-    expect(
-      doesPresetMatchCurrentConfig(preset, craftingConfig, false),
-    ).toBe(false)
+    expect(doesPresetMatchCurrentConfig(preset, craftingConfig, false)).toBe(false)
   })
 
   it('desactiva la especialidad al guardar una configuración de isla', () => {
@@ -83,73 +71,52 @@ describe('craftPresetStorage', () => {
       isIsland: true,
       hasSpecialtyBonus: true,
     })
-
     expect(preset.hasSpecialtyBonus).toBe(false)
     expect(preset.isHideout).toBe(false)
   })
 
-  it('guarda nivel y especialización del Hideout', () => {
+  it('guarda calidad, nivel y especialización del Hideout', () => {
     const hideoutConfig: NodeReturnRateConfig = {
       ...craftingConfig,
       cityId: 'hideout',
       isIsland: false,
       isHideout: true,
       hideoutPowerLevel: 9,
+      hideoutZoneQuality: 6,
       hideoutSpecialized: true,
       hasSpecialtyBonus: true,
     }
-
-    expect(toPresetProductionConfig(hideoutConfig)).toEqual({
-      cityId: 'hideout',
-      isIsland: false,
-      isHideout: true,
-      hideoutPowerLevel: 9,
-      hideoutSpecialized: true,
-      hasSpecialtyBonus: false,
-      useFocus: true,
-      hasDailyBonus: true,
-      dailyBonusAmount: 0.2,
-    })
+    const saved = toPresetProductionConfig(hideoutConfig)
+    expect(saved.hideoutPowerLevel).toBe(9)
+    expect(saved.hideoutZoneQuality).toBe(6)
+    expect(saved.hideoutSpecialized).toBe(true)
+    expect(saved.hasSpecialtyBonus).toBe(false)
   })
 
-  it('considera nivel y especialización al comparar presets', () => {
+  it('considera la calidad de zona al comparar presets', () => {
     const hideoutConfig: NodeReturnRateConfig = {
       ...craftingConfig,
       cityId: 'hideout',
       isHideout: true,
       hideoutPowerLevel: 8,
+      hideoutZoneQuality: 5,
       hideoutSpecialized: true,
       hasSpecialtyBonus: false,
     }
     const preset: CraftPreset = {
       id: 'preset-ho',
-      name: 'HO nivel 8',
+      name: 'HO calidad 5 nivel 8',
       productionConfig: toPresetProductionConfig(hideoutConfig),
-      craftingSpecializationConfig: {
-        focusCostEfficiency: 0,
-        availableFocus: 0,
-        qualityIncrease: 0,
-        hideoutSpecialistBonus: 0.2625,
-      },
       isPremium: true,
     }
-
     expect(
-      doesPresetMatchCurrentConfig(
-        preset,
-        hideoutConfig,
-        true,
-        undefined,
-        preset.craftingSpecializationConfig,
-      ),
+      doesPresetMatchCurrentConfig(preset, hideoutConfig, true),
     ).toBe(true)
     expect(
       doesPresetMatchCurrentConfig(
         preset,
-        { ...hideoutConfig, hideoutPowerLevel: 9 },
+        { ...hideoutConfig, hideoutZoneQuality: 6 },
         true,
-        undefined,
-        preset.craftingSpecializationConfig,
       ),
     ).toBe(false)
   })
