@@ -1,6 +1,10 @@
 import { CITIES } from '@core/domain/entities/City'
 import type { CityId } from '@core/domain/entities/City'
 import type { NodeReturnRateConfig } from '@core/domain/entities/CraftCostNode'
+import type {
+  HideoutPowerLevel,
+  HideoutZoneQuality,
+} from '@core/domain/entities/Hideout'
 import {
   DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
   DEFAULT_STATION_FEE_CONFIG,
@@ -14,8 +18,11 @@ import type {
 export const CRAFT_PRESET_STORAGE_KEY =
   'albion-craft-calculator:craft-presets:v1'
 
-const STORAGE_VERSION = 2
-const VALID_CITY_IDS = new Set<CityId>(CITIES.map((city) => city.id))
+const STORAGE_VERSION = 3
+const VALID_CITY_IDS = new Set<CityId>([
+  ...CITIES.map((city) => city.id),
+  'hideout',
+])
 const VALID_ACCESS_TYPES = new Set<StationAccessType>([
   'user',
   'associate',
@@ -25,6 +32,9 @@ const VALID_ACCESS_TYPES = new Set<StationAccessType>([
 export interface CraftPresetProductionConfig {
   readonly cityId: CityId
   readonly isIsland: boolean
+  readonly isHideout: boolean
+  readonly hideoutZoneQuality: HideoutZoneQuality
+  readonly hideoutPowerLevel: HideoutPowerLevel
   readonly hasSpecialtyBonus: boolean
   readonly useFocus: boolean
   readonly hasDailyBonus: boolean
@@ -68,6 +78,14 @@ function isDailyBonusAmount(value: unknown): value is 0.1 | 0.2 {
   return value === 0.1 || value === 0.2
 }
 
+function isHideoutZoneQuality(value: unknown): value is HideoutZoneQuality {
+  return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 6
+}
+
+function isHideoutPowerLevel(value: unknown): value is HideoutPowerLevel {
+  return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 9
+}
+
 function sanitizeNonNegative(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
     ? value
@@ -89,12 +107,26 @@ function parseProductionConfig(
     return null
   }
 
-  const isIsland = value['cityId'] === 'island'
+  const cityId = value['cityId']
+  const isIsland = cityId === 'island'
+  const isHideout = cityId === 'hideout'
+  const hideoutZoneQuality = isHideoutZoneQuality(
+    value['hideoutZoneQuality'],
+  )
+    ? value['hideoutZoneQuality']
+    : 1
+  const hideoutPowerLevel = isHideoutPowerLevel(value['hideoutPowerLevel'])
+    ? value['hideoutPowerLevel']
+    : 1
 
   return {
-    cityId: value['cityId'],
+    cityId,
     isIsland,
-    hasSpecialtyBonus: isIsland ? false : value['hasSpecialtyBonus'],
+    isHideout,
+    hideoutZoneQuality,
+    hideoutPowerLevel,
+    hasSpecialtyBonus:
+      isIsland || isHideout ? false : value['hasSpecialtyBonus'],
     useFocus: value['useFocus'],
     hasDailyBonus: value['hasDailyBonus'],
     dailyBonusAmount: value['dailyBonusAmount'],
@@ -167,11 +199,16 @@ export function toPresetProductionConfig(
 ): CraftPresetProductionConfig {
   const cityId = isCityId(config.cityId) ? config.cityId : 'island'
   const isIsland = cityId === 'island'
+  const isHideout = cityId === 'hideout'
 
   return {
     cityId,
     isIsland,
-    hasSpecialtyBonus: isIsland ? false : config.hasSpecialtyBonus,
+    isHideout,
+    hideoutZoneQuality: config.hideoutZoneQuality ?? 1,
+    hideoutPowerLevel: config.hideoutPowerLevel ?? 1,
+    hasSpecialtyBonus:
+      isIsland || isHideout ? false : config.hasSpecialtyBonus,
     useFocus: config.useFocus,
     hasDailyBonus: config.hasDailyBonus,
     dailyBonusAmount: config.dailyBonusAmount,
@@ -225,6 +262,9 @@ export function doesPresetMatchCurrentConfig(
   return (
     normalized.cityId === saved.cityId &&
     normalized.isIsland === saved.isIsland &&
+    normalized.isHideout === saved.isHideout &&
+    normalized.hideoutZoneQuality === saved.hideoutZoneQuality &&
+    normalized.hideoutPowerLevel === saved.hideoutPowerLevel &&
     normalized.hasSpecialtyBonus === saved.hasSpecialtyBonus &&
     normalized.useFocus === saved.useFocus &&
     normalized.hasDailyBonus === saved.hasDailyBonus &&
@@ -265,7 +305,7 @@ export function loadCraftPresetStorage(): CraftPresetStorageState {
 
     if (
       !isRecord(parsed) ||
-      (parsed['version'] !== 1 && parsed['version'] !== STORAGE_VERSION)
+      ![1, 2, STORAGE_VERSION].includes(Number(parsed['version']))
     ) {
       return EMPTY_STATE
     }
