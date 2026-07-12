@@ -53,9 +53,9 @@ describe('buildRoyalRecipeRequirements', () => {
     const result = buildRoyalRecipeRequirements(buildRoyalOption(2), 6)
 
     expect(result?.craftsNeeded).toBe(3)
-    expect(result?.requirements.map((requirement) => requirement.quantity)).toEqual([
-      3, 12,
-    ])
+    expect(
+      result?.requirements.map((requirement) => requirement.quantity),
+    ).toEqual([3, 12])
   })
 
   it('no clasifica recetas normales como Royal', () => {
