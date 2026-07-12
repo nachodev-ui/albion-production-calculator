@@ -38,13 +38,21 @@ export {
   CITY_CRAFTING_SPECIALTIES,
 } from './City'
 
-export type { HideoutPowerLevel, HideoutPowerProfile } from './Hideout'
+export type {
+  HideoutPowerLevel,
+  HideoutPowerProfile,
+  HideoutZoneQuality,
+} from './Hideout'
 export {
-  HIDEOUT_BASE_PRODUCTION_BONUS,
   DEFAULT_HIDEOUT_POWER_LEVEL,
+  DEFAULT_HIDEOUT_ZONE_QUALITY,
   HIDEOUT_POWER_PROFILES,
+  HIDEOUT_ZONE_QUALITIES,
   isHideoutPowerLevel,
+  isHideoutZoneQuality,
   getHideoutPowerProfile,
+  getHideoutReturnRate,
+  returnRateToProductionBonus,
 } from './Hideout'
 
 export type { ReturnRateParams, ReturnRateBreakdown } from './ReturnRate'

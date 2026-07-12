@@ -1,13 +1,17 @@
 import {
   CITIES,
-  HIDEOUT_BASE_PRODUCTION_BONUS,
+  DEFAULT_HIDEOUT_ZONE_QUALITY,
   HIDEOUT_POWER_PROFILES,
+  HIDEOUT_ZONE_QUALITIES,
   calculateReturnRateBreakdown,
   getHideoutPowerProfile,
+  getHideoutReturnRate,
+  returnRateToProductionBonus,
 } from '@core/domain/entities'
 import type {
   CityId,
   HideoutPowerLevel,
+  HideoutZoneQuality,
   NodeReturnRateConfig,
 } from '@core/domain/entities'
 import type { CraftingStation } from '@core/domain/entities/Recipe'
@@ -86,7 +90,22 @@ export function ProductionConfigCard({
   const isHideout = config.cityId === 'hideout' || config.isHideout === true
   const isIsland = config.cityId === 'island'
   const hideoutProfile = getHideoutPowerProfile(config.hideoutPowerLevel)
+  const hideoutZoneQuality =
+    config.hideoutZoneQuality ?? DEFAULT_HIDEOUT_ZONE_QUALITY
   const rrrBreakdown = calculateReturnRateBreakdown(config)
+  const hideoutRrrWithoutFocus = getHideoutReturnRate(
+    hideoutZoneQuality,
+    hideoutProfile.level,
+    false,
+  )
+  const hideoutRrrWithFocus = getHideoutReturnRate(
+    hideoutZoneQuality,
+    hideoutProfile.level,
+    true,
+  )
+  const hideoutEquivalentBonus = returnRateToProductionBonus(
+    config.useFocus ? hideoutRrrWithFocus : hideoutRrrWithoutFocus,
+  )
   const isRecommendedCity =
     !isHideout &&
     !isIsland &&
@@ -107,21 +126,12 @@ export function ProductionConfigCard({
     commit({ ...config, ...patch })
   }
 
-  function handleCityChange(cityId: CityId) {
-    update({ cityId })
-  }
-
-  function handleHideoutLevelChange(level: HideoutPowerLevel) {
-    update({ hideoutPowerLevel: level })
-  }
-
   return (
     <section className="mb-6 rounded-xl border border-border bg-surface p-4">
       <div className="mb-4">
         <h3 className="text-sm font-semibold text-text">
           Configuración de producción
         </h3>
-
         <p className="mt-1 text-xs text-text-faint">
           Ajusta el lugar de producción, retorno, tarifa del puesto y bonos de
           especialización.
@@ -154,7 +164,7 @@ export function ProductionConfigCard({
                 </span>
               )}
             </div>
-            {recommendation && (
+            {recommendation && !isHideout && (
               <p className="mt-1 text-[11px] text-text-faint">
                 Bono urbano para {recommendation.specialtyLabel}:{' '}
                 {recommendation.cityName}.
@@ -165,7 +175,9 @@ export function ProductionConfigCard({
           <select
             aria-label="Lugar de producción"
             value={config.cityId}
-            onChange={(event) => handleCityChange(event.target.value as CityId)}
+            onChange={(event) =>
+              update({ cityId: event.target.value as CityId })
+            }
             className="min-w-48 rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
             {CITIES.map((city) => (
@@ -177,20 +189,12 @@ export function ProductionConfigCard({
           </select>
         </div>
 
-        <div
-          className={`flex items-center justify-between gap-3 rounded-lg border p-3 ${
-            isRecommendedCity
-              ? 'border-positive/30 bg-positive-muted/60'
-              : 'border-border bg-surface-raised'
-          }`}
-        >
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-surface-raised p-3">
           <div>
-            <span className="text-sm text-text-muted">
-              Bono de especialidad
-            </span>
+            <span className="text-sm text-text-muted">Bono de especialidad</span>
             <p className="mt-1 text-[11px] text-text-faint">
               {isHideout
-                ? 'El HO usa sus bonos de energía y especialización propios.'
+                ? 'El HO usa calidad de zona, energía y especialización propias.'
                 : isIsland
                   ? 'Las islas no tienen bono local ni especialidad de ciudad.'
                   : recommendation
@@ -200,23 +204,13 @@ export function ProductionConfigCard({
                     : 'No se detectó una ciudad con bono para esta categoría.'}
             </p>
           </div>
-
-          <span
-            className={`rounded-md border px-2 py-1 text-xs font-medium ${
-              isRecommendedCity
-                ? 'border-positive/35 bg-positive-muted text-positive'
-                : isHideout
-                  ? 'border-accent-border bg-accent-muted text-accent'
-                  : 'border-border bg-surface text-text-faint'
-            }`}
-          >
+          <span className="rounded-md border border-border bg-surface px-2 py-1 text-xs font-medium text-text-faint">
             {isRecommendedCity ? 'Activo' : isHideout ? 'Bonos HO' : 'No aplica'}
           </span>
         </div>
 
         <label className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
           <span className="text-sm text-text-muted">Usar foco</span>
-
           <input
             type="checkbox"
             checked={config.useFocus}
@@ -227,7 +221,6 @@ export function ProductionConfigCard({
 
         <label className="flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
           <span className="text-sm text-text-muted">Bono diario</span>
-
           <input
             type="checkbox"
             checked={config.hasDailyBonus}
@@ -241,35 +234,57 @@ export function ProductionConfigCard({
 
       {isHideout && (
         <div className="mt-3 rounded-lg border border-accent-border/60 bg-accent-muted/30 p-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h4 className="text-sm font-medium text-text">
-                Calidad y energía del Hideout
-              </h4>
-              <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
-                El nivel de poder del HO determina el bono general de producción
-                y el bono especialista. El bono general entra al RRR; el
-                especialista reduce el foco cuando el HO está especializado para
-                este objeto.
-              </p>
-            </div>
+          <div>
+            <h4 className="text-sm font-medium text-text">
+              Calidad y energía del Hideout
+            </h4>
+            <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
+              La combinación determina el RRR base del HO. El bono especialista
+              del nivel continúa reduciendo el foco cuando el HO está
+              especializado para el objeto.
+            </p>
+          </div>
 
-            <label className="min-w-64">
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <label>
+              <span className="text-xs text-text-faint">Calidad de zona</span>
+              <select
+                aria-label="Calidad de zona del Hideout"
+                value={hideoutZoneQuality}
+                onChange={(event) =>
+                  update({
+                    hideoutZoneQuality: Number(
+                      event.target.value,
+                    ) as HideoutZoneQuality,
+                  })
+                }
+                className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+              >
+                {HIDEOUT_ZONE_QUALITIES.map((quality) => (
+                  <option key={quality} value={quality}>
+                    Calidad {quality}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
               <span className="text-xs text-text-faint">Nivel de energía</span>
               <select
                 aria-label="Nivel de energía del Hideout"
                 value={hideoutProfile.level}
                 onChange={(event) =>
-                  handleHideoutLevelChange(
-                    Number(event.target.value) as HideoutPowerLevel,
-                  )
+                  update({
+                    hideoutPowerLevel: Number(
+                      event.target.value,
+                    ) as HideoutPowerLevel,
+                  })
                 }
                 className="mt-1 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
               >
                 {HIDEOUT_POWER_PROFILES.map((profile) => (
                   <option key={profile.level} value={profile.level}>
-                    Nivel {profile.level} · {formatNumber(profile.powerPointsPool)} energía · +
-                    {formatPercent(profile.generalistCraftingBonus)} general
+                    Nivel {profile.level} · {formatNumber(profile.powerPointsPool)} energía
                   </option>
                 ))}
               </select>
@@ -278,37 +293,27 @@ export function ProductionConfigCard({
 
           <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-md border border-border bg-surface p-2.5">
-              <span className="text-[11px] text-text-faint">Bono base del HO</span>
+              <span className="text-[11px] text-text-faint">Bono equivalente</span>
               <p className="mt-1 font-mono text-sm font-medium text-text">
-                +{formatPercent(HIDEOUT_BASE_PRODUCTION_BONUS)}
+                +{formatPercent(hideoutEquivalentBonus)}
               </p>
             </div>
             <div className="rounded-md border border-border bg-surface p-2.5">
-              <span className="text-[11px] text-text-faint">
-                Bono general por energía
-              </span>
+              <span className="text-[11px] text-text-faint">RRR sin foco</span>
+              <p className="mt-1 font-mono text-sm font-medium text-text">
+                {formatPercent(hideoutRrrWithoutFocus)}
+              </p>
+            </div>
+            <div className="rounded-md border border-border bg-surface p-2.5">
+              <span className="text-[11px] text-text-faint">RRR con foco</span>
               <p className="mt-1 font-mono text-sm font-medium text-positive">
-                +{formatPercent(hideoutProfile.generalistCraftingBonus)}
+                {formatPercent(hideoutRrrWithFocus)}
               </p>
             </div>
             <div className="rounded-md border border-border bg-surface p-2.5">
-              <span className="text-[11px] text-text-faint">
-                Bono especialista disponible
-              </span>
+              <span className="text-[11px] text-text-faint">Bono especialista</span>
               <p className="mt-1 font-mono text-sm font-medium text-accent">
                 +{formatPercent(hideoutProfile.specialistCraftingBonus)}
-              </p>
-            </div>
-            <div className="rounded-md border border-border bg-surface p-2.5">
-              <span className="text-[11px] text-text-faint">
-                Bono local para RRR
-              </span>
-              <p className="mt-1 font-mono text-sm font-medium text-text">
-                +
-                {formatPercent(
-                  HIDEOUT_BASE_PRODUCTION_BONUS +
-                    hideoutProfile.generalistCraftingBonus,
-                )}
               </p>
             </div>
           </div>
@@ -319,9 +324,8 @@ export function ProductionConfigCard({
                 HO especializado para este objeto
               </span>
               <span className="mt-1 block text-[11px] leading-relaxed text-text-faint">
-                Aplica +{formatPercent(hideoutProfile.specialistCraftingBonus)}
-                {' '}como eficiencia adicional de foco. No se suma nuevamente al
-                RRR.
+                Aplica +{formatPercent(hideoutProfile.specialistCraftingBonus)} como
+                eficiencia adicional de foco. No se suma nuevamente al RRR.
               </span>
             </span>
             <input
@@ -340,7 +344,7 @@ export function ProductionConfigCard({
               {formatPercent(activeHideoutSpecialistBonus)} de eficiencia del HO
               y ahorro estimado de {formatNumber(
                 focusCostBreakdown.focusSavedByHideoutPerCraft,
-              )} de foco por tirada.
+              )} foco por tirada.
             </p>
           )}
         </div>
@@ -348,10 +352,7 @@ export function ProductionConfigCard({
 
       {config.hasDailyBonus && (
         <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-surface-raised p-3">
-          <span className="text-sm text-text-muted">
-            Magnitud del bono diario
-          </span>
-
+          <span className="text-sm text-text-muted">Magnitud del bono diario</span>
           <div className="inline-flex overflow-hidden rounded-md border border-border">
             {([0.1, 0.2] as const).map((amount) => (
               <button
@@ -372,19 +373,10 @@ export function ProductionConfigCard({
       )}
 
       <div className="mt-4 border-t border-border pt-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <span className="text-sm text-text-faint">
-              Return Rate resultante
-            </span>
-            <p className="mt-1 text-[11px] text-text-faint">
-              Bono de producción total: +
-              {formatPercent(rrrBreakdown.totalProductionBonus)}
-            </p>
-          </div>
-
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-text-faint">Return Rate resultante</span>
           <span className="font-mono text-lg font-semibold text-positive">
-            {formatPercent(rrrBreakdown.returnRate, 1)}
+            {formatPercent(rrrBreakdown.returnRate)}
           </span>
         </div>
       </div>
