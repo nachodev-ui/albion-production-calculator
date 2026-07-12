@@ -23,6 +23,7 @@ const CITY_NAME_BY_ID: Readonly<Record<CityId, string>> = {
   caerleon: 'Caerleon',
   brecilien: 'Brecilien',
   island: 'Isla personal/de gremio',
+  hideout: 'Hideout (HO)',
 }
 
 const CRAFTING_SPECIALTY_LABELS: Readonly<
@@ -63,36 +64,11 @@ const REFINING_RECOMMENDATIONS: readonly {
   readonly category: string
   readonly label: string
 }[] = [
-  {
-    pattern: /^T\d+_PLANKS(?:_LEVEL\d+)?$/,
-    cityId: 'fort_sterling',
-    category: 'wood',
-    label: 'refinado de madera',
-  },
-  {
-    pattern: /^T\d+_STONEBLOCK(?:_LEVEL\d+)?$/,
-    cityId: 'bridgewatch',
-    category: 'rock',
-    label: 'refinado de piedra',
-  },
-  {
-    pattern: /^T\d+_CLOTH(?:_LEVEL\d+)?$/,
-    cityId: 'lymhurst',
-    category: 'fiber',
-    label: 'refinado de fibra',
-  },
-  {
-    pattern: /^T\d+_LEATHER(?:_LEVEL\d+)?$/,
-    cityId: 'martlock',
-    category: 'hide',
-    label: 'refinado de piel',
-  },
-  {
-    pattern: /^T\d+_METALBAR(?:_LEVEL\d+)?$/,
-    cityId: 'thetford',
-    category: 'ore',
-    label: 'refinado de mineral',
-  },
+  { pattern: /^T\d+_PLANKS(?:_LEVEL\d+)?$/, cityId: 'fort_sterling', category: 'wood', label: 'refinado de madera' },
+  { pattern: /^T\d+_STONEBLOCK(?:_LEVEL\d+)?$/, cityId: 'bridgewatch', category: 'rock', label: 'refinado de piedra' },
+  { pattern: /^T\d+_CLOTH(?:_LEVEL\d+)?$/, cityId: 'lymhurst', category: 'fiber', label: 'refinado de fibra' },
+  { pattern: /^T\d+_LEATHER(?:_LEVEL\d+)?$/, cityId: 'martlock', category: 'hide', label: 'refinado de piel' },
+  { pattern: /^T\d+_METALBAR(?:_LEVEL\d+)?$/, cityId: 'thetford', category: 'ore', label: 'refinado de mineral' },
 ]
 
 function findCraftingCity(
@@ -112,9 +88,7 @@ export function getProductionCityRecommendation(
     const match = REFINING_RECOMMENDATIONS.find((candidate) =>
       candidate.pattern.test(item.id),
     )
-
     if (!match) return null
-
     return {
       cityId: match.cityId,
       cityName: CITY_NAME_BY_ID[match.cityId],
@@ -126,7 +100,6 @@ export function getProductionCityRecommendation(
 
   const specialtyCategory = getCraftingSpecialtyCategory(item)
   if (!specialtyCategory) return null
-
   const cityId = findCraftingCity(specialtyCategory)
   if (!cityId) return null
 
@@ -144,11 +117,16 @@ export function normalizeProductionConfigForRecommendation(
   recommendation: ProductionCityRecommendation | null,
 ): NodeReturnRateConfig {
   const isIsland = config.cityId === 'island'
+  const isHideout = config.cityId === 'hideout'
 
   return {
     ...config,
     isIsland,
-    hasSpecialtyBonus: !isIsland && recommendation?.cityId === config.cityId,
+    isHideout,
+    hideoutZoneQuality: config.hideoutZoneQuality ?? 1,
+    hideoutPowerLevel: config.hideoutPowerLevel ?? 1,
+    hasSpecialtyBonus:
+      !isIsland && !isHideout && recommendation?.cityId === config.cityId,
     specialtyKind: recommendation?.specialtyKind ?? config.specialtyKind,
   }
 }
@@ -160,10 +138,7 @@ export function applyRecommendedProductionCity(
 ): NodeReturnRateConfig {
   if (!recommendation) {
     return normalizeProductionConfigForRecommendation(
-      {
-        ...config,
-        specialtyKind: fallbackSpecialtyKind,
-      },
+      { ...config, specialtyKind: fallbackSpecialtyKind },
       null,
     )
   }
@@ -173,6 +148,7 @@ export function applyRecommendedProductionCity(
       ...config,
       cityId: recommendation.cityId,
       isIsland: false,
+      isHideout: false,
       specialtyKind: recommendation.specialtyKind,
     },
     recommendation,
