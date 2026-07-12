@@ -55,6 +55,9 @@ export interface StationFeeBreakdown {
 
 export interface FocusCostBreakdown {
   readonly baseFocusPerCraft: number
+  /** Foco tras Destiny Board, antes del bono especialista del Hideout. */
+  readonly baseEffectiveFocusPerCraft: number
+  /** Foco final tras Destiny Board y, cuando aplica, Hideout especializado. */
   readonly effectiveFocusPerCraft: number
   readonly craftsNeeded: number
   readonly totalFocusRequired: number
@@ -62,6 +65,11 @@ export interface FocusCostBreakdown {
   readonly maxCraftsWithAvailableFocus: number
   readonly maxItemsWithAvailableFocus: number
   readonly focusCostEfficiency: number
+  /** Eficiencia total equivalente después de incorporar el Hideout. */
+  readonly effectiveFocusCostEfficiency: number
+  /** Bono especialista del nivel del Hideout, expresado como fracción. */
+  readonly hideoutSpecialistBonus: number
+  readonly focusSavedByHideoutPerCraft: number
   readonly qualityIncrease: number
   readonly useFocus: boolean
 }
@@ -197,13 +205,35 @@ export function calculateFocusCostBreakdown(params: {
   readonly outputQuantity: number
   readonly useFocus: boolean
   readonly config: CraftingSpecializationConfig
+  /**
+   * `specialistcraftingbonus` del nivel de energía del Hideout.
+   * Un valor 0,30 equivale a sumar 3.000 puntos de eficiencia de foco.
+   */
+  readonly hideoutSpecialistBonus?: number
 }): FocusCostBreakdown {
   const craftsNeeded = sanitizeNonNegative(params.craftsNeeded)
   const outputQuantity = Math.max(1, sanitizeNonNegative(params.outputQuantity))
   const availableFocus = sanitizeNonNegative(params.config.availableFocus)
+  const focusCostEfficiency = sanitizeNonNegative(
+    params.config.focusCostEfficiency,
+  )
+  const hideoutSpecialistBonus = sanitizeNonNegative(
+    params.hideoutSpecialistBonus ?? 0,
+  )
+  const hideoutEquivalentEfficiency = hideoutSpecialistBonus * 10_000
+  const effectiveFocusCostEfficiency =
+    focusCostEfficiency + hideoutEquivalentEfficiency
+  const baseEffectiveFocusPerCraft = calculateEffectiveFocusCost(
+    params.baseFocusPerCraft,
+    focusCostEfficiency,
+  )
   const effectiveFocusPerCraft = calculateEffectiveFocusCost(
     params.baseFocusPerCraft,
-    params.config.focusCostEfficiency,
+    effectiveFocusCostEfficiency,
+  )
+  const focusSavedByHideoutPerCraft = Math.max(
+    0,
+    baseEffectiveFocusPerCraft - effectiveFocusPerCraft,
   )
   const maxCraftsWithAvailableFocus =
     effectiveFocusPerCraft > 0
@@ -212,6 +242,7 @@ export function calculateFocusCostBreakdown(params: {
 
   return {
     baseFocusPerCraft: sanitizeNonNegative(params.baseFocusPerCraft),
+    baseEffectiveFocusPerCraft,
     effectiveFocusPerCraft,
     craftsNeeded,
     totalFocusRequired: params.useFocus
@@ -220,7 +251,10 @@ export function calculateFocusCostBreakdown(params: {
     availableFocus,
     maxCraftsWithAvailableFocus,
     maxItemsWithAvailableFocus: maxCraftsWithAvailableFocus * outputQuantity,
-    focusCostEfficiency: sanitizeNonNegative(params.config.focusCostEfficiency),
+    focusCostEfficiency,
+    effectiveFocusCostEfficiency,
+    hideoutSpecialistBonus,
+    focusSavedByHideoutPerCraft,
     qualityIncrease: sanitizeNonNegative(params.config.qualityIncrease),
     useFocus: params.useFocus,
   }
