@@ -30,6 +30,7 @@ export type {
 export type { CityId, City, CitySpecialty } from './City'
 export {
   CITIES,
+  PRODUCTION_LOCATIONS,
   BASE_CITY_PRODUCTION_BONUS,
   REFINING_SPECIALTY_BONUS,
   CRAFTING_SPECIALTY_BONUS,
