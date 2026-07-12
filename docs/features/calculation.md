@@ -11,6 +11,28 @@
 - Fama de fabricación, estudio, diarios y proyección de especialización.
 - Presets de producción y venta.
 
+## Recetas Royal
+
+Las recetas de equipo Royal consumen una pieza base y Sellos Reales. Al seleccionar
+una variante, el resumen de materiales cambia automáticamente a **Requisitos de
+receta Royal** y muestra las cantidades totales necesarias para el lote actual.
+
+La detección se realiza por la presencia del Sello Real oficial en la opción de
+receta seleccionada, por lo que cubre las variantes de armadura de tela, cuero y
+placas en todos los tiers soportados.
+
+La interfaz diferencia claramente:
+
+- la pieza base elegida y su encantamiento;
+- la cantidad total de Sellos Reales;
+- el número de tiradas necesarias;
+- los materiales recuperados dentro de subrecetas expandidas, si existen.
+
+La pieza base terminada y los Sellos Reales se consumen por completo durante la
+conversión Royal. El RRR no reduce esas cantidades. Si la pieza base se fabrica
+dentro del árbol expandido, sus recursos refinados sí pueden generar retorno en
+esa etapa anterior y se muestran en una sección independiente.
+
 ## Producción en Hideout
 
 Al seleccionar **Hideout (HO)** como lugar de producción aparecen dos parámetros:
