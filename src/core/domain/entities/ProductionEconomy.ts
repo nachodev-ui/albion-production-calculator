@@ -15,6 +15,8 @@ export interface CraftingSpecializationConfig {
   readonly availableFocus: number
   /** Bono visible de aumento de calidad. Informativo por ahora. */
   readonly qualityIncrease: number
+  /** Bono especialista del Hideout sincronizado desde la configuración de producción. */
+  readonly hideoutSpecialistBonus?: number
 }
 
 export interface StationUsageFeeOverride {
@@ -85,6 +87,7 @@ export const DEFAULT_CRAFTING_SPECIALIZATION_CONFIG: CraftingSpecializationConfi
     focusCostEfficiency: 0,
     availableFocus: 0,
     qualityIncrease: 0,
+    hideoutSpecialistBonus: 0,
   }
 
 export const CRAFTING_STATION_LABELS: Readonly<
@@ -205,10 +208,7 @@ export function calculateFocusCostBreakdown(params: {
   readonly outputQuantity: number
   readonly useFocus: boolean
   readonly config: CraftingSpecializationConfig
-  /**
-   * `specialistcraftingbonus` del nivel de energía del Hideout.
-   * Un valor 0,30 equivale a sumar 3.000 puntos de eficiencia de foco.
-   */
+  /** Permite sobrescribir el bono sincronizado para pruebas o usos puros. */
   readonly hideoutSpecialistBonus?: number
 }): FocusCostBreakdown {
   const craftsNeeded = sanitizeNonNegative(params.craftsNeeded)
@@ -218,7 +218,9 @@ export function calculateFocusCostBreakdown(params: {
     params.config.focusCostEfficiency,
   )
   const hideoutSpecialistBonus = sanitizeNonNegative(
-    params.hideoutSpecialistBonus ?? 0,
+    params.hideoutSpecialistBonus ??
+      params.config.hideoutSpecialistBonus ??
+      0,
   )
   const hideoutEquivalentEfficiency = hideoutSpecialistBonus * 10_000
   const effectiveFocusCostEfficiency =
