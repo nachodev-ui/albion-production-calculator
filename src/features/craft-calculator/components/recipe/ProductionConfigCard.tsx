@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import {
   CITIES,
   HIDEOUT_BASE_PRODUCTION_BONUS,
@@ -98,46 +97,10 @@ export function ProductionConfigCard({
       ? hideoutProfile.specialistCraftingBonus
       : 0
 
-  function syncHideoutFocusBonus(nextConfig: NodeReturnRateConfig) {
-    const nextIsHideout =
-      nextConfig.cityId === 'hideout' || nextConfig.isHideout === true
-    const nextProfile = getHideoutPowerProfile(nextConfig.hideoutPowerLevel)
-    const nextBonus =
-      nextIsHideout && nextConfig.hideoutSpecialized === true
-        ? nextProfile.specialistCraftingBonus
-        : 0
-
-    if (
-      (craftingSpecializationConfig.hideoutSpecialistBonus ?? 0) === nextBonus
-    ) {
-      return
-    }
-
-    onCraftingSpecializationConfigChange({
-      ...craftingSpecializationConfig,
-      hideoutSpecialistBonus: nextBonus,
-    })
-  }
-
-  useEffect(() => {
-    syncHideoutFocusBonus(config)
-    // La sincronización solo depende del estado efectivo del HO y del bono guardado.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    config.cityId,
-    config.isHideout,
-    config.hideoutPowerLevel,
-    config.hideoutSpecialized,
-    craftingSpecializationConfig.hideoutSpecialistBonus,
-  ])
-
   function commit(nextConfig: NodeReturnRateConfig) {
-    const normalized = normalizeProductionConfigForRecommendation(
-      nextConfig,
-      recommendation,
+    onChange(
+      normalizeProductionConfigForRecommendation(nextConfig, recommendation),
     )
-    syncHideoutFocusBonus(normalized)
-    onChange(normalized)
   }
 
   function update(patch: Partial<NodeReturnRateConfig>) {
