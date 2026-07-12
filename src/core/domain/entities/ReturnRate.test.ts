@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  HIDEOUT_BASE_PRODUCTION_BONUS,
   HIDEOUT_POWER_PROFILES,
+  getHideoutReturnRate,
+  returnRateToProductionBonus,
 } from './Hideout'
 import {
   calculateReturnRate,
@@ -27,33 +28,44 @@ describe('ReturnRate', () => {
     expect(result).toBeCloseTo(0.33 / 1.33, 10)
   })
 
-  it('aplica el bono base y generalista de un Hideout nivel 1', () => {
-    const breakdown = calculateReturnRateBreakdown({
+  it('usa calidad de zona y energía conjuntamente para un Hideout', () => {
+    const qualityOne = calculateReturnRateBreakdown({
       ...baseConfig,
       isHideout: true,
       hideoutPowerLevel: 1,
+      hideoutZoneQuality: 1,
+    })
+    const qualitySix = calculateReturnRateBreakdown({
+      ...baseConfig,
+      isHideout: true,
+      hideoutPowerLevel: 1,
+      hideoutZoneQuality: 6,
     })
 
-    expect(breakdown.baseProductionBonus).toBe(
-      HIDEOUT_BASE_PRODUCTION_BONUS,
+    expect(qualityOne.returnRate).toBe(0.2138)
+    expect(qualitySix.returnRate).toBe(0.3306)
+    expect(qualitySix.returnRate).toBeGreaterThan(qualityOne.returnRate)
+    expect(qualityOne.totalProductionBonus).toBeCloseTo(
+      returnRateToProductionBonus(0.2138),
+      10,
     )
-    expect(breakdown.hideoutGeneralistBonus).toBe(0)
-    expect(breakdown.totalProductionBonus).toBe(0.15)
-    expect(breakdown.returnRate).toBeCloseTo(0.15 / 1.15, 10)
   })
 
-  it('alcanza 50% de RRR en un Hideout nivel 9 usando foco', () => {
+  it('usa la celda exacta de calidad 6 y energía 9 con foco', () => {
     const breakdown = calculateReturnRateBreakdown({
       ...baseConfig,
       isHideout: true,
       hideoutPowerLevel: 9,
+      hideoutZoneQuality: 6,
       useFocus: true,
     })
 
-    expect(breakdown.hideoutGeneralistBonus).toBe(0.26)
-    expect(breakdown.focusBonus).toBe(0.59)
-    expect(breakdown.totalProductionBonus).toBeCloseTo(1, 10)
-    expect(breakdown.returnRate).toBeCloseTo(0.5, 10)
+    expect(getHideoutReturnRate(6, 9, true)).toBe(0.6102)
+    expect(breakdown.returnRate).toBe(0.6102)
+    expect(breakdown.totalProductionBonus).toBeCloseTo(
+      returnRateToProductionBonus(0.6102),
+      10,
+    )
   })
 
   it('no suma el bono especialista nuevamente al RRR', () => {
@@ -61,12 +73,14 @@ describe('ReturnRate', () => {
       ...baseConfig,
       isHideout: true,
       hideoutPowerLevel: 9,
+      hideoutZoneQuality: 4,
       hideoutSpecialized: false,
     })
     const specialized = calculateReturnRate({
       ...baseConfig,
       isHideout: true,
       hideoutPowerLevel: 9,
+      hideoutZoneQuality: 4,
       hideoutSpecialized: true,
     })
 
