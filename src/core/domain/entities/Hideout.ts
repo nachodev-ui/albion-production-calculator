@@ -79,6 +79,9 @@ export const HIDEOUT_POWER_PROFILES: readonly HideoutPowerProfile[] = [
   },
 ]
 
+const DEFAULT_HIDEOUT_POWER_PROFILE: HideoutPowerProfile =
+  HIDEOUT_POWER_PROFILES[0]!
+
 export function isHideoutPowerLevel(value: unknown): value is HideoutPowerLevel {
   return (
     typeof value === 'number' &&
@@ -98,6 +101,6 @@ export function getHideoutPowerProfile(
   return (
     HIDEOUT_POWER_PROFILES.find(
       (profile) => profile.level === normalizedLevel,
-    ) ?? HIDEOUT_POWER_PROFILES[0]
+    ) ?? DEFAULT_HIDEOUT_POWER_PROFILE
   )
 }
