@@ -1,7 +1,11 @@
 import { formatEnchantment } from '@core/domain/entities/Enchantment'
-import type { ReturnedMaterial } from '@core/domain/entities/CraftCostNode'
+import type {
+  CraftCostNode,
+  ReturnedMaterial,
+} from '@core/domain/entities/CraftCostNode'
+import { getRecipeOption, getRecipeTier } from '@core/domain/entities/Recipe'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
-import type { RoyalRecipeRequirementsSummary } from '@core/usecases/buildRoyalRecipeRequirements'
+import { buildRoyalRecipeRequirements } from '@core/usecases/buildRoyalRecipeRequirements'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import { InfoHint } from '@shared/components/InfoHint'
 import { RETURNED_MATERIALS_INFO } from '@features/craft-calculator/content/returnedMaterialsInfo'
@@ -9,7 +13,7 @@ import { RETURNED_MATERIALS_INFO } from '@features/craft-calculator/content/retu
 interface ReturnedMaterialsCardProps {
   readonly materials: readonly ReturnedMaterial[]
   readonly repository: ItemRepository
-  readonly royalRequirements?: RoyalRecipeRequirementsSummary | null
+  readonly rootNode: CraftCostNode
 }
 
 function formatQuantity(quantity: number): string {
@@ -28,11 +32,22 @@ function formatSilver(amount: number): string {
 export function ReturnedMaterialsCard({
   materials,
   repository,
-  royalRequirements = null,
+  rootNode,
 }: ReturnedMaterialsCardProps) {
   const totalReturnedValue = materials.reduce(
     (sum, material) => sum + material.silverValue,
     0,
+  )
+  const rootItem = repository.getById(rootNode.itemId)
+  const rootTier = rootItem?.recipe
+    ? getRecipeTier(rootItem.recipe, rootNode.enchantment)
+    : null
+  const rootOption = rootTier
+    ? getRecipeOption(rootTier, rootNode.recipeOptionIndex ?? 0)
+    : null
+  const royalRequirements = buildRoyalRecipeRequirements(
+    rootOption,
+    rootNode.quantity,
   )
 
   const hasReturnedMaterials = materials.length > 0
