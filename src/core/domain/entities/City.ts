@@ -1,7 +1,8 @@
 /**
- * Ciudades reales de Albion Online relevantes para crafteo/refinado.
- * "island" representa una isla personal/de gremio (sin bono de
- * especialidad, pero sin tarifa de estación).
+ * Lugares de producción relevantes para crafteo y refinado.
+ *
+ * `island` representa una isla personal/de gremio sin bono local.
+ * `hideout` representa un HO de zona negra con nivel de energía configurable.
  */
 export type CityId =
   | 'martlock'
@@ -11,6 +12,7 @@ export type CityId =
   | 'thetford'
   | 'caerleon'
   | 'brecilien'
+  | 'hideout'
   | 'island'
 
 export interface City {
@@ -26,12 +28,13 @@ export const CITIES: readonly City[] = [
   { id: 'thetford', name: 'Thetford' },
   { id: 'caerleon', name: 'Caerleon' },
   { id: 'brecilien', name: 'Brecilien' },
+  { id: 'hideout', name: 'Hideout (HO)' },
   { id: 'island', name: 'Isla personal/de gremio' },
 ]
 
 /**
  * Bono base de Producción Local (LPB) que da CUALQUIER ciudad real
- * (no isla) a refinado y crafteo, sin necesidad de especialidad.
+ * (no isla ni Hideout) a refinado y crafteo, sin necesidad de especialidad.
  *
  * @see https://wiki.albiononline.com/wiki/Resource_return_rate
  */
