@@ -11,10 +11,6 @@ import type {
 } from '../domain/entities/CraftCostNode'
 import { calculateReturnRate } from '../domain/entities/ReturnRate'
 import {
-  DEFAULT_HIDEOUT_POWER_LEVEL,
-  getHideoutPowerProfile,
-} from '../domain/entities/Hideout'
-import {
   DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
   DEFAULT_STATION_FEE_CONFIG,
   calculateFocusCostBreakdown,
@@ -64,9 +60,6 @@ export const DEFAULT_RETURN_RATE_CONFIG: NodeReturnRateConfig = {
   hasDailyBonus: false,
   dailyBonusAmount: 0.1,
   isIsland: true,
-  isHideout: false,
-  hideoutPowerLevel: DEFAULT_HIDEOUT_POWER_LEVEL,
-  hideoutSpecialized: false,
 }
 
 export interface CraftTreeConfig {
@@ -153,6 +146,9 @@ function buildLeaf(
   path: NodePath,
   config: CraftTreeConfig,
 ): BuiltNode {
+  // La presencia de la clave importa: un precio manual 0 es válido.
+  // Cuando no existe override manual, se usa el precio automático del
+  // mercado para la misma identidad de ítem y encantamiento.
   const hasManualPrice = config.manualPrices.has(path)
   const manualUnitPrice = config.manualPrices.get(path)
   const automaticUnitPrice = config.automaticPrices?.get(
@@ -175,7 +171,7 @@ function buildLeaf(
       enchantment,
       quantity,
       totalCost: unitPrice * quantity,
-      unitCost,
+      unitCost: unitPrice,
       isManualPrice: true,
       priceSource: hasManualPrice
         ? 'manual'
@@ -203,72 +199,104 @@ function buildNode(
   repository: ItemRepository,
   config: CraftTreeConfig,
 ): BuiltNode {
+  const isExpanded = config.expandedPaths.has(path)
   const item = repository.getById(itemId)
+  const tier = item?.recipe ? getRecipeTier(item.recipe, enchantment) : null
 
-  if (!item?.recipe || !config.expandedPaths.has(path)) {
+  if (!isExpanded || !tier || !item) {
     return buildLeaf(itemId, enchantment, quantity, path, config)
   }
 
-  const tier = getRecipeTier(item.recipe, enchantment)
-
-  if (!tier) {
-    return buildLeaf(itemId, enchantment, quantity, path, config)
-  }
-
+  const rrrConfig = getProductionConfigForItem(config.productionConfig, item)
   const requestedOptionIndex = config.selectedRecipeOptions?.get(path) ?? 0
   const recipeOption = getRecipeOption(tier, requestedOptionIndex)
+  const recipeOptionIndex =
+    requestedOptionIndex >= 0 &&
+    requestedOptionIndex <= (tier.alternatives?.length ?? 0)
+      ? requestedOptionIndex
+      : 0
 
-  if (!recipeOption) {
-    return buildLeaf(itemId, enchantment, quantity, path, config)
-  }
+  const builtChildren: BuiltNode[] = recipeOption.ingredients.map(
+    (ingredient, index) => {
+      const resolved = resolveRecipeIngredient(ingredient, repository)
+      const childPathValue = recipeChildPath(path, recipeOptionIndex, index)
 
-  const recipeOptionIndex = tier.options.indexOf(recipeOption)
+      if (resolved.status === 'unresolved') {
+        return buildLeaf(
+          resolved.itemId,
+          enchantment,
+          resolved.quantity,
+          childPathValue,
+          config,
+        )
+      }
+
+      return buildNode(
+        resolved.item.id,
+        resolved.enchantment,
+        resolved.quantity,
+        childPathValue,
+        repository,
+        config,
+      )
+    },
+  )
+
   const craftsNeeded = quantity / recipeOption.outputQuantity
-  const builtChildren = recipeOption.ingredients.map((ingredient, index) => {
-    const resolvedIngredient = resolveRecipeIngredient(ingredient, enchantment)
 
-    return buildNode(
-      resolvedIngredient.itemId,
-      resolvedIngredient.enchantment,
-      ingredient.quantity * craftsNeeded,
-      recipeChildPath(path, recipeOptionIndex, index),
-      repository,
-      config,
-    )
-  })
-
-  const grossMaterialCost = builtChildren.reduce(
+  const grossMaterialCostPerCraft = builtChildren.reduce(
     (sum, child) => sum + child.node.totalCost,
     0,
   )
-  const eligibleMaterialCost = builtChildren.reduce((sum, child, index) => {
-    const ingredient = recipeOption.ingredients[index]
-    return ingredient && isReturnEligibleIngredient(ingredient)
-      ? sum + child.node.totalCost
-      : sum
-  }, 0)
-  const productionConfig = getProductionConfigForItem(
-    config.productionConfig,
-    item,
+
+  const returnEligibleMaterialCostPerCraft = builtChildren.reduce(
+    (sum, child) => {
+      const ingredientItem = repository.getById(child.node.itemId)
+
+      if (
+        !ingredientItem ||
+        !isReturnEligibleIngredient(item, ingredientItem)
+      ) {
+        return sum
+      }
+
+      return sum + child.node.totalCost
+    },
+    0,
   )
+
   const returnBreakdown = calculateMaterialReturn(
-    grossMaterialCost,
-    eligibleMaterialCost,
-    productionConfig,
+    grossMaterialCostPerCraft,
+    returnEligibleMaterialCostPerCraft,
+    rrrConfig,
   )
-  const fixedStationFees = tier.stationFee * craftsNeeded
-  const childStationFees = builtChildren.reduce(
+
+  const netMaterialCostPerCraft = returnBreakdown.netQuantity
+  const totalCostPerCraft = netMaterialCostPerCraft + recipeOption.silverFee
+  const unitCost = totalCostPerCraft / recipeOption.outputQuantity
+
+  /*
+   * Los hijos describen una sola tirada del padre. Sus tarifas y ahorros
+   * deben repetirse por la cantidad real de crafteos del nodo actual.
+   */
+  const childStationFeesPerCraft = builtChildren.reduce(
     (sum, child) => sum + child.stationFees,
     0,
   )
-  const stationFees = fixedStationFees + childStationFees
-  const netMaterialCost = returnBreakdown.netQuantity
-  const unitCost = (netMaterialCost + fixedStationFees) / quantity
+
+  const childSavingsPerCraft = builtChildren.reduce(
+    (sum, child) => sum + child.silverSavedByReturnRate,
+    0,
+  )
+
+  const stationFees =
+    childStationFeesPerCraft * craftsNeeded +
+    recipeOption.silverFee * craftsNeeded
+
   const silverSavedByReturnRate =
-    builtChildren.reduce(
-      (sum, child) => sum + child.silverSavedByReturnRate,
-      0,
-    ) + returnBreakdown.returnedQuantity
+    childSavingsPerCraft * craftsNeeded +
+    returnBreakdown.returnedQuantity * craftsNeeded
+
   const missingPriceOccurrences = builtChildren.flatMap(
     (child) => child.missingPriceOccurrences,
   )
@@ -351,9 +379,11 @@ export function calculateCraftCost(
     (sum, material) => sum + material.silverValue,
     0,
   )
+
   const missingPriceItems = aggregateMissingPriceItems(
     built.missingPriceOccurrences,
   )
+
   const rootItem = repository.getById(itemId)
   const rootTier = rootItem?.recipe
     ? getRecipeTier(rootItem.recipe, enchantment)
@@ -388,14 +418,6 @@ export function calculateCraftCost(
     manualOverride: config.stationUsageFeeOverride,
   })
 
-  const hideoutProfile = getHideoutPowerProfile(
-    config.productionConfig.hideoutPowerLevel ?? DEFAULT_HIDEOUT_POWER_LEVEL,
-  )
-  const hideoutSpecialistBonus =
-    config.productionConfig.isHideout === true &&
-    config.productionConfig.hideoutSpecialized === true
-      ? hideoutProfile.specialistCraftingBonus
-      : 0
   const focusCostBreakdown = calculateFocusCostBreakdown({
     baseFocusPerCraft: rootOption?.craftingFocus ?? 0,
     craftsNeeded,
@@ -404,19 +426,24 @@ export function calculateCraftCost(
     config:
       config.craftingSpecializationConfig ??
       DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
-    hideoutSpecialistBonus,
   })
+
+  const totalStationFees = built.stationFees + stationFeeBreakdown.totalFee
+  const totalMaterialCost = built.node.totalCost - built.stationFees
+  const grandTotal = built.node.totalCost + stationFeeBreakdown.totalFee
 
   return {
     root: built.node,
-    totalStationFees: built.stationFees + stationFeeBreakdown.totalFee,
+    totalStationFees,
     stationUsageFee: stationFeeBreakdown.totalFee,
     stationFeeBreakdown,
     focusCostBreakdown,
-    totalMaterialCost: built.node.totalCost,
-    grandTotal: built.node.totalCost + stationFeeBreakdown.totalFee,
+    totalMaterialCost,
+    grandTotal,
     totalSilverSavedByReturnRate,
     returnedMaterials,
     missingPriceItems,
+    missingPriceCount: missingPriceItems.length,
+    isComplete: missingPriceItems.length === 0,
   }
 }
