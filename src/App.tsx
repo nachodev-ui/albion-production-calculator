@@ -5,7 +5,8 @@ import { AppHeader } from './app/AppHeader'
 import { AppShell } from './app/AppShell'
 import { CatalogIcon } from './app/AppIcons'
 import { ModuleHeader } from './app/ModuleHeader'
-import type { AppModule } from './app/types'
+import { useAppRoute } from './app/routing'
+import type { AppModule, AppRoute } from './app/types'
 import { EmptyDetailState } from '@features/craft-calculator/components/EmptyDetailState'
 import { ItemDetailPanel } from '@features/craft-calculator/components/ItemDetailPanel'
 
@@ -25,6 +26,16 @@ const RefiningComingSoonPage = lazy(() =>
       default: module.RefiningComingSoonPage,
     }),
   ),
+)
+const PlansPage = lazy(() =>
+  import('@features/account/components/PlansPage').then((module) => ({
+    default: module.PlansPage,
+  })),
+)
+const AccountPage = lazy(() =>
+  import('@features/account/components/AccountPage').then((module) => ({
+    default: module.AccountPage,
+  })),
 )
 
 async function loadItemRepository(): Promise<ItemRepository> {
@@ -63,7 +74,7 @@ function ModuleFallback({ label }: { readonly label: string }) {
 }
 
 function App() {
-  const [activeModule, setActiveModule] = useState<AppModule>('crafting')
+  const { route, navigate } = useAppRoute()
   const [selectedItem, setSelectedItem] = useState<Item | null>(null)
   const [repository, setRepository] = useState<ItemRepository | null>(null)
   const [repositoryError, setRepositoryError] = useState<string | null>(null)
@@ -91,9 +102,13 @@ function App() {
     }
   }, [])
 
-  function navigate(module: AppModule) {
-    setActiveModule(module)
+  function navigateTo(nextRoute: AppRoute) {
+    navigate(nextRoute)
     setIsCatalogOpen(false)
+  }
+
+  function navigateModule(module: AppModule) {
+    navigateTo(module)
   }
 
   function selectItem(item: Item) {
@@ -103,14 +118,14 @@ function App() {
 
   const header = (
     <AppHeader
-      activeModule={activeModule}
+      activeRoute={route}
       itemCount={repository?.getAll().length ?? 0}
-      onNavigate={navigate}
+      onNavigate={navigateTo}
       onOpenCatalog={() => setIsCatalogOpen(true)}
     />
   )
 
-  const catalog = activeModule === 'crafting' ? (
+  const catalog = route === 'crafting' ? (
     repository ? (
       <Suspense fallback={<SidebarFallback />}>
         <ItemBrowserPanel
@@ -132,7 +147,7 @@ function App() {
       isSidebarOpen={isCatalogOpen}
       onCloseSidebar={() => setIsCatalogOpen(false)}
     >
-      {activeModule === 'crafting' && (
+      {route === 'crafting' && (
         <>
           <ModuleHeader
             eyebrow="Módulo de crafteo"
@@ -172,7 +187,7 @@ function App() {
         </>
       )}
 
-      {activeModule === 'refining' && (
+      {route === 'refining' && (
         <>
           <ModuleHeader
             eyebrow="Módulo de refinamiento"
@@ -181,12 +196,12 @@ function App() {
             badge="Próximamente"
           />
           <Suspense fallback={<ModuleFallback label="refinamiento" />}>
-            <RefiningComingSoonPage onOpenCrafting={() => navigate('crafting')} />
+            <RefiningComingSoonPage onOpenCrafting={() => navigateModule('crafting')} />
           </Suspense>
         </>
       )}
 
-      {activeModule === 'presets' && (
+      {route === 'presets' && (
         <>
           <ModuleHeader
             eyebrow="Biblioteca local"
@@ -194,7 +209,33 @@ function App() {
             description="Administra configuraciones frecuentes de ciudad, especialidad, foco, bono diario y Premium guardadas en este navegador."
           />
           <Suspense fallback={<ModuleFallback label="presets" />}>
-            <PresetLibraryPage onOpenCrafting={() => navigate('crafting')} />
+            <PresetLibraryPage onOpenCrafting={() => navigateModule('crafting')} />
+          </Suspense>
+        </>
+      )}
+
+      {route === 'plans' && (
+        <>
+          <ModuleHeader
+            eyebrow="Planes de acceso"
+            title="Free y Pro"
+            description="Compara límites y herramientas disponibles. El acceso efectivo siempre lo resuelve la API central mediante entitlements."
+          />
+          <Suspense fallback={<ModuleFallback label="planes" />}>
+            <PlansPage onNavigate={navigateTo} />
+          </Suspense>
+        </>
+      )}
+
+      {route === 'account' && (
+        <>
+          <ModuleHeader
+            eyebrow="Cuenta"
+            title="Perfil y permisos"
+            description="Consulta tu identidad autenticada, plan efectivo y capacidades habilitadas por la API central."
+          />
+          <Suspense fallback={<ModuleFallback label="cuenta" />}>
+            <AccountPage onNavigate={navigateTo} />
           </Suspense>
         </>
       )}
