@@ -59,10 +59,13 @@ La autenticación solo debe habilitarse cuando ambos lados estén configurados:
 
 1. Crear la aplicación SPA y la API en Auth0.
 2. Autorizar callbacks, logout y web origins de localhost y Cloudflare Pages.
-3. Configurar las variables `VITE_AUTH0_*` en Cloudflare Pages.
+3. Configurar `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID` y `AUTH0_AUDIENCE` como variables del Environment `production` de GitHub. El frontend se construye en GitHub Actions antes del Direct Upload a Cloudflare Pages.
 4. Configurar `AUTH_ISSUER` y `AUTH_AUDIENCE` en Render.
-5. Cambiar `AUTH_ENABLED=true` en Render y `VITE_AUTH0_ENABLED=true` en Cloudflare.
-6. Desplegar y verificar login, `/api/v1/me`, logout y renovación de sesión.
+5. Activar primero `AUTH_ENABLED=true` en Render y verificar que `/api/v1/me` exige bearer token.
+6. Activar después `AUTH0_ENABLED=true` en el Environment `production` del frontend.
+7. Desplegar y verificar login, `/api/v1/me`, logout y renovación de sesión.
+
+El procedimiento completo está documentado en [Activación de Auth0 en producción](/operations/auth0-production-setup).
 
 ## Pro manual durante este hito
 
