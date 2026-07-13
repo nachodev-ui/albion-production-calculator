@@ -25,6 +25,11 @@ jobs:
       VITE_CENTRAL_MARKET_API_URL: https://albion-market-api.onrender.com/api/v1
       VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
       VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
+      VITE_AUTH0_ENABLED: ${{ vars.AUTH0_ENABLED || 'false' }}
+      VITE_AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
+      VITE_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
+      VITE_AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE || 'https://albion-market-api' }}
+      VITE_AUTH0_SCOPE: openid profile email
 
     steps:
       - name: Checkout repository
@@ -78,6 +83,9 @@ jobs:
           pnpm contracts:check
           pnpm security:check
 
+      - name: Validate Auth0 production configuration
+        run: pnpm auth0:check
+
       - name: Run lint and tests
         run: |
           pnpm lint
@@ -89,7 +97,7 @@ jobs:
       - name: Validate bundle budget
         run: pnpm bundle:check
 
-      - name: Validate production API host in built bundle
+      - name: Validate production configuration in built bundle
         shell: bash
         run: |
           set -euo pipefail
@@ -102,6 +110,18 @@ jobs:
           if grep -R -Fq 'albion-market-api-nachodev.fly.dev' dist; then
             echo '::error::The production build still contains the obsolete Fly.io host.'
             exit 1
+          fi
+
+          if [[ "${VITE_AUTH0_ENABLED}" == 'true' ]]; then
+            for value in "${VITE_AUTH0_DOMAIN}" "${VITE_AUTH0_CLIENT_ID}" "${VITE_AUTH0_AUDIENCE}"; do
+              if [[ -z "${value}" ]] || ! grep -R -Fq "${value}" dist; then
+                echo "::error::The enabled Auth0 production value was not embedded in the build."
+                exit 1
+              fi
+            done
+            echo 'Production build contains the configured Auth0 SPA identifiers.'
+          else
+            echo 'Auth0 remains disabled for this production build.'
           fi
 
           echo 'Production build contains Render and no Fly.io host.'
@@ -218,9 +238,20 @@ jobs:
                 continue
               fi
 
+              local auth0_ok=true
+              if [[ "${VITE_AUTH0_ENABLED}" == 'true' ]]; then
+                for value in "${VITE_AUTH0_DOMAIN}" "${VITE_AUTH0_CLIENT_ID}" "${VITE_AUTH0_AUDIENCE}"; do
+                  if ! grep -Fq "${value}" "${bundle_file}"; then
+                    auth0_ok=false
+                    break
+                  fi
+                done
+              fi
+
               if grep -Fq "${expected_host}" "${bundle_file}" && \
-                 ! grep -Fq "${obsolete_host}" "${bundle_file}"; then
-                echo "${label}: all JavaScript chunks contain Render configuration and no Fly.io reference."
+                 ! grep -Fq "${obsolete_host}" "${bundle_file}" && \
+                 [[ "${auth0_ok}" == true ]]; then
+                echo "${label}: deployed chunks contain the expected Render and Auth0 configuration."
                 return 0
               fi
 
@@ -228,7 +259,7 @@ jobs:
               sleep 5
             done
 
-            echo "::error::${label} chunks did not converge to the expected Render host configuration."
+            echo "::error::${label} chunks did not converge to the expected production configuration."
             return 1
           }
 
