@@ -49,6 +49,26 @@ jobs:
             echo "sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
           fi
 
+      - name: Mark Auth0 frontend deployment pending
+        continue-on-error: true
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          payload="$(jq -n \
+            --arg state pending \
+            --arg context 'deploy/auth0-production' \
+            --arg description 'Auth0 frontend deployment is running' \
+            --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+          curl --fail --silent --show-error --request POST \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            --data "${payload}" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${{ steps.revision.outputs.sha }}" >/dev/null
+
       - name: Checkout production revision
         uses: actions/checkout@v6
         with:
@@ -152,3 +172,31 @@ jobs:
           done
           echo '::error::The public Cloudflare bundle did not converge to Auth0-enabled configuration.'
           exit 1
+
+      - name: Publish Auth0 frontend deployment status
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          state='failure'
+          description='Auth0 frontend deployment failed'
+          if [[ "${JOB_STATUS}" == 'success' ]]; then
+            state='success'
+            description='Auth0 frontend deployment passed'
+          fi
+          payload="$(jq -n \
+            --arg state "${state}" \
+            --arg context 'deploy/auth0-production' \
+            --arg description "${description}" \
+            --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+          curl --fail --silent --show-error --request POST \
+            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+            --header 'Accept: application/vnd.github+json' \
+            --header 'X-GitHub-Api-Version: 2022-11-28' \
+            --data "${payload}" \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${{ steps.revision.outputs.sha }}" >/dev/null
