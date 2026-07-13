@@ -1,0 +1,57 @@
+name: Verify deployed account routes
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/verify-account-routes.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Verify Cloudflare SPA account routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin='https://albion-production-calculator.pages.dev'
+
+          for path in / /plans /account; do
+            headers="$(mktemp)"
+            body="$(mktemp)"
+            status="$(curl \
+              --silent \
+              --show-error \
+              --location \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              --header 'Cache-Control: no-cache' \
+              "${origin}${path}?hito2-route-check=${GITHUB_SHA}")"
+
+            test "$status" = '200'
+            grep -Fq '<div id="root"></div>' "$body"
+            grep -Fqi 'content-type: text/html' "$headers"
+            grep -Fqi 'content-security-policy:' "$headers"
+            echo "${path}: HTTP 200, SPA root and security headers verified."
+          done
+
+      - name: Verify account API remains safely disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(curl \
+            --silent \
+            --show-error \
+            --output response.json \
+            --write-out '%{http_code}' \
+            https://albion-market-api.onrender.com/api/v1/me)"
+
+          test "$status" = '503'
+          jq -e '.error == "authentication unavailable"' response.json >/dev/null
+          echo 'Account API remains disabled until Auth0 tenant configuration is supplied.'
