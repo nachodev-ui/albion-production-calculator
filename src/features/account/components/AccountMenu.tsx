@@ -1,5 +1,9 @@
+import { useContext } from "react";
 import type { AppRoute } from "../../../app/types";
-import { useAccountSession } from "../hooks/useAccountSession";
+import {
+  AccountSessionContext,
+  type AccountSessionValue,
+} from "../context/accountSession";
 import {
   currentPlan,
   useAccountAccessStore,
@@ -16,6 +20,18 @@ interface AccountMenuProps {
   readonly onNavigate: (route: AppRoute) => void;
 }
 
+const isolatedSession: AccountSessionValue = {
+  authEnabled: false,
+  authConfigured: false,
+  isLoading: false,
+  isAuthenticated: false,
+  profile: null,
+  error: null,
+  login: async () => undefined,
+  logout: async () => undefined,
+  refreshAccess: async () => undefined,
+};
+
 function initials(name: string | null, email: string | null): string {
   const source = name?.trim() || email?.trim() || "Cuenta";
   const parts = source.split(/\s+/).filter(Boolean);
@@ -26,7 +42,7 @@ function initials(name: string | null, email: string | null): string {
 }
 
 export function AccountMenu({ onNavigate }: AccountMenuProps) {
-  const session = useAccountSession();
+  const session = useContext(AccountSessionContext) ?? isolatedSession;
   const access = useAccountAccessStore((state) => state.access);
   const accessStatus = useAccountAccessStore((state) => state.status);
   const plan = currentPlan(access);
