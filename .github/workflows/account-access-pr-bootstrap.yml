@@ -1,0 +1,99 @@
+name: Account access bootstrap
+
+on:
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - package.json
+      - pnpm-lock.yaml
+      - contracts/central-api/openapi.yaml
+      - scripts/bootstrap-account-access.py
+      - src/**
+      - public/**
+      - .github/workflows/account-access-pr-bootstrap.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: account-access-pr-bootstrap-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  bootstrap:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Apply account access gate
+        run: python3 scripts/bootstrap-account-access.py
+
+      - name: Synchronize central API contract
+        run: |
+          curl --fail --silent --show-error \
+            https://raw.githubusercontent.com/nachodev-ui/albion-market-api/main/openapi/openapi.yaml \
+            > contracts/central-api/openapi.yaml
+
+      - name: Update lockfile and install dependencies
+        run: |
+          pnpm install --lockfile-only
+          pnpm install --frozen-lockfile
+
+      - name: Regenerate central API types
+        run: pnpm contracts:generate
+
+      - name: Format implementation
+        run: |
+          pnpm exec prettier --write \
+            package.json \
+            src/App.tsx \
+            src/main.tsx \
+            src/app/AppHeader.tsx \
+            src/app/MainNavigation.tsx \
+            src/app/routing.ts \
+            src/app/routing.test.ts \
+            src/app/types.ts \
+            src/features/account \
+            src/features/craft-calculator/components/recipe/ItemRecipeCard.tsx \
+            src/features/market-data/hooks/useProfitabilityLiquidity.ts \
+            docs/.vitepress/config.ts
+
+      - name: Validate implementation
+        run: |
+          pnpm contracts:check
+          pnpm security:check
+          pnpm lint
+          pnpm test
+          pnpm build
+          pnpm bundle:check
+          pnpm docs:build
+
+      - name: Commit bootstrap results
+        run: |
+          if git diff --quiet; then
+            echo "No bootstrap changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml contracts/central-api/openapi.yaml src public docs/.vitepress/config.ts
+          git commit -m "feat: complete account access integration"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
