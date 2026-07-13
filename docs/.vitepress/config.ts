@@ -23,6 +23,10 @@ export default defineConfig({
           { text: "Visión general", link: "/" },
           { text: "Primeros pasos", link: "/getting-started" },
           { text: "Cuentas y acceso", link: "/accounts-access" },
+          {
+            text: "Branding de Auth0",
+            link: "/auth0-universal-login-branding",
+          },
         ],
       },
       {

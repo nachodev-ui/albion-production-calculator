@@ -6,7 +6,12 @@ import {
   useAccountAccessStore,
 } from "../store/accountAccessStore";
 import { ENTITLEMENT_KEYS } from "../types";
-import { CheckIcon, RefreshIcon, SparklesIcon, UserIcon } from "./AccountIcons";
+import {
+  CheckIcon,
+  RefreshIcon,
+  SparklesIcon,
+  UserIcon,
+} from "./AccountIcons";
 
 interface AccountPageProps {
   readonly onNavigate: (route: AppRoute) => void;
@@ -57,9 +62,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             Acceso de cuenta en preparación
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">
-            La interfaz de cuenta ya está integrada, pero el login real
-            permanece deshabilitado hasta configurar el tenant de Auth0 y
-            habilitar la validación JWT de la API.
+            La interfaz de cuenta ya está integrada, pero el login real permanece
+            deshabilitado hasta configurar el tenant de Auth0 y habilitar la
+            validación JWT de la API.
           </p>
           <div className="mt-6 rounded-xl border border-border bg-surface-raised p-4 text-xs leading-relaxed text-text-faint">
             Mientras tanto, la aplicación conserva el acceso Free y no envía
@@ -106,6 +111,11 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const entitlements = getEffectiveEntitlements(access);
   const plan = currentPlan(access);
+  const hasManagedSubscription =
+    access?.subscription.status !== undefined &&
+    access.subscription.status !== "none";
+  const checkoutSucceeded =
+    new URLSearchParams(window.location.search).get("checkout") === "success";
   const displayName =
     session.profile?.name ?? access?.user.displayName ?? "Usuario de Albion";
   const email =
@@ -113,6 +123,24 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-14 pt-2 sm:px-6">
+      {checkoutSucceeded && (
+        <section className="mb-5 rounded-xl border border-positive/40 bg-positive-muted px-4 py-3">
+          <p className="text-sm font-semibold text-positive">
+            Checkout completado
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-text-muted">
+            La suscripción se habilitará cuando la API confirme el webhook. Usa
+            “Actualizar permisos” para consultar el estado más reciente.
+          </p>
+        </section>
+      )}
+
+      {(accessError || session.billingError) && (
+        <p className="mb-5 rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+          {session.billingError ?? accessError}
+        </p>
+      )}
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
         <section className="rounded-2xl border border-border bg-surface p-5">
           <div className="flex items-center gap-4">
@@ -163,12 +191,6 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             </div>
           </dl>
 
-          {accessError && (
-            <p className="mt-4 rounded-lg border border-negative/40 bg-negative-muted px-3 py-2 text-xs text-negative">
-              {accessError}
-            </p>
-          )}
-
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               type="button"
@@ -181,14 +203,28 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               />
               Actualizar permisos
             </button>
-            <button
-              type="button"
-              onClick={() => onNavigate("plans")}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-bg"
-            >
-              <SparklesIcon className="h-4 w-4" />
-              Ver planes
-            </button>
+            {session.billingEnabled && hasManagedSubscription ? (
+              <button
+                type="button"
+                onClick={() => void session.openBillingPortal()}
+                disabled={session.billingStatus !== "idle"}
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-bg disabled:cursor-wait disabled:opacity-60"
+              >
+                <SparklesIcon className="h-4 w-4" />
+                {session.billingStatus === "portal"
+                  ? "Abriendo portal..."
+                  : "Administrar suscripción"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate("plans")}
+                className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-bg"
+              >
+                <SparklesIcon className="h-4 w-4" />
+                Ver planes
+              </button>
+            )}
           </div>
         </section>
 
@@ -222,9 +258,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </div>
 
           <p className="mt-5 text-xs leading-relaxed text-text-faint">
-            Durante esta etapa, el acceso Pro se asigna manualmente en
-            PostgreSQL. Al actualizar permisos, la interfaz refleja
-            inmediatamente cualquier alta o retiro de acceso.
+            Los permisos se resuelven en la API central. Las asignaciones
+            manuales de Pro continúan disponibles para administración y pruebas,
+            aunque no exista una suscripción externa asociada.
           </p>
         </section>
       </div>
