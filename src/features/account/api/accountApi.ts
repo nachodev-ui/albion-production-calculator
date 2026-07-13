@@ -17,6 +17,10 @@ export class AccountApiError extends Error {
   }
 }
 
+export interface BillingUrlResponse {
+  readonly url: string
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -95,6 +99,24 @@ function parseAccountAccess(value: unknown): AccountAccess {
   }
 }
 
+function parseBillingUrl(value: unknown): BillingUrlResponse {
+  if (!isRecord(value)) {
+    throw new AccountApiError('Invalid billing response', 502)
+  }
+
+  const url = requiredString(value['url'], 'billing.url')
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') {
+      throw new Error('unsupported protocol')
+    }
+  } catch {
+    throw new AccountApiError('Invalid billing redirect URL', 502)
+  }
+
+  return { url }
+}
+
 async function responseMessage(response: Response): Promise<string> {
   try {
     const payload: unknown = await response.json()
@@ -107,17 +129,28 @@ async function responseMessage(response: Response): Promise<string> {
   return `Account API request failed with status ${response.status}`
 }
 
+async function authenticatedRequest(
+  path: string,
+  accessToken: string,
+  options: RequestInit,
+): Promise<Response> {
+  return fetch(`${accountAuthConfig.centralApiBaseUrl}${path}`, {
+    ...options,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+      ...options.headers,
+    },
+    cache: 'no-store',
+  })
+}
+
 export async function fetchCurrentAccount(
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<AccountAccess> {
-  const response = await fetch(`${accountAuthConfig.centralApiBaseUrl}/me`, {
+  const response = await authenticatedRequest('/me', accessToken, {
     method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
     signal,
   })
 
@@ -126,4 +159,35 @@ export async function fetchCurrentAccount(
   }
 
   return parseAccountAccess(await response.json())
+}
+
+async function createBillingUrl(
+  endpoint: '/billing/checkout' | '/billing/portal',
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<BillingUrlResponse> {
+  const response = await authenticatedRequest(endpoint, accessToken, {
+    method: 'POST',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new AccountApiError(await responseMessage(response), response.status)
+  }
+
+  return parseBillingUrl(await response.json())
+}
+
+export function createBillingCheckout(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<BillingUrlResponse> {
+  return createBillingUrl('/billing/checkout', accessToken, signal)
+}
+
+export function createBillingPortal(
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<BillingUrlResponse> {
+  return createBillingUrl('/billing/portal', accessToken, signal)
 }
