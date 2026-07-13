@@ -65,7 +65,7 @@ La autenticación solo debe habilitarse cuando ambos lados estén configurados:
 6. Activar después `AUTH0_ENABLED=true` en el Environment `production` del frontend.
 7. Desplegar y verificar login, `/api/v1/me`, logout y renovación de sesión.
 
-El procedimiento completo está documentado en [Activación de Auth0 en producción](../operations/auth0-production-activation.md).
+El procedimiento completo está documentado en [Activación de Auth0 en producción](/operations/auth0-production-setup).
 
 ## Pro manual durante este hito
 
