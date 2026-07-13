@@ -15,7 +15,9 @@ const enabledValue = (process.env.VITE_AUTH0_ENABLED ?? 'false')
 const domain = (process.env.VITE_AUTH0_DOMAIN ?? '').trim()
 const clientId = (process.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
 const audience = (process.env.VITE_AUTH0_AUDIENCE ?? '').trim()
-const scope = (process.env.VITE_AUTH0_SCOPE ?? 'openid profile email').trim()
+const scope = (
+  process.env.VITE_AUTH0_SCOPE ?? 'openid profile email read:account'
+).trim()
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
@@ -61,7 +63,7 @@ async function main(): Promise<void> {
   assert(audienceUrl.protocol === 'https:', 'VITE_AUTH0_AUDIENCE must use HTTPS')
 
   const requestedScopes = new Set(scope.split(/\s+/).filter(Boolean))
-  for (const requiredScope of ['openid', 'profile', 'email']) {
+  for (const requiredScope of ['openid', 'profile', 'email', 'read:account']) {
     assert(requestedScopes.has(requiredScope), `Missing required scope: ${requiredScope}`)
   }
 
@@ -89,6 +91,7 @@ async function main(): Promise<void> {
   console.log(`Auth0 production configuration is valid for ${issuer}`)
   console.log(`Audience: ${audience}`)
   console.log(`SPA Client ID: ${clientId}`)
+  console.log(`Scopes: ${scope}`)
 }
 
 await main()
