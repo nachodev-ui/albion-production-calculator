@@ -34,6 +34,7 @@ interface PlanCardProps {
   readonly active: boolean;
   readonly highlighted?: boolean;
   readonly actionLabel: string;
+  readonly disabled?: boolean;
   readonly onAction: () => void;
 }
 
@@ -45,6 +46,7 @@ function PlanCard({
   active,
   highlighted = false,
   actionLabel,
+  disabled = false,
   onAction,
 }: PlanCardProps) {
   return (
@@ -94,7 +96,8 @@ function PlanCard({
         <button
           type="button"
           onClick={onAction}
-          className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${
+          disabled={disabled}
+          className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border disabled:cursor-not-allowed disabled:opacity-55 ${
             highlighted
               ? "bg-accent text-bg"
               : "border border-border bg-surface-raised text-text-muted hover:border-border-strong hover:text-text"
@@ -113,6 +116,10 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
   const access = useAccountAccessStore((state) => state.access);
   const plan = currentPlan(access);
   const isPro = plan === "pro";
+  const hasManagedSubscription =
+    access?.subscription.status !== undefined &&
+    access.subscription.status !== "none";
+  const billingBusy = session.billingStatus !== "idle";
 
   function openAccountOrLogin() {
     if (session.isAuthenticated) {
@@ -126,6 +133,32 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
     onNavigate("account");
   }
 
+  function handleProAction() {
+    if (!session.isAuthenticated) {
+      openAccountOrLogin();
+      return;
+    }
+    if (isPro && hasManagedSubscription) {
+      void session.openBillingPortal();
+      return;
+    }
+    if (isPro) {
+      onNavigate("account");
+      return;
+    }
+    void session.startCheckout();
+  }
+
+  function proActionLabel(): string {
+    if (!session.billingEnabled) return "Checkout en preparación";
+    if (session.billingStatus === "checkout") return "Creando checkout...";
+    if (session.billingStatus === "portal") return "Abriendo portal...";
+    if (!session.isAuthenticated) return "Iniciar sesión para contratar";
+    if (isPro && hasManagedSubscription) return "Administrar suscripción";
+    if (isPro) return "Ver mi cuenta";
+    return "Contratar Pro · USD 4,99";
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl px-5 pb-14 pt-2 sm:px-6">
       <section className="mb-6 rounded-2xl border border-border bg-surface/75 px-6 py-7 text-center sm:px-10">
@@ -137,11 +170,17 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           Compara el acceso Free y Pro
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-text-muted">
-          La API central resuelve el plan efectivo y la interfaz desbloquea
-          únicamente las capacidades autorizadas. En este hito, Pro se asigna
-          manualmente desde administración.
+          La API central autoriza cada capacidad y Lemon Squeezy administra la
+          suscripción sin almacenar información bancaria en Albion Production
+          Calculator.
         </p>
       </section>
+
+      {session.billingError && (
+        <p className="mb-5 rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+          {session.billingError}
+        </p>
+      )}
 
       <div className="grid gap-5 md:grid-cols-2">
         <PlanCard
@@ -156,26 +195,26 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           onAction={openAccountOrLogin}
         />
         <PlanCard
-          eyebrow="Acceso ampliado"
+          eyebrow="USD 4,99 al mes"
           title="Pro"
           description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, automatizar comparaciones y administrar más configuraciones."
           features={PRO_FEATURES}
           active={isPro}
           highlighted
-          actionLabel={isPro ? "Administrar mi acceso" : "Solicitar acceso Pro"}
-          onAction={openAccountOrLogin}
+          actionLabel={proActionLabel()}
+          disabled={!session.billingEnabled || billingBusy}
+          onAction={handleProAction}
         />
       </div>
 
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
         <h3 className="text-sm font-semibold text-text">
-          Activación durante el Hito 2
+          Facturación sandbox protegida
         </h3>
         <p className="mt-2 text-xs leading-relaxed text-text-faint">
-          Todavía no existe checkout ni facturación automática. Una cuenta
-          autenticada se crea al consultar su perfil; luego un administrador
-          puede asignar o retirar Pro en PostgreSQL. El botón de actualizar
-          permisos refleja el cambio sin almacenar secretos en el navegador.
+          El checkout permanece oculto en producción hasta activar la bandera de
+          facturación y configurar las credenciales externas. Las cuentas con Pro
+          manual continúan funcionando sin depender del proveedor de pago.
         </p>
       </section>
     </div>
