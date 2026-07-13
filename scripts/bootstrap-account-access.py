@@ -1,5 +1,18 @@
 from pathlib import Path
 
+for relative_path in (
+    'src/features/account/components/AccountMenu.tsx',
+    'src/features/account/components/AccountPage.tsx',
+    'src/features/account/components/PlansPage.tsx',
+):
+    component_path = Path(relative_path)
+    component_text = component_path.read_text(encoding='utf-8')
+    component_text = component_text.replace(
+        '../context/AccountSessionContext',
+        '../hooks/useAccountSession',
+    )
+    component_path.write_text(component_text, encoding='utf-8')
+
 path = Path('src/features/craft-calculator/components/recipe/ItemRecipeCard.tsx')
 text = path.read_text(encoding='utf-8')
 
