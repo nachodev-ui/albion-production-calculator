@@ -1,0 +1,207 @@
+name: Bootstrap account access integration
+
+on:
+  push:
+    branches:
+      - feat/account-access-ui
+
+permissions:
+  contents: write
+
+concurrency:
+  group: account-access-bootstrap
+  cancel-in-progress: true
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/account-access-ui
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Activate pnpm
+        run: corepack enable && corepack prepare pnpm@10.28.0 --activate
+
+      - name: Connect liquidity optimizer entitlement gate
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('src/features/craft-calculator/components/recipe/ItemRecipeCard.tsx')
+          text = path.read_text(encoding='utf-8')
+
+          import_anchor = "import { useEffect, useMemo, useState } from 'react'\n"
+          imports = """import { useEffect, useMemo, useState } from 'react'
+          import { FeatureGate } from '@features/account/components/FeatureGate'
+          import { useBooleanEntitlement } from '@features/account/hooks/useAccountEntitlement'
+          import { ENTITLEMENT_KEYS } from '@features/account/types'
+          import { navigateToRoute } from '../../../../app/routing'
+          """
+          if "@features/account/components/FeatureGate" not in text:
+              text = text.replace(import_anchor, imports, 1)
+
+          state_anchor = """  const [historyComparison, setHistoryComparison] = useState<Pick<
+              MarketConfig,
+              'saleCity' | 'quality'
+            > | null>(null)
+
+            const isVanity = isVanityPlaceholder(item)
+          """
+          state_replacement = """  const [historyComparison, setHistoryComparison] = useState<Pick<
+              MarketConfig,
+              'saleCity' | 'quality'
+            > | null>(null)
+            const optimizerLiquidityEnabled = useBooleanEntitlement(
+              ENTITLEMENT_KEYS.optimizerLiquidity,
+            )
+
+            const isVanity = isVanityPlaceholder(item)
+          """
+          if "const optimizerLiquidityEnabled" not in text:
+              if state_anchor not in text:
+                  raise SystemExit('Could not locate ItemRecipeCard state anchor')
+              text = text.replace(state_anchor, state_replacement, 1)
+
+          config_anchor = """    markets: market.markets,
+              config: market.config,
+            })
+          """
+          config_replacement = """    markets: market.markets,
+              config: market.config,
+              enabled: optimizerLiquidityEnabled,
+            })
+          """
+          if "enabled: optimizerLiquidityEnabled" not in text:
+              if config_anchor not in text:
+                  raise SystemExit('Could not locate liquidity hook anchor')
+              text = text.replace(config_anchor, config_replacement, 1)
+
+          card_anchor = """          <ProfitabilityOptimizerCard
+                      recommendation={profitabilityRecommendation}
+                      markets={market.markets}
+                      marketStatus={market.status}
+                      liquidityStatus={profitabilityLiquidityHistory.status}
+                      liquidityError={profitabilityLiquidityHistory.error}
+                      liquidityWarnings={profitabilityLiquidityHistory.warnings}
+                      liquidityProgress={profitabilityLiquidityHistory.progress}
+                      onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
+                      currentTotalCost={calculation.grandTotal}
+                      optimizedTotalCost={optimizedCalculation.grandTotal}
+                      purchaseSavings={optimizerPurchaseSavings}
+                      currentEconomicResult={
+                        currentAutomaticEconomicSummary?.economicResult ?? null
+                      }
+                      optimizedEconomicResult={
+                        optimizedEconomicSummary?.economicResult ?? null
+                      }
+                      resultImprovement={optimizerResultImprovement}
+                      isManualSellPrice={hasManualSellPrice}
+                      manualMaterialPriceCount={manualMaterialPriceCount}
+                      onApply={() =>
+                        market.applyMarketRecommendation(
+                          profitabilityRecommendation.materialCities,
+                          profitabilityRecommendation.saleCity,
+                        )
+                      }
+                    />
+          """
+          card_replacement = """          <FeatureGate
+                      entitlementKey={ENTITLEMENT_KEYS.optimizerLiquidity}
+                      title=\"Optimizador con liquidez\"
+                      description=\"El plan Pro analiza el historial de cada mercado candidato para descartar opciones sin profundidad suficiente antes de recomendar una compra o venta.\"
+                      onViewPlans={() => navigateToRoute('plans')}
+                    >
+                      <ProfitabilityOptimizerCard
+                        recommendation={profitabilityRecommendation}
+                        markets={market.markets}
+                        marketStatus={market.status}
+                        liquidityStatus={profitabilityLiquidityHistory.status}
+                        liquidityError={profitabilityLiquidityHistory.error}
+                        liquidityWarnings={profitabilityLiquidityHistory.warnings}
+                        liquidityProgress={profitabilityLiquidityHistory.progress}
+                        onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
+                        currentTotalCost={calculation.grandTotal}
+                        optimizedTotalCost={optimizedCalculation.grandTotal}
+                        purchaseSavings={optimizerPurchaseSavings}
+                        currentEconomicResult={
+                          currentAutomaticEconomicSummary?.economicResult ?? null
+                        }
+                        optimizedEconomicResult={
+                          optimizedEconomicSummary?.economicResult ?? null
+                        }
+                        resultImprovement={optimizerResultImprovement}
+                        isManualSellPrice={hasManualSellPrice}
+                        manualMaterialPriceCount={manualMaterialPriceCount}
+                        onApply={() =>
+                          market.applyMarketRecommendation(
+                            profitabilityRecommendation.materialCities,
+                            profitabilityRecommendation.saleCity,
+                          )
+                        }
+                      />
+                    </FeatureGate>
+          """
+          if "title=\"Optimizador con liquidez\"" not in text:
+              if card_anchor not in text:
+                  raise SystemExit('Could not locate optimizer card anchor')
+              text = text.replace(card_anchor, card_replacement, 1)
+
+          path.write_text(text, encoding='utf-8')
+
+      - name: Synchronize central API contract
+        run: |
+          curl --fail --silent --show-error \
+            https://raw.githubusercontent.com/nachodev-ui/albion-market-api/main/openapi/openapi.yaml \
+            > contracts/central-api/openapi.yaml
+
+      - name: Update dependency lock and generated contracts
+        run: |
+          pnpm install --lockfile-only
+          pnpm install --frozen-lockfile
+          pnpm contracts:generate
+
+      - name: Format account access implementation
+        run: |
+          pnpm exec prettier --write \
+            package.json \
+            src/App.tsx \
+            src/main.tsx \
+            src/app/AppHeader.tsx \
+            src/app/MainNavigation.tsx \
+            src/app/routing.ts \
+            src/app/routing.test.ts \
+            src/app/types.ts \
+            src/features/account \
+            src/features/craft-calculator/components/recipe/ItemRecipeCard.tsx \
+            src/features/market-data/hooks/useProfitabilityLiquidity.ts
+
+      - name: Validate implementation
+        run: |
+          pnpm contracts:check
+          pnpm security:check
+          pnpm lint
+          pnpm test
+          pnpm build
+          pnpm bundle:check
+          pnpm docs:build
+
+      - name: Commit generated and formatted files
+        run: |
+          if git diff --quiet; then
+            echo "No bootstrap changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml contracts/central-api/openapi.yaml src public
+          git commit -m "feat: complete account access integration"
+          git push origin HEAD:feat/account-access-ui
