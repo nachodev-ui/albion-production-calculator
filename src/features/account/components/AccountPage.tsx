@@ -1,5 +1,5 @@
 import type { AppRoute } from "../../../app/types";
-import { useAccountSession } from "../context/AccountSessionContext";
+import { useAccountSession } from "../hooks/useAccountSession";
 import {
   currentPlan,
   getEffectiveEntitlements,
