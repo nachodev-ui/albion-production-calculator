@@ -1,0 +1,52 @@
+name: Billing UI diagnostic
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Capture diagnostics
+        env:
+          VITE_CENTRAL_MARKET_API_URL: https://api.example.invalid/api/v1
+          VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+          VITE_AUTH0_ENABLED: 'false'
+          VITE_AUTH0_AUDIENCE: https://albion-market-api
+          VITE_BILLING_ENABLED: 'false'
+        run: |
+          pnpm lint > lint.log 2>&1 || true
+          pnpm test > test.log 2>&1 || true
+          pnpm build > build.log 2>&1 || true
+          pnpm docs:build > docs.log 2>&1 || true
+      - name: Upload diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: billing-ui-diagnostics
+          path: |
+            lint.log
+            test.log
+            build.log
+            docs.log
+          if-no-files-found: error
+          retention-days: 1
