@@ -2,7 +2,7 @@ import type { AppModule } from './types'
 import { HammerIcon, PresetIcon, RefiningIcon } from './AppIcons'
 
 interface MainNavigationProps {
-  readonly activeModule: AppModule
+  readonly activeModule: AppModule | null
   readonly onNavigate: (module: AppModule) => void
 }
 
