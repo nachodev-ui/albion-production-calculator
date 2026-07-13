@@ -18,6 +18,7 @@
     "contracts:compat": "tsx scripts/check-market-contracts.ts",
     "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && pnpm contracts:compat && git diff --exit-code -- src/shared/contracts",
     "security:check": "tsx scripts/check-public-security.ts",
+    "auth0:check": "tsx scripts/validate-auth0-production.ts",
     "bundle:check": "tsx scripts/check-bundle-budget.ts",
     "bundle:analyze": "pnpm build && tsx scripts/check-bundle-budget.ts --write-report"
   },
