@@ -13,6 +13,7 @@ const allowedViteKeys = new Set([
   'VITE_AUTH0_CLIENT_ID',
   'VITE_AUTH0_AUDIENCE',
   'VITE_AUTH0_SCOPE',
+  'VITE_BILLING_ENABLED',
 ])
 
 const viteKeyPattern = /\bVITE_[A-Z0-9_]*[A-Z0-9]\b/g
