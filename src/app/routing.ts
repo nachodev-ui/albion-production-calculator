@@ -26,6 +26,18 @@ export function routeFromPathname(pathname: string): AppRoute {
   }
 }
 
+export function navigateToRoute(nextRoute: AppRoute, replace = false): void {
+  const nextPath = ROUTE_PATHS[nextRoute]
+  if (window.location.pathname !== nextPath) {
+    if (replace) {
+      window.history.replaceState({}, '', nextPath)
+    } else {
+      window.history.pushState({}, '', nextPath)
+    }
+  }
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 export function useAppRoute() {
   const [route, setRoute] = useState<AppRoute>(() =>
     routeFromPathname(window.location.pathname),
@@ -38,11 +50,7 @@ export function useAppRoute() {
   }, [])
 
   const navigate = useCallback((nextRoute: AppRoute) => {
-    const nextPath = ROUTE_PATHS[nextRoute]
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({}, '', nextPath)
-    }
-    setRoute(nextRoute)
+    navigateToRoute(nextRoute)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
