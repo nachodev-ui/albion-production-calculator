@@ -28,6 +28,8 @@ jobs:
     env:
       VITE_CENTRAL_MARKET_API_URL: https://api.example.invalid/api/v1
       VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+      VITE_AUTH0_ENABLED: 'false'
+      VITE_AUTH0_AUDIENCE: https://albion-market-api
 
     steps:
       - name: Checkout repository
@@ -54,6 +56,9 @@ jobs:
 
       - name: Validate public security config
         run: pnpm security:check
+
+      - name: Validate disabled Auth0 configuration
+        run: pnpm auth0:check
 
       - name: Run lint
         run: pnpm lint
