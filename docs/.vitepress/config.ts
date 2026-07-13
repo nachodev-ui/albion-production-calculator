@@ -13,6 +13,7 @@ export default defineConfig({
       { text: 'Distribución', link: '/architecture/distribution-model' },
       { text: 'Arquitectura', link: '/architecture/overview' },
       { text: 'Mercado', link: '/architecture/market-data' },
+      { text: 'Cuentas', link: '/accounts-access' },
       { text: 'Despliegue', link: '/operations/production-deployment' },
     ],
     sidebar: [
@@ -21,6 +22,7 @@ export default defineConfig({
         items: [
           { text: 'Visión general', link: '/' },
           { text: 'Primeros pasos', link: '/getting-started' },
+          { text: 'Cuentas y acceso', link: '/accounts-access' },
         ],
       },
       {
@@ -32,6 +34,10 @@ export default defineConfig({
           },
           { text: 'Aplicación', link: '/architecture/overview' },
           { text: 'Datos de mercado', link: '/architecture/market-data' },
+          {
+            text: 'Autenticación y entitlements',
+            link: '/architecture/accounts-access',
+          },
         ],
       },
       {
