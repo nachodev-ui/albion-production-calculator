@@ -17,6 +17,7 @@ const ALLOWED_PUBLIC_ENV_KEYS = new Set([
   'VITE_AUTH0_CLIENT_ID',
   'VITE_AUTH0_AUDIENCE',
   'VITE_AUTH0_SCOPE',
+  'VITE_BILLING_ENABLED',
 ])
 
 const SENSITIVE_ENV_KEY_PATTERN =
@@ -58,109 +59,90 @@ function normalizeApiBaseUrl({
   key,
   rawValue,
   fallback,
-  requireHttps = false,
+  localOnly,
 }: {
   readonly key: string
   readonly rawValue: string | undefined
   readonly fallback: string
-  readonly requireHttps?: boolean
+  readonly localOnly: boolean
 }): string {
-  if (requireHttps && !rawValue) {
-    throw new Error(`${key} es obligatoria para compilar el frontend en producción`)
-  }
+  const candidate = rawValue ?? fallback
+  let url: URL
 
-  const value = rawValue ?? fallback
-
-  let parsed: URL
   try {
-    parsed = new URL(value)
+    url = new URL(candidate)
   } catch {
     throw new Error(`${key} debe ser una URL absoluta válida`)
   }
 
-  if (parsed.username || parsed.password) {
-    throw new Error(`${key} no debe contener usuario ni contraseña`)
+  if (url.username || url.password) {
+    throw new Error(`${key} no puede contener credenciales`)
+  }
+  if (url.search || url.hash) {
+    throw new Error(`${key} no puede contener query string ni fragmento`)
   }
 
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new Error(`${key} debe usar http o https`)
+  const isLoopback = isLoopbackHostname(url.hostname)
+  if (localOnly && !isLoopback) {
+    throw new Error(`${key} solo puede apuntar a loopback`)
+  }
+  if (!localOnly && url.protocol !== 'https:' && !isLoopback) {
+    throw new Error(`${key} debe usar HTTPS fuera de loopback`)
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`${key} debe usar HTTP o HTTPS`)
   }
 
-  if (requireHttps && parsed.protocol !== 'https:') {
-    throw new Error(`${key} debe usar HTTPS en producción`)
-  }
-
-  if (parsed.protocol === 'http:' && !isLoopbackHostname(parsed.hostname)) {
-    throw new Error(`${key} solo puede usar http en localhost/127.0.0.1`)
-  }
-
-  const normalized = parsed.toString().replace(/\/$/, '')
-  if (!normalized.endsWith('/api/v1')) {
-    throw new Error(`${key} debe apuntar a una base URL terminada en /api/v1`)
-  }
-
-  return normalized
+  return url.toString().replace(/\/+$/, '')
 }
 
-function normalizeBoolean(
-  key: string,
-  rawValue: string | undefined,
-  fallback: boolean,
-): boolean {
-  if (!rawValue) return fallback
-  if (rawValue === 'true') return true
-  if (rawValue === 'false') return false
-
+function parseBoolean(key: string, fallback: boolean): boolean {
+  const value = readPublicEnv(key)
+  if (value === undefined) return fallback
+  if (value === 'true') return true
+  if (value === 'false') return false
   throw new Error(`${key} debe ser true o false`)
 }
 
-function normalizeTimeoutMs(rawValue: string | undefined): number {
-  if (!rawValue) return DEFAULT_MARKET_REQUEST_TIMEOUT_MS
+function parseTimeout(): number {
+  const value = readPublicEnv('VITE_MARKET_REQUEST_TIMEOUT_MS')
+  if (value === undefined) return DEFAULT_MARKET_REQUEST_TIMEOUT_MS
 
-  const parsed = Number(rawValue)
-  if (!Number.isInteger(parsed)) {
-    throw new Error('VITE_MARKET_REQUEST_TIMEOUT_MS debe ser un entero')
-  }
-
-  if (parsed < MIN_TIMEOUT_MS || parsed > MAX_TIMEOUT_MS) {
+  const parsed = Number(value)
+  if (
+    !Number.isInteger(parsed) ||
+    parsed < MIN_TIMEOUT_MS ||
+    parsed > MAX_TIMEOUT_MS
+  ) {
     throw new Error(
       `VITE_MARKET_REQUEST_TIMEOUT_MS debe estar entre ${MIN_TIMEOUT_MS} y ${MAX_TIMEOUT_MS}`,
     )
   }
-
   return parsed
 }
 
 assertNoUnexpectedViteEnv()
 
-const localReceiverFallbackEnabled = normalizeBoolean(
+const localReceiverFallbackEnabled = parseBoolean(
   'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK',
-  readPublicEnv('VITE_ENABLE_LOCAL_RECEIVER_FALLBACK'),
   DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED,
 )
 
-if (import.meta.env.PROD && localReceiverFallbackEnabled) {
-  throw new Error(
-    'VITE_ENABLE_LOCAL_RECEIVER_FALLBACK debe ser false en builds de producción',
-  )
-}
-
-export const PUBLIC_ENV = {
+export const publicEnv = Object.freeze({
   centralMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_CENTRAL_MARKET_API_URL',
     rawValue: readPublicEnv('VITE_CENTRAL_MARKET_API_URL'),
     fallback: DEFAULT_CENTRAL_MARKET_API_URL,
-    requireHttps: import.meta.env.PROD,
+    localOnly: false,
   }),
-  localReceiverFallbackEnabled,
   localMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_LOCAL_MARKET_API_URL',
     rawValue:
       readPublicEnv('VITE_LOCAL_MARKET_API_URL') ??
       readPublicEnv('VITE_MARKET_API_URL'),
     fallback: DEFAULT_LOCAL_MARKET_API_URL,
+    localOnly: true,
   }),
-  marketRequestTimeoutMs: normalizeTimeoutMs(
-    readPublicEnv('VITE_MARKET_REQUEST_TIMEOUT_MS'),
-  ),
-} as const
+  marketRequestTimeoutMs: parseTimeout(),
+  localReceiverFallbackEnabled,
+})
