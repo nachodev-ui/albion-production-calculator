@@ -27,7 +27,7 @@ jobs:
       VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
       VITE_AUTH0_ENABLED: 'true'
       VITE_AUTH0_DOMAIN: albion-production-calculator.us.auth0.com
-      VITE_AUTH0_CLIENT_ID: LNrCFAgAUVubf14yCe10eAMx42w9XJvv
+      VITE_AUTH0_CLIENT_ID: LNrCFAgAUVubfI4yCe10eAMx42w9XJvv
       VITE_AUTH0_AUDIENCE: https://albion-market-api
       VITE_AUTH0_SCOPE: openid profile email read:account
 
