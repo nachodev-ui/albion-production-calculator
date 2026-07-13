@@ -73,6 +73,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar el perfil y acceso efectivo del usuario autenticado
+         * @description Sincroniza el usuario identificado por el claim `sub` y devuelve su plan y entitlements efectivos.
+         */
+        get: operations["getCurrentAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/entitlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consultar la suscripción y los entitlements efectivos */
+        get: operations["getCurrentEntitlements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/status": {
         parameters: {
             query?: never;
@@ -266,6 +303,46 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccountUser: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string | null;
+            displayName: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            lastLoginAt: string | null;
+        };
+        AccountSubscription: {
+            /** @enum {string} */
+            plan: "free" | "pro" | "guild";
+            /** @enum {string} */
+            status: "none" | "trialing" | "active" | "past_due" | "canceled" | "expired";
+            /** Format: date-time */
+            accessUntil: string | null;
+        };
+        /**
+         * @example {
+         *       "history.max_days": 28,
+         *       "optimizer.liquidity": true,
+         *       "exports.csv": true
+         *     }
+         */
+        EntitlementMap: {
+            [key: string]: unknown;
+        };
+        AccountAccess: {
+            user: components["schemas"]["AccountUser"];
+            subscription: components["schemas"]["AccountSubscription"];
+            entitlements: components["schemas"]["EntitlementMap"];
+        };
+        AccountEntitlementsResponse: {
+            subscription: components["schemas"]["AccountSubscription"];
+            entitlements: components["schemas"]["EntitlementMap"];
+        };
         /** @enum {string} */
         Server: "west" | "east" | "europe";
         /** Format: int32 */
@@ -917,6 +994,104 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCurrentAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perfil, suscripción efectiva y entitlements resueltos. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountAccess"];
+                };
+            };
+            /** @description Access token ausente, mal formado, inválido o expirado. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            403: components["responses"]["OriginNotAllowed"];
+            405: components["responses"]["MethodNotAllowedGet"];
+            429: components["responses"]["RateLimited"];
+            500: components["responses"]["InternalServerError"];
+            /** @description La autenticación de usuarios todavía no está habilitada en el runtime. */
+            503: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "authentication unavailable"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getCurrentEntitlements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Suscripción efectiva y mapa de entitlements del usuario. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountEntitlementsResponse"];
+                };
+            };
+            /** @description Access token ausente, mal formado, inválido o expirado. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            403: components["responses"]["OriginNotAllowed"];
+            405: components["responses"]["MethodNotAllowedGet"];
+            429: components["responses"]["RateLimited"];
+            500: components["responses"]["InternalServerError"];
+            /** @description La autenticación de usuarios todavía no está habilitada en el runtime. */
+            503: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "error": "authentication unavailable"
+                     *     }
+                     */
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };

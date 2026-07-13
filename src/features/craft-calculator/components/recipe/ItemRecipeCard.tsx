@@ -1,64 +1,68 @@
-import { useEffect, useMemo, useState } from 'react'
-import { formatEnchantment } from '@core/domain/entities/Enchantment'
-import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
-import { isVanityPlaceholder } from '@core/domain/entities/Item'
-import type { Item } from '@core/domain/entities/Item'
+import { useEffect, useMemo, useState } from "react";
+import { FeatureGate } from "@features/account/components/FeatureGate";
+import { useBooleanEntitlement } from "@features/account/hooks/useAccountEntitlement";
+import { ENTITLEMENT_KEYS } from "@features/account/types";
+import { navigateToRoute } from "../../../../app/routing";
+import { formatEnchantment } from "@core/domain/entities/Enchantment";
+import type { EnchantmentLevel } from "@core/domain/entities/Enchantment";
+import { isVanityPlaceholder } from "@core/domain/entities/Item";
+import type { Item } from "@core/domain/entities/Item";
 import {
   getRecipeOption,
   getRecipeOptions,
   getRecipeTier,
-} from '@core/domain/entities/Recipe'
-import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
-import { calculateCraftingFame } from '@core/usecases/calculateCraftingFame'
+} from "@core/domain/entities/Recipe";
+import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
+import { calculateCraftingFame } from "@core/usecases/calculateCraftingFame";
 import {
   getRecipeResolutionStatus,
   resolveRecipeTierIngredients,
-} from '@core/usecases/resolveRecipeIngredient'
-import type { RecipeResolutionStatus } from '@core/usecases/resolveRecipeIngredient'
-import { MarketConnectionBar } from '@features/market-data/components/MarketConnectionBar'
-import { MaterialPurchaseConfigBar } from '@features/market-data/components/MaterialPurchaseConfigBar'
-import { MarketHistoryCard } from '@features/market-data/components/MarketHistoryCard'
-import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
-import { useMarketHistory } from '@features/market-data/hooks/useMarketHistory'
-import { useProfitabilityLiquidity } from '@features/market-data/hooks/useProfitabilityLiquidity'
-import { useMarketDataStore } from '@features/market-data/store/marketDataStore'
-import type { MarketConfig } from '@features/market-data/types/MarketPrice'
-import { buildItemPriceKey } from '@features/market-data/types/MarketPrice'
-import { collectMarketPriceTargets } from '@features/market-data/utils/collectMarketPriceTargets'
-import { collectMarketQuantityRequirements } from '@features/market-data/utils/collectMarketQuantityRequirements'
-import { buildProfitabilityMarketRecommendation } from '@features/market-data/utils/profitabilityOptimizer'
+} from "@core/usecases/resolveRecipeIngredient";
+import type { RecipeResolutionStatus } from "@core/usecases/resolveRecipeIngredient";
+import { MarketConnectionBar } from "@features/market-data/components/MarketConnectionBar";
+import { MaterialPurchaseConfigBar } from "@features/market-data/components/MaterialPurchaseConfigBar";
+import { MarketHistoryCard } from "@features/market-data/components/MarketHistoryCard";
+import { useCurrentMarketPrices } from "@features/market-data/hooks/useCurrentMarketPrices";
+import { useMarketHistory } from "@features/market-data/hooks/useMarketHistory";
+import { useProfitabilityLiquidity } from "@features/market-data/hooks/useProfitabilityLiquidity";
+import { useMarketDataStore } from "@features/market-data/store/marketDataStore";
+import type { MarketConfig } from "@features/market-data/types/MarketPrice";
+import { buildItemPriceKey } from "@features/market-data/types/MarketPrice";
+import { collectMarketPriceTargets } from "@features/market-data/utils/collectMarketPriceTargets";
+import { collectMarketQuantityRequirements } from "@features/market-data/utils/collectMarketQuantityRequirements";
+import { buildProfitabilityMarketRecommendation } from "@features/market-data/utils/profitabilityOptimizer";
 import {
   buildMaterialLiquidityAssessments,
   buildSaleLiquidityAssessments,
-} from '@features/market-data/utils/profitabilityLiquidity'
+} from "@features/market-data/utils/profitabilityLiquidity";
 import {
   applyRecommendedProductionCity,
   getProductionCityRecommendation,
-} from '../../utils/productionRecommendation'
-import { ManualPricePersistenceBar } from '@features/price-input/components/ManualPricePersistenceBar'
-import { ItemIcon } from '@shared/components/ItemIcon'
-import { TierBadge } from '@shared/components/TierBadge'
-import { useCraftCalculation } from '../../hooks/useCraftCalculation'
-import { useRecipeOptionComparison } from '../../hooks/useRecipeOptionComparison'
-import { useCraftTreeStore } from '../../store/craftTreeStore'
-import { calculateCraftEconomicSummary } from '../../utils/profitCalculations'
-import { CalculationReadinessBanner } from '../CalculationReadinessBanner'
-import { CalculationSummaryActions } from '../CalculationSummaryActions'
-import { CraftQuantityInput } from '../CraftQuantityInput'
-import { CraftingProgressCard } from '../CraftingProgressCard'
-import { ProfitSummaryCard } from '../ProfitSummaryCard'
-import { ProfitabilityOptimizerCard } from '../ProfitabilityOptimizerCard'
-import { ReturnRateSavingsCard } from '../ReturnRateSavingsCard'
-import { ReturnedMaterialsCard } from '../ReturnedMaterialsCard'
-import { ProductionConfigCard } from './ProductionConfigCard'
-import { RecipeOptionProfitComparisonCard } from './RecipeOptionProfitComparisonCard'
-import { RecipeOptionSelector } from './RecipeOptionSelector'
-import { RecipeTree } from './RecipeTree'
+} from "../../utils/productionRecommendation";
+import { ManualPricePersistenceBar } from "@features/price-input/components/ManualPricePersistenceBar";
+import { ItemIcon } from "@shared/components/ItemIcon";
+import { TierBadge } from "@shared/components/TierBadge";
+import { useCraftCalculation } from "../../hooks/useCraftCalculation";
+import { useRecipeOptionComparison } from "../../hooks/useRecipeOptionComparison";
+import { useCraftTreeStore } from "../../store/craftTreeStore";
+import { calculateCraftEconomicSummary } from "../../utils/profitCalculations";
+import { CalculationReadinessBanner } from "../CalculationReadinessBanner";
+import { CalculationSummaryActions } from "../CalculationSummaryActions";
+import { CraftQuantityInput } from "../CraftQuantityInput";
+import { CraftingProgressCard } from "../CraftingProgressCard";
+import { ProfitSummaryCard } from "../ProfitSummaryCard";
+import { ProfitabilityOptimizerCard } from "../ProfitabilityOptimizerCard";
+import { ReturnRateSavingsCard } from "../ReturnRateSavingsCard";
+import { ReturnedMaterialsCard } from "../ReturnedMaterialsCard";
+import { ProductionConfigCard } from "./ProductionConfigCard";
+import { RecipeOptionProfitComparisonCard } from "./RecipeOptionProfitComparisonCard";
+import { RecipeOptionSelector } from "./RecipeOptionSelector";
+import { RecipeTree } from "./RecipeTree";
 
 interface ItemRecipeCardProps {
-  readonly item: Item
-  readonly enchantment: EnchantmentLevel
-  readonly repository: ItemRepository
+  readonly item: Item;
+  readonly enchantment: EnchantmentLevel;
+  readonly repository: ItemRepository;
 }
 
 const STATUS_STYLE: Record<
@@ -66,25 +70,25 @@ const STATUS_STYLE: Record<
   { label: string; className: string }
 > = {
   complete: {
-    label: 'Cálculo completo',
-    className: 'bg-positive-muted text-positive',
+    label: "Cálculo completo",
+    className: "bg-positive-muted text-positive",
   },
   partial: {
-    label: 'Cálculo parcial',
-    className: 'bg-accent-muted text-accent',
+    label: "Cálculo parcial",
+    className: "bg-accent-muted text-accent",
   },
   unresolved: {
-    label: 'Sin receta',
-    className: 'bg-surface-raised text-text-faint',
+    label: "Sin receta",
+    className: "bg-surface-raised text-text-faint",
   },
-}
+};
 
-const EMPTY_AUTOMATIC_PRICES = new Map<string, number>()
+const EMPTY_AUTOMATIC_PRICES = new Map<string, number>();
 
 function formatSilver(amount: number): string {
-  return new Intl.NumberFormat('es-CL', {
+  return new Intl.NumberFormat("es-CL", {
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(amount);
 }
 
 export function ItemRecipeCard({
@@ -92,102 +96,105 @@ export function ItemRecipeCard({
   enchantment,
   repository,
 }: ItemRecipeCardProps) {
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(1);
   const [historyComparison, setHistoryComparison] = useState<Pick<
     MarketConfig,
-    'saleCity' | 'quality'
-  > | null>(null)
+    "saleCity" | "quality"
+  > | null>(null);
+  const optimizerLiquidityEnabled = useBooleanEntitlement(
+    ENTITLEMENT_KEYS.optimizerLiquidity,
+  );
 
-  const isVanity = isVanityPlaceholder(item)
-  const tier = item.recipe ? getRecipeTier(item.recipe, enchantment) : null
+  const isVanity = isVanityPlaceholder(item);
+  const tier = item.recipe ? getRecipeTier(item.recipe, enchantment) : null;
   const selectedRootOptionIndex = useCraftTreeStore(
-    (state) => state.selectedRecipeOptions.get('root') ?? 0,
-  )
-  const setRecipeOption = useCraftTreeStore((state) => state.setRecipeOption)
-  const recipeOptions = tier ? getRecipeOptions(tier) : []
+    (state) => state.selectedRecipeOptions.get("root") ?? 0,
+  );
+  const setRecipeOption = useCraftTreeStore((state) => state.setRecipeOption);
+  const recipeOptions = tier ? getRecipeOptions(tier) : [];
   const normalizedRootOptionIndex =
     selectedRootOptionIndex >= 0 &&
     selectedRootOptionIndex < recipeOptions.length
       ? selectedRootOptionIndex
-      : 0
+      : 0;
   const selectedRecipeOption = tier
     ? getRecipeOption(tier, normalizedRootOptionIndex)
-    : null
+    : null;
 
   const resolvedIngredients = useMemo(() => {
-    if (!selectedRecipeOption) return []
+    if (!selectedRecipeOption) return [];
 
     return resolveRecipeTierIngredients(
       selectedRecipeOption.ingredients,
       repository,
-    )
-  }, [selectedRecipeOption, repository])
+    );
+  }, [selectedRecipeOption, repository]);
 
   const status: RecipeResolutionStatus =
     isVanity || resolvedIngredients.length === 0
-      ? 'unresolved'
-      : getRecipeResolutionStatus(resolvedIngredients)
+      ? "unresolved"
+      : getRecipeResolutionStatus(resolvedIngredients);
 
-  const statusStyle = STATUS_STYLE[status]
-  const resetForItem = useCraftTreeStore((state) => state.resetForItem)
-  const productionConfig = useCraftTreeStore((state) => state.productionConfig)
+  const statusStyle = STATUS_STYLE[status];
+  const resetForItem = useCraftTreeStore((state) => state.resetForItem);
+  const productionConfig = useCraftTreeStore((state) => state.productionConfig);
   const setProductionConfig = useCraftTreeStore(
     (state) => state.setProductionConfig,
-  )
-  const stationFeeConfig = useCraftTreeStore((state) => state.stationFeeConfig)
+  );
+  const stationFeeConfig = useCraftTreeStore((state) => state.stationFeeConfig);
   const setStationFeeConfig = useCraftTreeStore(
     (state) => state.setStationFeeConfig,
-  )
+  );
   const craftingSpecializationConfig = useCraftTreeStore(
     (state) => state.craftingSpecializationConfig,
-  )
+  );
   const setCraftingSpecializationConfig = useCraftTreeStore(
     (state) => state.setCraftingSpecializationConfig,
-  )
+  );
   const itemValueOverride = useCraftTreeStore(
     (state) => state.itemValueOverride,
-  )
+  );
   const setItemValueOverride = useCraftTreeStore(
     (state) => state.setItemValueOverride,
-  )
+  );
   const stationUsageFeeOverride = useCraftTreeStore(
     (state) => state.stationUsageFeeOverride,
-  )
+  );
   const setStationUsageFeeOverride = useCraftTreeStore(
     (state) => state.setStationUsageFeeOverride,
-  )
+  );
   const manualMaterialPriceCount = useCraftTreeStore(
     (state) => state.manualPrices.size,
-  )
-  const isPremium = useCraftTreeStore((state) => state.isPremium)
-  const setIsPremium = useCraftTreeStore((state) => state.setIsPremium)
+  );
+  const isPremium = useCraftTreeStore((state) => state.isPremium);
+  const setIsPremium = useCraftTreeStore((state) => state.setIsPremium);
 
-  const rootMarketKey = `${item.id}@${enchantment}`
+  const rootMarketKey = `${item.id}@${enchantment}`;
   const hasManualSellPrice = useMarketDataStore((state) =>
     state.manualSellPrices.has(rootMarketKey),
-  )
+  );
   const manualSellPrice = useMarketDataStore(
     (state) => state.manualSellPrices.get(rootMarketKey) ?? null,
-  )
+  );
   const setManualSellPrice = useMarketDataStore(
     (state) => state.setManualSellPrice,
-  )
+  );
 
   const specialtyKind =
-    item.category === 'refined_resource' ? 'refining' : 'crafting'
+    item.category === "refined_resource" ? "refining" : "crafting";
   const productionRecommendation = useMemo(
     () => getProductionCityRecommendation(item),
     [item],
-  )
+  );
 
   useEffect(() => {
-    resetForItem(item.id, enchantment, tier !== null)
+    resetForItem(item.id, enchantment, tier !== null);
     // resetForItem ya evita reinicios si la clave no cambió.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.id, enchantment])
+  }, [item.id, enchantment]);
 
   useEffect(() => {
-    const currentConfig = useCraftTreeStore.getState().productionConfig
+    const currentConfig = useCraftTreeStore.getState().productionConfig;
 
     setProductionConfig(
       applyRecommendedProductionCity(
@@ -195,8 +202,8 @@ export function ItemRecipeCard({
         productionRecommendation,
         specialtyKind,
       ),
-    )
-  }, [item.id, productionRecommendation, setProductionConfig, specialtyKind])
+    );
+  }, [item.id, productionRecommendation, setProductionConfig, specialtyKind]);
 
   /*
    * El primer cálculo solo descubre la estructura y las hojas que necesitan
@@ -208,16 +215,16 @@ export function ItemRecipeCard({
     quantity,
     repository,
     EMPTY_AUTOMATIC_PRICES,
-  )
+  );
 
   const materialPriceTargets = useMemo(
     () => collectMarketPriceTargets(structureCalculation.root, tier),
     [structureCalculation.root, tier],
-  )
+  );
   const activeMaterialPriceTargets = useMemo(
     () => collectMarketPriceTargets(structureCalculation.root, null),
     [structureCalculation.root],
-  )
+  );
 
   const saleTarget = useMemo(
     () => ({
@@ -225,22 +232,22 @@ export function ItemRecipeCard({
       enchantment,
     }),
     [item.id, enchantment],
-  )
+  );
 
   const marketTargetLabels = useMemo(() => {
-    const labels = new Map<string, string>()
+    const labels = new Map<string, string>();
 
     for (const target of materialPriceTargets) {
-      const key = buildItemPriceKey(target.itemId, target.enchantment)
+      const key = buildItemPriceKey(target.itemId, target.enchantment);
       labels.set(
         key,
         repository.getById(target.itemId)?.name ?? String(target.itemId),
-      )
+      );
     }
 
-    labels.set(rootMarketKey, item.name)
-    return labels
-  }, [item.name, materialPriceTargets, repository, rootMarketKey])
+    labels.set(rootMarketKey, item.name);
+    return labels;
+  }, [item.name, materialPriceTargets, repository, rootMarketKey]);
 
   const activeOptimizerTargetKeys = useMemo(
     () =>
@@ -250,7 +257,7 @@ export function ItemRecipeCard({
         ),
       ),
     [activeMaterialPriceTargets],
-  )
+  );
 
   const market = useCurrentMarketPrices({
     rootKey: rootMarketKey,
@@ -260,12 +267,12 @@ export function ItemRecipeCard({
     targetLabels: marketTargetLabels,
     manualOverrideCount:
       manualMaterialPriceCount + (hasManualSellPrice ? 1 : 0),
-  })
+  });
   const requiredMaterialQuantities = useMemo(
     () =>
       collectMarketQuantityRequirements(structureCalculation.root, repository),
     [repository, structureCalculation.root],
-  )
+  );
   const profitabilityLiquidityHistory = useProfitabilityLiquidity({
     materialTargets: activeMaterialPriceTargets,
     materialComparisons: market.materialMarketPriceComparisons,
@@ -273,7 +280,8 @@ export function ItemRecipeCard({
     saleOptions: market.saleMarketPriceOptions,
     markets: market.markets,
     config: market.config,
-  })
+    enabled: optimizerLiquidityEnabled,
+  });
   const materialLiquidityAssessments = useMemo(
     () =>
       buildMaterialLiquidityAssessments({
@@ -292,7 +300,7 @@ export function ItemRecipeCard({
       profitabilityLiquidityHistory.snapshots,
       requiredMaterialQuantities,
     ],
-  )
+  );
   const saleLiquidityAssessments = useMemo(
     () =>
       buildSaleLiquidityAssessments({
@@ -313,18 +321,18 @@ export function ItemRecipeCard({
       quantity,
       saleTarget,
     ],
-  )
+  );
   const historyConfig = useMemo<MarketConfig>(
     () => ({
       ...market.config,
       ...(historyComparison ?? {}),
     }),
     [historyComparison, market.config],
-  )
+  );
   const marketHistory = useMarketHistory({
     saleTarget,
     config: historyConfig,
-  })
+  });
 
   const calculation = useCraftCalculation(
     item.id,
@@ -332,7 +340,7 @@ export function ItemRecipeCard({
     quantity,
     repository,
     market.automaticPurchasePrices,
-  )
+  );
 
   const profitabilityRecommendation = useMemo(
     () =>
@@ -364,7 +372,7 @@ export function ItemRecipeCard({
       marketTargetLabels,
       activeOptimizerTargetKeys,
     ],
-  )
+  );
 
   const optimizedCalculation = useCraftCalculation(
     item.id,
@@ -372,14 +380,14 @@ export function ItemRecipeCard({
     quantity,
     repository,
     profitabilityRecommendation.automaticPurchasePrices,
-  )
+  );
 
   const currentAutomaticEconomicSummary = useMemo(() => {
     if (
       calculation.isComplete === false ||
       market.automaticSalePrice === null
     ) {
-      return null
+      return null;
     }
 
     return calculateCraftEconomicSummary({
@@ -388,15 +396,15 @@ export function ItemRecipeCard({
       quantity,
       unitSellPrice: market.automaticSalePrice,
       isPremium,
-    })
-  }, [calculation, isPremium, market.automaticSalePrice, quantity])
+    });
+  }, [calculation, isPremium, market.automaticSalePrice, quantity]);
 
   const optimizedEconomicSummary = useMemo(() => {
     if (
       optimizedCalculation.isComplete === false ||
       profitabilityRecommendation.saleUnitPrice === null
     ) {
-      return null
+      return null;
     }
 
     return calculateCraftEconomicSummary({
@@ -405,26 +413,26 @@ export function ItemRecipeCard({
       quantity,
       unitSellPrice: profitabilityRecommendation.saleUnitPrice,
       isPremium,
-    })
+    });
   }, [
     isPremium,
     optimizedCalculation,
     profitabilityRecommendation.saleUnitPrice,
     quantity,
-  ])
+  ]);
 
   const optimizerPurchaseSavings =
     calculation.isComplete && optimizedCalculation.isComplete
       ? Math.max(0, calculation.grandTotal - optimizedCalculation.grandTotal)
-      : null
+      : null;
   const optimizerResultImprovement =
     currentAutomaticEconomicSummary && optimizedEconomicSummary
       ? optimizedEconomicSummary.economicResult -
         currentAutomaticEconomicSummary.economicResult
-      : null
+      : null;
 
   const initialInvestment =
-    calculation.grandTotal + calculation.totalSilverSavedByReturnRate
+    calculation.grandTotal + calculation.totalSilverSavedByReturnRate;
 
   const craftingFame = useMemo(
     () =>
@@ -444,11 +452,11 @@ export function ItemRecipeCard({
       quantity,
       repository,
     ],
-  )
+  );
 
   const unitSellPrice = hasManualSellPrice
     ? manualSellPrice
-    : market.automaticSalePrice
+    : market.automaticSalePrice;
 
   const recipeOptionComparisons = useRecipeOptionComparison({
     itemId: item.id,
@@ -457,7 +465,7 @@ export function ItemRecipeCard({
     unitSellPrice,
     repository,
     automaticPrices: market.automaticPurchasePrices,
-  })
+  });
 
   return (
     <div className="rounded-xl border border-border bg-surface p-5">
@@ -498,23 +506,23 @@ export function ItemRecipeCard({
             <div>
               <p className="text-[10px] uppercase tracking-wide text-text-faint">
                 {calculation.isComplete
-                  ? 'Costo neto tras RRR'
-                  : 'Costo neto parcial'}
+                  ? "Costo neto tras RRR"
+                  : "Costo neto parcial"}
               </p>
               <p
                 className={`text-sm font-medium tabular ${
-                  calculation.isComplete ? 'text-text' : 'text-accent'
+                  calculation.isComplete ? "text-text" : "text-accent"
                 }`}
               >
-                {formatSilver(calculation.grandTotal)}{' '}
+                {formatSilver(calculation.grandTotal)}{" "}
                 <span className="font-normal text-text-faint">plata</span>
               </p>
 
               <p className="mt-0.5 text-[10px] leading-relaxed text-text-faint">
-                Inversión inicial {formatSilver(initialInvestment)} ·{' '}
+                Inversión inicial {formatSilver(initialInvestment)} ·{" "}
                 {calculation.totalSilverSavedByReturnRate > 0
                   ? `recuperas ${formatSilver(calculation.totalSilverSavedByReturnRate)}`
-                  : 'sin retornos valorados'}
+                  : "sin retornos valorados"}
               </p>
             </div>
           )}
@@ -553,15 +561,15 @@ export function ItemRecipeCard({
             refreshReport={market.refreshReport}
             onServerChange={(server) => market.setConfig({ server })}
             onRefresh={() => {
-              void market.refresh()
-              void marketHistory.refresh()
+              void market.refresh();
+              void marketHistory.refresh();
             }}
             onDismissRefreshReport={market.dismissRefreshReport}
             onClearCache={() => {
-              market.clearCache()
-              marketHistory.clearCache()
-              void market.refresh()
-              void marketHistory.refresh()
+              market.clearCache();
+              marketHistory.clearCache();
+              void market.refresh();
+              void marketHistory.refresh();
             }}
           />
 
@@ -569,7 +577,7 @@ export function ItemRecipeCard({
             config={productionConfig}
             recommendation={productionRecommendation}
             isPremium={isPremium}
-            station={tier?.station ?? 'unknown'}
+            station={tier?.station ?? "unknown"}
             quantity={quantity}
             stationFeeConfig={stationFeeConfig}
             craftingSpecializationConfig={craftingSpecializationConfig}
@@ -630,7 +638,7 @@ export function ItemRecipeCard({
                 tier={tier}
                 selectedIndex={normalizedRootOptionIndex}
                 repository={repository}
-                onChange={(optionIndex) => setRecipeOption('root', optionIndex)}
+                onChange={(optionIndex) => setRecipeOption("root", optionIndex)}
               />
             )}
 
@@ -660,19 +668,19 @@ export function ItemRecipeCard({
             {calculation.totalStationFees > 0 && (
               <div className="mt-4 space-y-1 border-t border-border pt-3 text-center text-xs tabular text-text-faint">
                 <p>
-                  Tarifas totales de estación:{' '}
+                  Tarifas totales de estación:{" "}
                   {formatSilver(calculation.totalStationFees)} plata
                 </p>
                 {calculation.stationUsageFee > 0 && (
                   <p>
-                    Costo de fabricación en el puesto:{' '}
+                    Costo de fabricación en el puesto:{" "}
                     {formatSilver(calculation.stationUsageFee)} plata
                   </p>
                 )}
               </div>
             )}
 
-            {status === 'partial' && (
+            {status === "partial" && (
               <p className="mt-4 border-t border-border pt-3 text-xs leading-relaxed text-text-faint">
                 Los ingredientes especiales, como artefactos o componentes,
                 también se consultan en las fuentes de mercado. Si no existen
@@ -700,37 +708,44 @@ export function ItemRecipeCard({
             rootNode={calculation.root}
           />
 
-          <ProfitabilityOptimizerCard
-            recommendation={profitabilityRecommendation}
-            markets={market.markets}
-            marketStatus={market.status}
-            liquidityStatus={profitabilityLiquidityHistory.status}
-            liquidityError={profitabilityLiquidityHistory.error}
-            liquidityWarnings={profitabilityLiquidityHistory.warnings}
-            liquidityProgress={profitabilityLiquidityHistory.progress}
-            onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
-            currentTotalCost={calculation.grandTotal}
-            optimizedTotalCost={optimizedCalculation.grandTotal}
-            purchaseSavings={optimizerPurchaseSavings}
-            currentEconomicResult={
-              currentAutomaticEconomicSummary?.economicResult ?? null
-            }
-            optimizedEconomicResult={
-              optimizedEconomicSummary?.economicResult ?? null
-            }
-            resultImprovement={optimizerResultImprovement}
-            isManualSellPrice={hasManualSellPrice}
-            manualMaterialPriceCount={manualMaterialPriceCount}
-            onApply={() =>
-              market.applyMarketRecommendation(
-                profitabilityRecommendation.materialCities,
-                profitabilityRecommendation.saleCity,
-              )
-            }
-          />
+          <FeatureGate
+            entitlementKey={ENTITLEMENT_KEYS.optimizerLiquidity}
+            title="Optimizador con liquidez"
+            description="El plan Pro analiza el historial de cada mercado candidato para descartar opciones sin profundidad suficiente antes de recomendar una compra o venta."
+            onViewPlans={() => navigateToRoute("plans")}
+          >
+            <ProfitabilityOptimizerCard
+              recommendation={profitabilityRecommendation}
+              markets={market.markets}
+              marketStatus={market.status}
+              liquidityStatus={profitabilityLiquidityHistory.status}
+              liquidityError={profitabilityLiquidityHistory.error}
+              liquidityWarnings={profitabilityLiquidityHistory.warnings}
+              liquidityProgress={profitabilityLiquidityHistory.progress}
+              onRefreshLiquidity={profitabilityLiquidityHistory.refresh}
+              currentTotalCost={calculation.grandTotal}
+              optimizedTotalCost={optimizedCalculation.grandTotal}
+              purchaseSavings={optimizerPurchaseSavings}
+              currentEconomicResult={
+                currentAutomaticEconomicSummary?.economicResult ?? null
+              }
+              optimizedEconomicResult={
+                optimizedEconomicSummary?.economicResult ?? null
+              }
+              resultImprovement={optimizerResultImprovement}
+              isManualSellPrice={hasManualSellPrice}
+              manualMaterialPriceCount={manualMaterialPriceCount}
+              onApply={() =>
+                market.applyMarketRecommendation(
+                  profitabilityRecommendation.materialCities,
+                  profitabilityRecommendation.saleCity,
+                )
+              }
+            />
+          </FeatureGate>
 
           <ProfitSummaryCard
-            key={`${rootMarketKey}:${hasManualSellPrice ? 'manual' : 'automatic'}:${unitSellPrice ?? 'missing'}`}
+            key={`${rootMarketKey}:${hasManualSellPrice ? "manual" : "automatic"}:${unitSellPrice ?? "missing"}`}
             totalCost={calculation.grandTotal}
             recoveredMaterialValue={calculation.totalSilverSavedByReturnRate}
             quantity={quantity}
@@ -773,24 +788,24 @@ export function ItemRecipeCard({
                   patch.saleCity ?? current?.saleCity ?? market.config.saleCity,
                 quality:
                   patch.quality ?? current?.quality ?? market.config.quality,
-              }))
+              }));
             }}
             onStartComparison={() => {
               setHistoryComparison({
                 saleCity: market.config.saleCity,
                 quality: market.config.quality,
-              })
+              });
             }}
             onFollowSale={() => setHistoryComparison(null)}
             onApplyToSale={() => {
               market.setConfig({
                 saleCity: historyConfig.saleCity,
                 quality: historyConfig.quality,
-              })
-              setHistoryComparison(null)
+              });
+              setHistoryComparison(null);
             }}
             onRefresh={() => {
-              void marketHistory.refresh()
+              void marketHistory.refresh();
             }}
           />
 
@@ -801,7 +816,7 @@ export function ItemRecipeCard({
               selectedOptionIndex={normalizedRootOptionIndex}
               unitSellPrice={unitSellPrice}
               repository={repository}
-              onSelect={(optionIndex) => setRecipeOption('root', optionIndex)}
+              onSelect={(optionIndex) => setRecipeOption("root", optionIndex)}
             />
           )}
 
@@ -820,5 +835,5 @@ export function ItemRecipeCard({
         </div>
       )}
     </div>
-  )
+  );
 }

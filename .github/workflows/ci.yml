@@ -78,7 +78,23 @@ jobs:
           retention-days: 7
 
       - name: Build application
-        run: pnpm build
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          set +e
+          pnpm build > artifacts/build-output.log 2>&1
+          status=$?
+          cat artifacts/build-output.log
+          exit "$status"
+
+      - name: Upload failing build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-failure-log
+          path: artifacts/build-output.log
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Check bundle budget
         run: pnpm exec tsx scripts/check-bundle-budget.ts --write-report
