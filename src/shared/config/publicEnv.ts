@@ -128,7 +128,7 @@ const localReceiverFallbackEnabled = parseBoolean(
   DEFAULT_LOCAL_RECEIVER_FALLBACK_ENABLED,
 )
 
-export const publicEnv = Object.freeze({
+export const PUBLIC_ENV = Object.freeze({
   centralMarketApiUrl: normalizeApiBaseUrl({
     key: 'VITE_CENTRAL_MARKET_API_URL',
     rawValue: readPublicEnv('VITE_CENTRAL_MARKET_API_URL'),
