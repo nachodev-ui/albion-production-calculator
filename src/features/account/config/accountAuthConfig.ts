@@ -24,18 +24,20 @@ function normalizeBaseUrl(value: string | undefined): string {
   return (value?.trim() || fallback).replace(/\/+$/, "");
 }
 
-const domain = normalizeDomain(import.meta.env.VITE_AUTH0_DOMAIN);
-const clientId = (import.meta.env.VITE_AUTH0_CLIENT_ID ?? "").trim();
-const audience = (import.meta.env.VITE_AUTH0_AUDIENCE ?? "").trim();
+const domain = normalizeDomain(import.meta.env["VITE_AUTH0_DOMAIN"]);
+const clientId = (import.meta.env["VITE_AUTH0_CLIENT_ID"] ?? "").trim();
+const audience = (import.meta.env["VITE_AUTH0_AUDIENCE"] ?? "").trim();
 
 export const accountAuthConfig: AccountAuthConfig = {
-  enabled: parseBoolean(import.meta.env.VITE_AUTH0_ENABLED),
+  enabled: parseBoolean(import.meta.env["VITE_AUTH0_ENABLED"]),
   configured: domain.length > 0 && clientId.length > 0 && audience.length > 0,
   domain,
   clientId,
   audience,
-  scope: (import.meta.env.VITE_AUTH0_SCOPE ?? "openid profile email").trim(),
+  scope: (
+    import.meta.env["VITE_AUTH0_SCOPE"] ?? "openid profile email"
+  ).trim(),
   centralApiBaseUrl: normalizeBaseUrl(
-    import.meta.env.VITE_CENTRAL_MARKET_API_URL,
+    import.meta.env["VITE_CENTRAL_MARKET_API_URL"],
   ),
 };
