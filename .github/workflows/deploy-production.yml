@@ -25,17 +25,17 @@ jobs:
       VITE_CENTRAL_MARKET_API_URL: https://albion-market-api.onrender.com/api/v1
       VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
       VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
-      VITE_AUTH0_ENABLED: ${{ vars.AUTH0_ENABLED || 'false' }}
-      VITE_AUTH0_DOMAIN: ${{ vars.AUTH0_DOMAIN }}
-      VITE_AUTH0_CLIENT_ID: ${{ vars.AUTH0_CLIENT_ID }}
-      VITE_AUTH0_AUDIENCE: ${{ vars.AUTH0_AUDIENCE || 'https://albion-market-api' }}
-      VITE_AUTH0_SCOPE: openid profile email
+      VITE_AUTH0_ENABLED: 'true'
+      VITE_AUTH0_DOMAIN: albion-production-calculator.us.auth0.com
+      VITE_AUTH0_CLIENT_ID: LNrCFAgAUVubf14yCe10eAMx42w9XJvv
+      VITE_AUTH0_AUDIENCE: https://albion-market-api
+      VITE_AUTH0_SCOPE: openid profile email read:account
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Mark production deployment pending
+      - name: Mark production deployments pending
         continue-on-error: true
         shell: bash
         env:
@@ -43,24 +43,26 @@ jobs:
         run: |
           set -euo pipefail
 
-          payload="$(jq -n \
-            --arg state pending \
-            --arg context 'deploy/production' \
-            --arg description 'Production deployment is running' \
-            --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+          for context in 'deploy/production' 'deploy/auth0-production'; do
+            payload="$(jq -n \
+              --arg state pending \
+              --arg context "${context}" \
+              --arg description 'Production deployment is running' \
+              --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              '{state: $state, context: $context, description: $description, target_url: $target_url}')"
 
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --request POST \
-            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            --data "${payload}" \
-            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            >/dev/null
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              --data "${payload}" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              >/dev/null
+          done
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -91,6 +93,22 @@ jobs:
           pnpm lint
           pnpm test
 
+      - name: Confirm API authentication is enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(curl \
+            --silent \
+            --show-error \
+            --output auth-response.json \
+            --write-out '%{http_code}' \
+            https://albion-market-api.onrender.com/api/v1/me)"
+          if [[ "${status}" != '401' ]]; then
+            echo "::error::Expected the API to require authentication with HTTP 401, got ${status}."
+            cat auth-response.json
+            exit 1
+          fi
+
       - name: Build production application
         run: pnpm build
 
@@ -112,19 +130,18 @@ jobs:
             exit 1
           fi
 
-          if [[ "${VITE_AUTH0_ENABLED}" == 'true' ]]; then
-            for value in "${VITE_AUTH0_DOMAIN}" "${VITE_AUTH0_CLIENT_ID}" "${VITE_AUTH0_AUDIENCE}"; do
-              if [[ -z "${value}" ]] || ! grep -R -Fq "${value}" dist; then
-                echo "::error::The enabled Auth0 production value was not embedded in the build."
-                exit 1
-              fi
-            done
-            echo 'Production build contains the configured Auth0 SPA identifiers.'
-          else
-            echo 'Auth0 remains disabled for this production build.'
-          fi
+          for value in \
+            "${VITE_AUTH0_DOMAIN}" \
+            "${VITE_AUTH0_CLIENT_ID}" \
+            "${VITE_AUTH0_AUDIENCE}" \
+            'read:account'; do
+            if [[ -z "${value}" ]] || ! grep -R -Fq "${value}" dist; then
+              echo "::error::The Auth0 production value was not embedded in the build: ${value}"
+              exit 1
+            fi
+          done
 
-          echo 'Production build contains Render and no Fly.io host.'
+          echo 'Production build contains Render and the active Auth0 configuration.'
 
       - name: Deploy to Cloudflare Pages
         shell: bash
@@ -151,7 +168,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Verify deployed frontend and API host
+      - name: Verify deployed frontend, Auth0 and API host
         shell: bash
         run: |
           set -euo pipefail
@@ -239,19 +256,21 @@ jobs:
               fi
 
               local auth0_ok=true
-              if [[ "${VITE_AUTH0_ENABLED}" == 'true' ]]; then
-                for value in "${VITE_AUTH0_DOMAIN}" "${VITE_AUTH0_CLIENT_ID}" "${VITE_AUTH0_AUDIENCE}"; do
-                  if ! grep -Fq "${value}" "${bundle_file}"; then
-                    auth0_ok=false
-                    break
-                  fi
-                done
-              fi
+              for value in \
+                "${VITE_AUTH0_DOMAIN}" \
+                "${VITE_AUTH0_CLIENT_ID}" \
+                "${VITE_AUTH0_AUDIENCE}" \
+                'read:account'; do
+                if ! grep -Fq "${value}" "${bundle_file}"; then
+                  auth0_ok=false
+                  break
+                fi
+              done
 
               if grep -Fq "${expected_host}" "${bundle_file}" && \
                  ! grep -Fq "${obsolete_host}" "${bundle_file}" && \
                  [[ "${auth0_ok}" == true ]]; then
-                echo "${label}: deployed chunks contain the expected Render and Auth0 configuration."
+                echo "${label}: deployed chunks contain Render and the active Auth0 configuration."
                 return 0
               fi
 
@@ -277,7 +296,7 @@ jobs:
             https://albion-market-api.onrender.com/readyz
 
           echo
-          echo 'Production deployment, every JavaScript chunk and Render readiness validated.'
+          echo 'Production deployment, Auth0 bundle and Render readiness validated.'
 
       - name: Upload production verification log
         if: always()
@@ -288,7 +307,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Publish production deployment status
+      - name: Publish production deployment statuses
         if: always()
         continue-on-error: true
         shell: bash
@@ -300,27 +319,29 @@ jobs:
 
           if [[ "${JOB_STATUS}" == 'success' ]]; then
             state='success'
-            description='Production deployment and smoke tests passed'
+            description='Production and Auth0 deployment passed'
           else
             state='failure'
-            description='Production deployment or smoke tests failed'
+            description='Production or Auth0 deployment failed'
           fi
 
-          payload="$(jq -n \
-            --arg state "${state}" \
-            --arg context 'deploy/production' \
-            --arg description "${description}" \
-            --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            '{state: $state, context: $context, description: $description, target_url: $target_url}')"
+          for context in 'deploy/production' 'deploy/auth0-production'; do
+            payload="$(jq -n \
+              --arg state "${state}" \
+              --arg context "${context}" \
+              --arg description "${description}" \
+              --arg target_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+              '{state: $state, context: $context, description: $description, target_url: $target_url}')"
 
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --request POST \
-            --header "Authorization: Bearer ${GITHUB_TOKEN}" \
-            --header 'Accept: application/vnd.github+json' \
-            --header 'X-GitHub-Api-Version: 2022-11-28' \
-            --data "${payload}" \
-            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            >/dev/null
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${GITHUB_TOKEN}" \
+              --header 'Accept: application/vnd.github+json' \
+              --header 'X-GitHub-Api-Version: 2022-11-28' \
+              --data "${payload}" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              >/dev/null
+          done
