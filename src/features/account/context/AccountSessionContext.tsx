@@ -32,6 +32,9 @@ function StaticAccountSessionProvider({
     () => ({
       authEnabled: accountAuthConfig.enabled,
       authConfigured: accountAuthConfig.configured,
+      billingEnabled: false,
+      billingStatus: 'idle',
+      billingError: null,
       isLoading: loading,
       isAuthenticated: false,
       profile: null,
@@ -42,6 +45,8 @@ function StaticAccountSessionProvider({
       login: noop,
       logout: noop,
       refreshAccess: noop,
+      startCheckout: noop,
+      openBillingPortal: noop,
     }),
     [loading],
   )

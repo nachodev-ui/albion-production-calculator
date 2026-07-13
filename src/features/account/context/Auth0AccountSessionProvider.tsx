@@ -3,15 +3,21 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useState,
   type ReactNode,
 } from 'react'
-import { fetchCurrentAccount } from '../api/accountApi'
+import {
+  createBillingCheckout,
+  createBillingPortal,
+  fetchCurrentAccount,
+} from '../api/accountApi'
 import { accountAuthConfig } from '../config/accountAuthConfig'
 import { useAccountAccessStore } from '../store/accountAccessStore'
 import type { SessionProfile } from '../types'
 import {
   AccountSessionContext,
   type AccountSessionValue,
+  type BillingActionStatus,
 } from './accountSession'
 
 interface Auth0AccountSessionProviderProps {
@@ -53,6 +59,20 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
   const setAccess = useAccountAccessStore((state) => state.setAccess)
   const setError = useAccountAccessStore((state) => state.setError)
   const clear = useAccountAccessStore((state) => state.clear)
+  const [billingStatus, setBillingStatus] =
+    useState<BillingActionStatus>('idle')
+  const [billingError, setBillingError] = useState<string | null>(null)
+
+  const getAccountAccessToken = useCallback(
+    () =>
+      getAccessTokenSilently({
+        authorizationParams: {
+          audience: accountAuthConfig.audience,
+          scope: accountAuthConfig.scope,
+        },
+      }),
+    [getAccessTokenSilently],
+  )
 
   const refreshAccess = useCallback(async () => {
     if (!isAuthenticated) {
@@ -62,12 +82,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
 
     beginLoading()
     try {
-      const accessToken = await getAccessTokenSilently({
-        authorizationParams: {
-          audience: accountAuthConfig.audience,
-          scope: accountAuthConfig.scope,
-        },
-      })
+      const accessToken = await getAccountAccessToken()
       setAccess(await fetchCurrentAccount(accessToken))
     } catch (error: unknown) {
       setError(
@@ -79,7 +94,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
   }, [
     beginLoading,
     clear,
-    getAccessTokenSilently,
+    getAccountAccessToken,
     isAuthenticated,
     setAccess,
     setError,
@@ -94,24 +109,66 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     void refreshAccess()
   }, [clear, isAuthenticated, isLoading, refreshAccess])
 
-  const login = useCallback(
-    () =>
-      loginWithRedirect({
-        appState: { returnTo: currentReturnTo() },
-        authorizationParams: {
-          audience: accountAuthConfig.audience,
-          scope: accountAuthConfig.scope,
-        },
-      }),
-    [loginWithRedirect],
+  const login = useCallback(async () => {
+    setBillingError(null)
+    setBillingStatus('idle')
+    await loginWithRedirect({
+      appState: { returnTo: currentReturnTo() },
+      authorizationParams: {
+        audience: accountAuthConfig.audience,
+        scope: accountAuthConfig.scope,
+      },
+    })
+  }, [loginWithRedirect])
+
+  const logout = useCallback(async () => {
+    setBillingError(null)
+    setBillingStatus('idle')
+    await auth0Logout({
+      logoutParams: { returnTo: window.location.origin },
+    })
+  }, [auth0Logout])
+
+  const runBillingAction = useCallback(
+    async (
+      status: Exclude<BillingActionStatus, 'idle'>,
+      action: (accessToken: string) => Promise<{ readonly url: string }>,
+    ) => {
+      if (!accountAuthConfig.billingEnabled) {
+        setBillingError('La facturación sandbox todavía no está habilitada.')
+        return
+      }
+      if (!isAuthenticated) {
+        await login()
+        return
+      }
+
+      setBillingError(null)
+      setBillingStatus(status)
+      try {
+        const accessToken = await getAccountAccessToken()
+        const response = await action(accessToken)
+        window.location.assign(response.url)
+      } catch (error: unknown) {
+        setBillingError(
+          error instanceof Error
+            ? error.message
+            : 'No fue posible abrir la facturación.',
+        )
+        setBillingStatus('idle')
+      }
+    },
+    [getAccountAccessToken, isAuthenticated, login],
   )
 
-  const logout = useCallback(
-    async () =>
-      auth0Logout({
-        logoutParams: { returnTo: window.location.origin },
-      }),
-    [auth0Logout],
+  const startCheckout = useCallback(
+    () => runBillingAction('checkout', createBillingCheckout),
+    [runBillingAction],
+  )
+
+  const openBillingPortal = useCallback(
+    () => runBillingAction('portal', createBillingPortal),
+    [runBillingAction],
   )
 
   const profile = useMemo<SessionProfile | null>(
@@ -139,6 +196,9 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     () => ({
       authEnabled: true,
       authConfigured: true,
+      billingEnabled: accountAuthConfig.billingEnabled,
+      billingStatus,
+      billingError,
       isLoading,
       isAuthenticated,
       profile,
@@ -146,15 +206,21 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       login,
       logout,
       refreshAccess,
+      startCheckout,
+      openBillingPortal,
     }),
     [
       authError?.message,
+      billingError,
+      billingStatus,
       isAuthenticated,
       isLoading,
       login,
       logout,
+      openBillingPortal,
       profile,
       refreshAccess,
+      startCheckout,
     ],
   )
 

@@ -1,6 +1,7 @@
 interface AccountAuthConfig {
   readonly enabled: boolean;
   readonly configured: boolean;
+  readonly billingEnabled: boolean;
   readonly domain: string;
   readonly clientId: string;
   readonly audience: string;
@@ -31,6 +32,7 @@ const audience = (import.meta.env["VITE_AUTH0_AUDIENCE"] ?? "").trim();
 export const accountAuthConfig: AccountAuthConfig = {
   enabled: parseBoolean(import.meta.env["VITE_AUTH0_ENABLED"]),
   configured: domain.length > 0 && clientId.length > 0 && audience.length > 0,
+  billingEnabled: parseBoolean(import.meta.env["VITE_BILLING_ENABLED"]),
   domain,
   clientId,
   audience,
