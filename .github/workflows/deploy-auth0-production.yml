@@ -1,0 +1,154 @@
+name: Deploy Auth0 production
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy production
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: production-cloudflare-pages-auth0
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Auth0-enabled frontend
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_ACCOUNT_ID: 5a398641827f64511f3d0df0323729bf
+      VITE_CENTRAL_MARKET_API_URL: https://albion-market-api.onrender.com/api/v1
+      VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+      VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
+      VITE_AUTH0_ENABLED: 'true'
+      VITE_AUTH0_DOMAIN: albion-production-calculator.us.auth0.com
+      VITE_AUTH0_CLIENT_ID: LNrCFAgAUVubf14yCe10eAMx42w9XJvv
+      VITE_AUTH0_AUDIENCE: https://albion-market-api
+      VITE_AUTH0_SCOPE: openid profile email read:account
+
+    steps:
+      - name: Resolve production revision
+        id: revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == 'workflow_run' ]]; then
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "sha=${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Checkout production revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.revision.outputs.sha }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Auth0 and project contracts
+        run: |
+          pnpm contracts:check
+          pnpm security:check
+          pnpm auth0:check
+          pnpm lint
+          pnpm test
+
+      - name: Confirm API authentication is enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          status="$(curl \
+            --silent \
+            --show-error \
+            --output auth-response.json \
+            --write-out '%{http_code}' \
+            https://albion-market-api.onrender.com/api/v1/me)"
+          if [[ "${status}" != '401' ]]; then
+            echo "::error::Expected the API to require authentication with HTTP 401, got ${status}."
+            cat auth-response.json
+            exit 1
+          fi
+
+      - name: Build Auth0-enabled application
+        run: |
+          pnpm build
+          pnpm bundle:check
+
+      - name: Verify Auth0 values in bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          for value in \
+            "${VITE_AUTH0_DOMAIN}" \
+            "${VITE_AUTH0_CLIENT_ID}" \
+            "${VITE_AUTH0_AUDIENCE}" \
+            'read:account'; do
+            grep -R -Fq "${value}" dist || {
+              echo "::error::Missing Auth0 production value in bundle: ${value}"
+              exit 1
+            }
+          done
+
+      - name: Deploy Auth0-enabled build to Cloudflare Pages
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4.110.0 pages deploy dist \
+            --project-name=albion-production-calculator \
+            --branch=main \
+            --commit-hash="${{ steps.revision.outputs.sha }}" \
+            --commit-dirty=false
+
+      - name: Verify public Auth0 bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin='https://albion-production-calculator.pages.dev'
+          for attempt in $(seq 1 48); do
+            html="$(curl --fail --silent --show-error --location \
+              --header 'Cache-Control: no-cache' \
+              "${origin}/?auth0-check=${{ steps.revision.outputs.sha }}-${attempt}" || true)"
+            mapfile -t assets < <(grep -oE '/assets/[^" ]+\.js' <<< "${html}" | sort -u)
+            : > bundles.js
+            for asset in "${assets[@]}"; do
+              curl --fail --silent --show-error --location \
+                --header 'Cache-Control: no-cache' \
+                "${origin}${asset}" >> bundles.js || true
+            done
+            if grep -Fq "${VITE_AUTH0_DOMAIN}" bundles.js && \
+               grep -Fq "${VITE_AUTH0_CLIENT_ID}" bundles.js && \
+               grep -Fq 'read:account' bundles.js; then
+              echo 'Cloudflare Pages is serving the Auth0-enabled production bundle.'
+              exit 0
+            fi
+            sleep 5
+          done
+          echo '::error::The public Cloudflare bundle did not converge to Auth0-enabled configuration.'
+          exit 1
