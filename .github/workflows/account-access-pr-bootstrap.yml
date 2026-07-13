@@ -76,24 +76,35 @@ jobs:
             src/features/market-data/hooks/useProfitabilityLiquidity.ts \
             docs/.vitepress/config.ts
 
-      - name: Validate implementation
-        run: |
-          pnpm contracts:check
-          pnpm security:check
-          pnpm lint
-          pnpm test
-          pnpm build
-          pnpm bundle:check
-          pnpm docs:build
-
       - name: Commit bootstrap results
         run: |
           if git diff --quiet; then
             echo "No bootstrap changes to commit."
-            exit 0
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package.json pnpm-lock.yaml contracts/central-api/openapi.yaml src public docs/.vitepress/config.ts
+            git commit -m "feat: complete account access integration"
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json pnpm-lock.yaml contracts/central-api/openapi.yaml src public docs/.vitepress/config.ts
-          git commit -m "feat: complete account access integration"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
+      - name: Validate API contracts
+        run: pnpm contracts:check
+
+      - name: Validate public security
+        run: pnpm security:check
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Check bundle budget
+        run: pnpm bundle:check
+
+      - name: Build documentation
+        run: pnpm docs:build
