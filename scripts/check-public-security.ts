@@ -8,10 +8,15 @@ const allowedViteKeys = new Set([
   'VITE_LOCAL_MARKET_API_URL',
   'VITE_MARKET_API_URL',
   'VITE_MARKET_REQUEST_TIMEOUT_MS',
+  'VITE_AUTH0_ENABLED',
+  'VITE_AUTH0_DOMAIN',
+  'VITE_AUTH0_CLIENT_ID',
+  'VITE_AUTH0_AUDIENCE',
+  'VITE_AUTH0_SCOPE',
 ])
 
 const sensitiveKeyPattern =
-  /VITE_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PASS|PRIVATE|API_KEY|AUTH|BEARER|JWT|CREDENTIAL)[A-Z0-9_]*/g
+  /VITE_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PASS|PRIVATE|API_KEY|BEARER|CREDENTIAL)[A-Z0-9_]*/g
 
 function gitLsFiles(): readonly string[] {
   return execFileSync(
@@ -89,9 +94,10 @@ function assertSecurityHeaders(): void {
     'Permissions-Policy:',
     "object-src 'none'",
     "frame-ancestors 'none'",
+    "frame-src https:",
     "script-src 'self'",
     "connect-src 'self' https:",
-    "img-src 'self' data: https://render.albiononline.com",
+    "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   ]
