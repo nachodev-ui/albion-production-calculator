@@ -35,7 +35,8 @@ export const accountAuthConfig: AccountAuthConfig = {
   clientId,
   audience,
   scope: (
-    import.meta.env["VITE_AUTH0_SCOPE"] ?? "openid profile email"
+    import.meta.env["VITE_AUTH0_SCOPE"] ??
+    "openid profile email read:account"
   ).trim(),
   centralApiBaseUrl: normalizeBaseUrl(
     import.meta.env["VITE_CENTRAL_MARKET_API_URL"],

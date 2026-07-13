@@ -1,25 +1,24 @@
 ---
-title: Activación de Auth0 en producción
+title: Auth0 en producción
 ---
 
-# Activación de Auth0 en producción
+# Auth0 en producción
 
-## Identificadores acordados
+## Configuración activa
 
-- Frontend público: `https://albion-production-calculator.pages.dev`
-- API pública: `https://albion-market-api.onrender.com`
+- Frontend: `https://albion-production-calculator.pages.dev`
+- API: `https://albion-market-api.onrender.com`
+- Tenant domain: `albion-production-calculator.us.auth0.com`
+- SPA Client ID: `LNrCFAgAUVubf14yCe10eAMx42w9XJvv`
 - Audience / API Identifier: `https://albion-market-api`
+- Scope delegado: `read:account`
+- Algoritmo: `RS256`
 
-El identifier de Auth0 es lógico y no depende del proveedor donde se despliega la API.
+El domain, Client ID y audience son identificadores públicos. Nunca debe almacenarse un Client Secret en el frontend ni en una variable `VITE_*`.
 
-## Recursos de Auth0
+## Aplicación SPA
 
-Crear en el mismo tenant:
-
-1. Una aplicación **Single Page Application** llamada `Albion Production Calculator`.
-2. Una API llamada `Albion Market API` con identifier `https://albion-market-api` y algoritmo `RS256`.
-
-Configurar la SPA con:
+La aplicación `Albion Production Calculator` está configurada como **Single Page Application** con:
 
 ```text
 Allowed Callback URLs
@@ -39,42 +38,48 @@ https://albion-production-calculator.pages.dev,
 http://localhost:5173
 ```
 
-No usar comodines en producción y no copiar el Client Secret al frontend.
+No se usan comodines, Cross-Origin Authentication, Client Credentials ni secretos de aplicación.
 
-## GitHub Environment `production`
+## API y acceso delegado
 
-El frontend se compila en GitHub Actions y después se publica mediante Cloudflare Pages Direct Upload. Por eso los valores públicos deben configurarse como variables del Environment `production` del repositorio:
-
-```text
-AUTH0_ENABLED=true
-AUTH0_DOMAIN=<tenant-domain-sin-https>
-AUTH0_CLIENT_ID=<spa-client-id>
-AUTH0_AUDIENCE=https://albion-market-api
-```
-
-El workflow transforma estos valores en `VITE_AUTH0_*` durante el build. No se deben guardar como secretos porque el dominio, Client ID y audience quedan visibles en el bundle del navegador.
-
-## Render
-
-Configurar en el servicio `albion-market-api`:
+La API `Albion Market API` usa el identifier `https://albion-market-api`. En **Permissions** define:
 
 ```text
-AUTH_ENABLED=true
-AUTH_ISSUER=https://<tenant-domain>/
-AUTH_AUDIENCE=https://albion-market-api
+read:account
 ```
 
-Mantener los valores de caché, timeout y clock skew definidos en `render.yaml`.
+En **Application Access**, únicamente `Albion Production Calculator` tiene `1 / 1` permisos de acceso delegado. Client Access permanece deshabilitado.
 
-## Orden seguro de activación
+El frontend solicita:
 
-1. Crear la SPA y la API en Auth0.
-2. Configurar callbacks, logout y web origins.
-3. Configurar `AUTH_ISSUER` y `AUTH_AUDIENCE` en Render, dejando `AUTH_ENABLED=false`.
-4. Configurar las variables públicas en el Environment `production` de GitHub, dejando `AUTH0_ENABLED=false`.
-5. Cambiar `AUTH_ENABLED=true` en Render y desplegar la API.
-6. Confirmar que `/api/v1/me` sin token responde `401`.
-7. Cambiar `AUTH0_ENABLED=true` en GitHub y publicar el frontend.
-8. Probar login, `/account`, actualización de permisos, renovación silenciosa y logout.
+```text
+openid profile email read:account
+```
 
-Si la API no está lista, el frontend debe permanecer deshabilitado para evitar una experiencia de login que termine en error.
+La API valida firma, issuer, audience, expiración y el scope `read:account` antes de atender `/api/v1/me` o `/api/v1/me/entitlements`.
+
+## Despliegue
+
+El deployment estándar de Cloudflare Pages se ejecuta primero. Al finalizar, `Deploy Auth0 production` recompila con la configuración Auth0 activa, confirma que Render ya responde `401` sin token y publica el bundle final.
+
+La API se despliega antes que el frontend mediante `Deploy Auth0 production to Render`. Ese workflow valida discovery/JWKS, aplica migraciones de Neon, despliega la revisión exacta y verifica health, readiness, CORS y autenticación.
+
+## Interruptor de emergencia
+
+En production la autenticación está activa por defecto. Solo debe deshabilitarse temporalmente ante una incidencia mediante:
+
+```text
+AUTH_EMERGENCY_DISABLED=true
+```
+
+Después de resolver el incidente debe restaurarse a `false` y desplegarse nuevamente.
+
+## Verificación funcional
+
+1. Abrir `/account` y pulsar **Iniciar sesión**.
+2. Completar Universal Login.
+3. Confirmar retorno a Cloudflare Pages.
+4. Comprobar que `/api/v1/me` responde y crea o actualiza `app_users` por `sub`.
+5. Confirmar plan Free y entitlements efectivos.
+6. Pulsar **Actualizar permisos**.
+7. Cerrar sesión y confirmar retorno al origen público.
