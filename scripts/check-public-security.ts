@@ -15,6 +15,7 @@ const allowedViteKeys = new Set([
   'VITE_AUTH0_SCOPE',
 ])
 
+const viteKeyPattern = /\bVITE_[A-Z0-9_]*[A-Z0-9]\b/g
 const sensitiveKeyPattern =
   /VITE_[A-Z0-9_]*(SECRET|TOKEN|PASSWORD|PASS|PRIVATE|API_KEY|BEARER|CREDENTIAL)[A-Z0-9_]*/g
 
@@ -62,7 +63,7 @@ function assertViteEnvKeysAreAllowed(files: readonly string[]): void {
 
     const text = readFileSync(file, 'utf8')
 
-    for (const match of text.matchAll(/\bVITE_[A-Z0-9_]+\b/g)) {
+    for (const match of text.matchAll(viteKeyPattern)) {
       const key = match[0]
       if (!allowedViteKeys.has(key)) {
         violations.push(`${file}: variable VITE_* no permitida: ${key}`)
