@@ -22,6 +22,7 @@ interface UseProfitabilityLiquidityParams {
   readonly saleOptions: readonly SaleMarketPriceOption[]
   readonly markets: readonly MarketDefinition[]
   readonly config: MarketConfig
+  readonly enabled?: boolean
 }
 
 export function useProfitabilityLiquidity({
@@ -31,6 +32,7 @@ export function useProfitabilityLiquidity({
   saleOptions,
   markets,
   config,
+  enabled = true,
 }: UseProfitabilityLiquidityParams) {
   const snapshots = useMarketHistoryStore((state) => state.snapshots)
   const status = useMarketHistoryStore((state) => state.optimizerStatus)
@@ -50,6 +52,8 @@ export function useProfitabilityLiquidity({
   )
 
   const candidates = useMemo<readonly MarketHistoryCandidate[]>(() => {
+    if (!enabled) return []
+
     const result = new Map<string, MarketHistoryCandidate>()
 
     for (const target of materialTargets) {
@@ -113,6 +117,7 @@ export function useProfitabilityLiquidity({
   }, [
     config.quality,
     config.server,
+    enabled,
     materialComparisons,
     materialTargets,
     saleOptions,
@@ -121,13 +126,14 @@ export function useProfitabilityLiquidity({
   ])
 
   useEffect(() => {
+    if (!enabled) return
     void refreshCandidates({ candidates })
-  }, [candidates, refreshCandidates])
+  }, [candidates, enabled, refreshCandidates])
 
-  const refresh = useCallback(
-    () => refreshCandidates({ candidates, force: true }),
-    [candidates, refreshCandidates],
-  )
+  const refresh = useCallback(() => {
+    if (!enabled) return Promise.resolve()
+    return refreshCandidates({ candidates, force: true })
+  }, [candidates, enabled, refreshCandidates])
 
   return {
     snapshots,
@@ -137,5 +143,6 @@ export function useProfitabilityLiquidity({
     progress,
     refresh,
     candidateCount: candidates.length,
+    enabled,
   }
 }
