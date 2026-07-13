@@ -9,6 +9,10 @@ const ROUTE_PATHS: Readonly<Record<AppRoute, string>> = {
   account: "/account",
 };
 
+function currentPathname(): string {
+  return typeof window === "undefined" ? "/" : window.location.pathname;
+}
+
 export function routeFromPathname(pathname: string): AppRoute {
   switch (pathname.replace(/\/+$/, "") || "/") {
     case "/refining":
@@ -27,6 +31,10 @@ export function routeFromPathname(pathname: string): AppRoute {
 }
 
 export function navigateToRoute(nextRoute: AppRoute, replace = false): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   const nextPath = ROUTE_PATHS[nextRoute];
   if (window.location.pathname !== nextPath) {
     if (replace) {
@@ -40,7 +48,7 @@ export function navigateToRoute(nextRoute: AppRoute, replace = false): void {
 
 export function useAppRoute() {
   const [route, setRoute] = useState<AppRoute>(() =>
-    routeFromPathname(window.location.pathname),
+    routeFromPathname(currentPathname()),
   );
 
   useEffect(() => {
@@ -52,7 +60,9 @@ export function useAppRoute() {
 
   const navigate = useCallback((nextRoute: AppRoute) => {
     navigateToRoute(nextRoute);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }, []);
 
   return { route, navigate };
