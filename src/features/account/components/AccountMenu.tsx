@@ -1,35 +1,35 @@
-import type { AppRoute } from '../../../app/types'
-import { useAccountSession } from '../context/AccountSessionContext'
+import type { AppRoute } from "../../../app/types";
+import { useAccountSession } from "../context/AccountSessionContext";
 import {
   currentPlan,
   useAccountAccessStore,
-} from '../store/accountAccessStore'
+} from "../store/accountAccessStore";
 import {
   ChevronDownIcon,
   LogoutIcon,
   RefreshIcon,
   SparklesIcon,
   UserIcon,
-} from './AccountIcons'
+} from "./AccountIcons";
 
 interface AccountMenuProps {
-  readonly onNavigate: (route: AppRoute) => void
+  readonly onNavigate: (route: AppRoute) => void;
 }
 
 function initials(name: string | null, email: string | null): string {
-  const source = name?.trim() || email?.trim() || 'Cuenta'
-  const parts = source.split(/\s+/).filter(Boolean)
+  const source = name?.trim() || email?.trim() || "Cuenta";
+  const parts = source.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) {
-    return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase()
+    return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
   }
-  return source.slice(0, 2).toUpperCase()
+  return source.slice(0, 2).toUpperCase();
 }
 
 export function AccountMenu({ onNavigate }: AccountMenuProps) {
-  const session = useAccountSession()
-  const access = useAccountAccessStore((state) => state.access)
-  const accessStatus = useAccountAccessStore((state) => state.status)
-  const plan = currentPlan(access)
+  const session = useAccountSession();
+  const access = useAccountAccessStore((state) => state.access);
+  const accessStatus = useAccountAccessStore((state) => state.status);
+  const plan = currentPlan(access);
 
   if (!session.isAuthenticated) {
     if (session.authEnabled && session.authConfigured) {
@@ -43,23 +43,23 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           <UserIcon className="h-4 w-4" />
           <span className="hidden sm:inline">Iniciar sesión</span>
         </button>
-      )
+      );
     }
 
     return (
       <button
         type="button"
-        onClick={() => onNavigate('account')}
+        onClick={() => onNavigate("account")}
         className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-surface-raised px-3 text-xs font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
       >
         <UserIcon className="h-4 w-4" />
         <span className="hidden sm:inline">Cuenta</span>
       </button>
-    )
+    );
   }
 
-  const profileName = session.profile?.name ?? access?.user.displayName ?? null
-  const profileEmail = session.profile?.email ?? access?.user.email ?? null
+  const profileName = session.profile?.name ?? access?.user.displayName ?? null;
+  const profileEmail = session.profile?.email ?? access?.user.email ?? null;
 
   return (
     <details className="group relative">
@@ -78,7 +78,7 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
         )}
         <span className="hidden min-w-0 leading-tight md:block">
           <span className="block max-w-28 truncate text-xs font-medium text-text">
-            {profileName ?? profileEmail ?? 'Mi cuenta'}
+            {profileName ?? profileEmail ?? "Mi cuenta"}
           </span>
           <span className="block text-[9px] font-semibold uppercase tracking-[0.12em] text-accent">
             Plan {plan}
@@ -90,10 +90,10 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
       <div className="absolute right-0 top-[calc(100%+0.6rem)] z-50 w-72 overflow-hidden rounded-xl border border-border bg-surface shadow-[0_20px_60px_rgba(0,0,0,0.38)]">
         <div className="border-b border-border px-4 py-3">
           <p className="truncate text-sm font-semibold text-text">
-            {profileName ?? 'Cuenta de Albion'}
+            {profileName ?? "Cuenta de Albion"}
           </p>
           <p className="mt-0.5 truncate text-xs text-text-faint">
-            {profileEmail ?? 'Perfil autenticado'}
+            {profileEmail ?? "Perfil autenticado"}
           </p>
           <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-accent-border bg-accent-muted px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-accent">
             <SparklesIcon className="h-3 w-3" />
@@ -104,7 +104,7 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
         <div className="p-2">
           <button
             type="button"
-            onClick={() => onNavigate('account')}
+            onClick={() => onNavigate("account")}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text"
           >
             <UserIcon className="h-4 w-4" />
@@ -112,7 +112,7 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           </button>
           <button
             type="button"
-            onClick={() => onNavigate('plans')}
+            onClick={() => onNavigate("plans")}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text"
           >
             <SparklesIcon className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           <button
             type="button"
             onClick={() => void session.refreshAccess()}
-            disabled={accessStatus === 'loading'}
+            disabled={accessStatus === "loading"}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text disabled:cursor-wait disabled:opacity-60"
           >
             <RefreshIcon className="h-4 w-4" />
@@ -141,5 +141,5 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
         </div>
       </div>
     </details>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-import { AccountMenu } from '@features/account/components/AccountMenu'
-import type { AppRoute } from './types'
-import { isAppModule } from './types'
-import { AnvilIcon, CatalogIcon } from './AppIcons'
-import { MainNavigation } from './MainNavigation'
+import { AccountMenu } from "@features/account/components/AccountMenu";
+import type { AppRoute } from "./types";
+import { isAppModule } from "./types";
+import { AnvilIcon, CatalogIcon } from "./AppIcons";
+import { MainNavigation } from "./MainNavigation";
 
 interface AppHeaderProps {
-  readonly activeRoute: AppRoute
-  readonly itemCount: number
-  readonly onNavigate: (route: AppRoute) => void
-  readonly onOpenCatalog: () => void
+  readonly activeRoute: AppRoute;
+  readonly itemCount: number;
+  readonly onNavigate: (route: AppRoute) => void;
+  readonly onOpenCatalog: () => void;
 }
 
 export function AppHeader({
@@ -17,7 +17,7 @@ export function AppHeader({
   onNavigate,
   onOpenCatalog,
 }: AppHeaderProps) {
-  const activeModule = isAppModule(activeRoute) ? activeRoute : null
+  const activeModule = isAppModule(activeRoute) ? activeRoute : null;
 
   return (
     <header className="relative z-50 shrink-0 border-b border-border bg-surface/92 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/78">
@@ -26,7 +26,7 @@ export function AppHeader({
       <div className="mx-auto flex min-h-[76px] w-full items-center gap-4 px-4 py-3 sm:px-5 lg:gap-6 lg:px-6">
         <button
           type="button"
-          onClick={() => onNavigate('crafting')}
+          onClick={() => onNavigate("crafting")}
           className="group flex min-w-0 shrink-0 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           aria-label="Ir a la calculadora de crafteo"
         >
@@ -46,14 +46,11 @@ export function AppHeader({
         </button>
 
         <div className="min-w-0 flex-1">
-          <MainNavigation
-            activeModule={activeModule}
-            onNavigate={onNavigate}
-          />
+          <MainNavigation activeModule={activeModule} onNavigate={onNavigate} />
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {activeRoute === 'crafting' && (
+          {activeRoute === "crafting" && (
             <button
               type="button"
               onClick={onOpenCatalog}
@@ -71,7 +68,7 @@ export function AppHeader({
             </span>
             <span className="leading-tight">
               <span className="block font-mono text-[11px] tabular text-text">
-                {new Intl.NumberFormat('es-CL').format(itemCount)}
+                {new Intl.NumberFormat("es-CL").format(itemCount)}
               </span>
               <span className="block text-[8px] font-semibold uppercase tracking-[0.14em] text-text-faint">
                 ítems cargados
@@ -83,5 +80,5 @@ export function AppHeader({
         </div>
       </div>
     </header>
-  )
+  );
 }

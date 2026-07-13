@@ -1,43 +1,43 @@
 export const ENTITLEMENT_KEYS = {
-  historyMaxDays: 'history.max_days',
-  optimizerLiquidity: 'optimizer.liquidity',
-  optimizerBatchLimit: 'optimizer.batch_limit',
-  savedConfigurationsMax: 'saved_configurations.max',
-  exportsCsv: 'exports.csv',
-  marketAlertsMax: 'alerts.market.max',
-} as const
+  historyMaxDays: "history.max_days",
+  optimizerLiquidity: "optimizer.liquidity",
+  optimizerBatchLimit: "optimizer.batch_limit",
+  savedConfigurationsMax: "saved_configurations.max",
+  exportsCsv: "exports.csv",
+  marketAlertsMax: "alerts.market.max",
+} as const;
 
 export type EntitlementKey =
-  (typeof ENTITLEMENT_KEYS)[keyof typeof ENTITLEMENT_KEYS]
+  (typeof ENTITLEMENT_KEYS)[keyof typeof ENTITLEMENT_KEYS];
 
-export type EntitlementValue = boolean | number | string | null
-export type EntitlementMap = Readonly<Record<string, EntitlementValue>>
+export type EntitlementValue = boolean | number | string | null;
+export type EntitlementMap = Readonly<Record<string, EntitlementValue>>;
 
 export interface AccountUser {
-  readonly id: string
-  readonly email: string | null
-  readonly displayName: string | null
-  readonly createdAt: string
-  readonly updatedAt: string
-  readonly lastLoginAt: string | null
+  readonly id: string;
+  readonly email: string | null;
+  readonly displayName: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly lastLoginAt: string | null;
 }
 
 export interface AccountSubscription {
-  readonly plan: string
-  readonly status: string
-  readonly accessUntil: string | null
+  readonly plan: string;
+  readonly status: string;
+  readonly accessUntil: string | null;
 }
 
 export interface AccountAccess {
-  readonly user: AccountUser
-  readonly subscription: AccountSubscription
-  readonly entitlements: EntitlementMap
+  readonly user: AccountUser;
+  readonly subscription: AccountSubscription;
+  readonly entitlements: EntitlementMap;
 }
 
 export interface SessionProfile {
-  readonly name: string | null
-  readonly email: string | null
-  readonly picture: string | null
+  readonly name: string | null;
+  readonly email: string | null;
+  readonly picture: string | null;
 }
 
 export const FREE_ENTITLEMENTS: EntitlementMap = {
@@ -47,4 +47,4 @@ export const FREE_ENTITLEMENTS: EntitlementMap = {
   [ENTITLEMENT_KEYS.savedConfigurationsMax]: 3,
   [ENTITLEMENT_KEYS.exportsCsv]: false,
   [ENTITLEMENT_KEYS.marketAlertsMax]: 0,
-}
+};

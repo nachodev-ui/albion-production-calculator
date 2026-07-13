@@ -1,10 +1,10 @@
-import { LockIcon, SparklesIcon } from './AccountIcons'
+import { LockIcon, SparklesIcon } from "./AccountIcons";
 
 interface LockedFeatureCardProps {
-  readonly title: string
-  readonly description: string
-  readonly onViewPlans: () => void
-  readonly compact?: boolean
+  readonly title: string;
+  readonly description: string;
+  readonly onViewPlans: () => void;
+  readonly compact?: boolean;
 }
 
 export function LockedFeatureCard({
@@ -16,7 +16,7 @@ export function LockedFeatureCard({
   return (
     <section
       className={`relative overflow-hidden rounded-xl border border-accent-border bg-accent-muted/55 ${
-        compact ? 'p-4' : 'p-5'
+        compact ? "p-4" : "p-5"
       }`}
     >
       <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-accent/10 blur-2xl" />
@@ -47,5 +47,5 @@ export function LockedFeatureCard({
         </button>
       </div>
     </section>
-  )
+  );
 }

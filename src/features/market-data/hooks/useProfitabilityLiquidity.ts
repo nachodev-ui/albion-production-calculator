@@ -1,28 +1,28 @@
-import { useCallback, useEffect, useMemo } from 'react'
-import { useMarketHistoryStore } from '../store/marketHistoryStore'
-import type { MarketHistoryCandidate } from '../types/MarketHistory'
+import { useCallback, useEffect, useMemo } from "react";
+import { useMarketHistoryStore } from "../store/marketHistoryStore";
+import type { MarketHistoryCandidate } from "../types/MarketHistory";
 import type {
   MarketConfig,
   MarketDefinition,
   MarketPriceTarget,
   MaterialMarketPriceComparisons,
   SaleMarketPriceOption,
-} from '../types/MarketPrice'
+} from "../types/MarketPrice";
 import {
   MATERIAL_MARKET_QUALITY,
   buildItemPriceKey,
   buildMarketItemIdentifier,
   isUsableMarket,
-} from '../types/MarketPrice'
+} from "../types/MarketPrice";
 
 interface UseProfitabilityLiquidityParams {
-  readonly materialTargets: readonly MarketPriceTarget[]
-  readonly materialComparisons: MaterialMarketPriceComparisons
-  readonly saleTarget: MarketPriceTarget | null
-  readonly saleOptions: readonly SaleMarketPriceOption[]
-  readonly markets: readonly MarketDefinition[]
-  readonly config: MarketConfig
-  readonly enabled?: boolean
+  readonly materialTargets: readonly MarketPriceTarget[];
+  readonly materialComparisons: MaterialMarketPriceComparisons;
+  readonly saleTarget: MarketPriceTarget | null;
+  readonly saleOptions: readonly SaleMarketPriceOption[];
+  readonly markets: readonly MarketDefinition[];
+  readonly config: MarketConfig;
+  readonly enabled?: boolean;
 }
 
 export function useProfitabilityLiquidity({
@@ -34,34 +34,31 @@ export function useProfitabilityLiquidity({
   config,
   enabled = true,
 }: UseProfitabilityLiquidityParams) {
-  const snapshots = useMarketHistoryStore((state) => state.snapshots)
-  const status = useMarketHistoryStore((state) => state.optimizerStatus)
-  const error = useMarketHistoryStore((state) => state.optimizerError)
-  const warnings = useMarketHistoryStore((state) => state.optimizerWarnings)
-  const progress = useMarketHistoryStore((state) => state.optimizerProgress)
+  const snapshots = useMarketHistoryStore((state) => state.snapshots);
+  const status = useMarketHistoryStore((state) => state.optimizerStatus);
+  const error = useMarketHistoryStore((state) => state.optimizerError);
+  const warnings = useMarketHistoryStore((state) => state.optimizerWarnings);
+  const progress = useMarketHistoryStore((state) => state.optimizerProgress);
   const refreshCandidates = useMarketHistoryStore(
     (state) => state.refreshCandidates,
-  )
+  );
 
   const usableCities = useMemo(
-    () =>
-      new Set(
-        markets.filter(isUsableMarket).map((market) => market.key),
-      ),
+    () => new Set(markets.filter(isUsableMarket).map((market) => market.key)),
     [markets],
-  )
+  );
 
   const candidates = useMemo<readonly MarketHistoryCandidate[]>(() => {
-    if (!enabled) return []
+    if (!enabled) return [];
 
-    const result = new Map<string, MarketHistoryCandidate>()
+    const result = new Map<string, MarketHistoryCandidate>();
 
     for (const target of materialTargets) {
-      const itemPriceKey = buildItemPriceKey(target.itemId, target.enchantment)
+      const itemPriceKey = buildItemPriceKey(target.itemId, target.enchantment);
       const itemIdentifier = buildMarketItemIdentifier(
         target.itemId,
         target.enchantment,
-      )
+      );
 
       for (const option of materialComparisons.get(itemPriceKey) ?? []) {
         if (
@@ -69,7 +66,7 @@ export function useProfitabilityLiquidity({
           option.value <= 0 ||
           !usableCities.has(option.city)
         ) {
-          continue
+          continue;
         }
 
         const candidate: MarketHistoryCandidate = {
@@ -77,11 +74,11 @@ export function useProfitabilityLiquidity({
           itemIdentifier,
           city: option.city,
           quality: MATERIAL_MARKET_QUALITY,
-        }
+        };
         result.set(
           `${candidate.server}|${candidate.city}|${candidate.itemIdentifier}|${candidate.quality}`,
           candidate,
-        )
+        );
       }
     }
 
@@ -89,7 +86,7 @@ export function useProfitabilityLiquidity({
       const itemIdentifier = buildMarketItemIdentifier(
         saleTarget.itemId,
         saleTarget.enchantment,
-      )
+      );
 
       for (const option of saleOptions) {
         if (
@@ -97,7 +94,7 @@ export function useProfitabilityLiquidity({
           option.value <= 0 ||
           !usableCities.has(option.city)
         ) {
-          continue
+          continue;
         }
 
         const candidate: MarketHistoryCandidate = {
@@ -105,15 +102,15 @@ export function useProfitabilityLiquidity({
           itemIdentifier,
           city: option.city,
           quality: config.quality,
-        }
+        };
         result.set(
           `${candidate.server}|${candidate.city}|${candidate.itemIdentifier}|${candidate.quality}`,
           candidate,
-        )
+        );
       }
     }
 
-    return Array.from(result.values())
+    return Array.from(result.values());
   }, [
     config.quality,
     config.server,
@@ -123,17 +120,17 @@ export function useProfitabilityLiquidity({
     saleOptions,
     saleTarget,
     usableCities,
-  ])
+  ]);
 
   useEffect(() => {
-    if (!enabled) return
-    void refreshCandidates({ candidates })
-  }, [candidates, enabled, refreshCandidates])
+    if (!enabled) return;
+    void refreshCandidates({ candidates });
+  }, [candidates, enabled, refreshCandidates]);
 
   const refresh = useCallback(() => {
-    if (!enabled) return Promise.resolve()
-    return refreshCandidates({ candidates, force: true })
-  }, [candidates, enabled, refreshCandidates])
+    if (!enabled) return Promise.resolve();
+    return refreshCandidates({ candidates, force: true });
+  }, [candidates, enabled, refreshCandidates]);
 
   return {
     snapshots,
@@ -144,5 +141,5 @@ export function useProfitabilityLiquidity({
     refresh,
     candidateCount: candidates.length,
     enabled,
-  }
+  };
 }

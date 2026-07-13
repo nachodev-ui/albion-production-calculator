@@ -1,49 +1,50 @@
-import type { AppRoute } from '../../../app/types'
-import { useAccountSession } from '../context/AccountSessionContext'
+import type { AppRoute } from "../../../app/types";
+import { useAccountSession } from "../context/AccountSessionContext";
 import {
   currentPlan,
   getEffectiveEntitlements,
   useAccountAccessStore,
-} from '../store/accountAccessStore'
-import { ENTITLEMENT_KEYS } from '../types'
-import { CheckIcon, RefreshIcon, SparklesIcon, UserIcon } from './AccountIcons'
+} from "../store/accountAccessStore";
+import { ENTITLEMENT_KEYS } from "../types";
+import { CheckIcon, RefreshIcon, SparklesIcon, UserIcon } from "./AccountIcons";
 
 interface AccountPageProps {
-  readonly onNavigate: (route: AppRoute) => void
+  readonly onNavigate: (route: AppRoute) => void;
 }
 
 const ENTITLEMENT_LABELS: Readonly<Record<string, string>> = {
-  [ENTITLEMENT_KEYS.historyMaxDays]: 'Días máximos de historial',
-  [ENTITLEMENT_KEYS.optimizerLiquidity]: 'Optimizador con liquidez',
-  [ENTITLEMENT_KEYS.optimizerBatchLimit]: 'Límite del optimizador',
-  [ENTITLEMENT_KEYS.savedConfigurationsMax]: 'Presets guardados',
-  [ENTITLEMENT_KEYS.exportsCsv]: 'Exportación CSV',
-  [ENTITLEMENT_KEYS.marketAlertsMax]: 'Alertas de mercado',
-}
+  [ENTITLEMENT_KEYS.historyMaxDays]: "Días máximos de historial",
+  [ENTITLEMENT_KEYS.optimizerLiquidity]: "Optimizador con liquidez",
+  [ENTITLEMENT_KEYS.optimizerBatchLimit]: "Límite del optimizador",
+  [ENTITLEMENT_KEYS.savedConfigurationsMax]: "Presets guardados",
+  [ENTITLEMENT_KEYS.exportsCsv]: "Exportación CSV",
+  [ENTITLEMENT_KEYS.marketAlertsMax]: "Alertas de mercado",
+};
 
 function formatValue(value: boolean | number | string | null): string {
-  if (typeof value === 'boolean') return value ? 'Incluido' : 'No incluido'
-  if (typeof value === 'number') return new Intl.NumberFormat('es-CL').format(value)
-  return value ?? 'Sin valor'
+  if (typeof value === "boolean") return value ? "Incluido" : "No incluido";
+  if (typeof value === "number")
+    return new Intl.NumberFormat("es-CL").format(value);
+  return value ?? "Sin valor";
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return 'Sin fecha definida'
-  const date = new Date(value)
+  if (!value) return "Sin fecha definida";
+  const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? value
-    : new Intl.DateTimeFormat('es-CL', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }).format(date)
+    : new Intl.DateTimeFormat("es-CL", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(date);
 }
 
 export function AccountPage({ onNavigate }: AccountPageProps) {
-  const session = useAccountSession()
-  const access = useAccountAccessStore((state) => state.access)
-  const status = useAccountAccessStore((state) => state.status)
-  const accessError = useAccountAccessStore((state) => state.error)
-  const lastSyncedAt = useAccountAccessStore((state) => state.lastSyncedAt)
+  const session = useAccountSession();
+  const access = useAccountAccessStore((state) => state.access);
+  const status = useAccountAccessStore((state) => state.status);
+  const accessError = useAccountAccessStore((state) => state.error);
+  const lastSyncedAt = useAccountAccessStore((state) => state.lastSyncedAt);
 
   if (!session.authEnabled || !session.authConfigured) {
     return (
@@ -56,14 +57,17 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             Acceso de cuenta en preparación
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">
-            La interfaz de cuenta ya está integrada, pero el login real permanece deshabilitado hasta configurar el tenant de Auth0 y habilitar la validación JWT de la API.
+            La interfaz de cuenta ya está integrada, pero el login real
+            permanece deshabilitado hasta configurar el tenant de Auth0 y
+            habilitar la validación JWT de la API.
           </p>
           <div className="mt-6 rounded-xl border border-border bg-surface-raised p-4 text-xs leading-relaxed text-text-faint">
-            Mientras tanto, la aplicación conserva el acceso Free y no envía credenciales ni datos de sesión.
+            Mientras tanto, la aplicación conserva el acceso Free y no envía
+            credenciales ni datos de sesión.
           </div>
           <button
             type="button"
-            onClick={() => onNavigate('plans')}
+            onClick={() => onNavigate("plans")}
             className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
             <SparklesIcon className="h-4 w-4" />
@@ -71,7 +75,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </button>
         </section>
       </div>
-    )
+    );
   }
 
   if (!session.isAuthenticated) {
@@ -81,9 +85,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-border bg-accent-muted text-accent">
             <UserIcon className="h-7 w-7" />
           </span>
-          <h2 className="mt-5 font-display text-2xl text-text">Inicia sesión para ver tu cuenta</h2>
+          <h2 className="mt-5 font-display text-2xl text-text">
+            Inicia sesión para ver tu cuenta
+          </h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-muted">
-            Auth0 entrega el access token y la API central resuelve tu plan y permisos efectivos desde Neon.
+            Auth0 entrega el access token y la API central resuelve tu plan y
+            permisos efectivos desde Neon.
           </p>
           <button
             type="button"
@@ -94,14 +101,15 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </button>
         </section>
       </div>
-    )
+    );
   }
 
-  const entitlements = getEffectiveEntitlements(access)
-  const plan = currentPlan(access)
+  const entitlements = getEffectiveEntitlements(access);
+  const plan = currentPlan(access);
   const displayName =
-    session.profile?.name ?? access?.user.displayName ?? 'Usuario de Albion'
-  const email = session.profile?.email ?? access?.user.email ?? 'Correo no disponible'
+    session.profile?.name ?? access?.user.displayName ?? "Usuario de Albion";
+  const email =
+    session.profile?.email ?? access?.user.email ?? "Correo no disponible";
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-14 pt-2 sm:px-6">
@@ -121,7 +129,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               </span>
             )}
             <div className="min-w-0">
-              <h2 className="truncate font-display text-xl text-text">{displayName}</h2>
+              <h2 className="truncate font-display text-xl text-text">
+                {displayName}
+              </h2>
               <p className="mt-1 truncate text-xs text-text-faint">{email}</p>
             </div>
           </div>
@@ -135,7 +145,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Estado</dt>
-              <dd className="text-right text-text">{access?.subscription.status ?? 'Free'}</dd>
+              <dd className="text-right text-text">
+                {access?.subscription.status ?? "Free"}
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Acceso hasta</dt>
@@ -145,7 +157,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Última sincronización</dt>
-              <dd className="text-right text-xs text-text-muted">{formatDate(lastSyncedAt)}</dd>
+              <dd className="text-right text-xs text-text-muted">
+                {formatDate(lastSyncedAt)}
+              </dd>
             </div>
           </dl>
 
@@ -159,15 +173,17 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             <button
               type="button"
               onClick={() => void session.refreshAccess()}
-              disabled={status === 'loading'}
+              disabled={status === "loading"}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-text-muted hover:border-border-strong hover:text-text disabled:cursor-wait disabled:opacity-60"
             >
-              <RefreshIcon className={`h-4 w-4 ${status === 'loading' ? 'animate-spin' : ''}`} />
+              <RefreshIcon
+                className={`h-4 w-4 ${status === "loading" ? "animate-spin" : ""}`}
+              />
               Actualizar permisos
             </button>
             <button
               type="button"
-              onClick={() => onNavigate('plans')}
+              onClick={() => onNavigate("plans")}
               className="inline-flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-semibold text-bg"
             >
               <SparklesIcon className="h-4 w-4" />
@@ -182,7 +198,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-text-faint">
                 Acceso efectivo
               </p>
-              <h2 className="mt-1 font-display text-xl text-text">Permisos de la cuenta</h2>
+              <h2 className="mt-1 font-display text-xl text-text">
+                Permisos de la cuenta
+              </h2>
             </div>
             <CheckIcon className="h-6 w-6 text-positive" />
           </div>
@@ -193,17 +211,23 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 key={key}
                 className="rounded-xl border border-border bg-surface-raised p-4"
               >
-                <p className="text-xs text-text-faint">{ENTITLEMENT_LABELS[key] ?? key}</p>
-                <p className="mt-1 text-sm font-semibold text-text">{formatValue(value)}</p>
+                <p className="text-xs text-text-faint">
+                  {ENTITLEMENT_LABELS[key] ?? key}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-text">
+                  {formatValue(value)}
+                </p>
               </article>
             ))}
           </div>
 
           <p className="mt-5 text-xs leading-relaxed text-text-faint">
-            Durante esta etapa, el acceso Pro se asigna manualmente en PostgreSQL. Al actualizar permisos, la interfaz refleja inmediatamente cualquier alta o retiro de acceso.
+            Durante esta etapa, el acceso Pro se asigna manualmente en
+            PostgreSQL. Al actualizar permisos, la interfaz refleja
+            inmediatamente cualquier alta o retiro de acceso.
           </p>
         </section>
       </div>
     </div>
-  )
+  );
 }

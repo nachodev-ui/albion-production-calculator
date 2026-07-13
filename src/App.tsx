@@ -1,49 +1,50 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import type { Item } from '@core/domain/entities/Item'
-import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
-import { AppHeader } from './app/AppHeader'
-import { AppShell } from './app/AppShell'
-import { CatalogIcon } from './app/AppIcons'
-import { ModuleHeader } from './app/ModuleHeader'
-import { useAppRoute } from './app/routing'
-import type { AppModule, AppRoute } from './app/types'
-import { EmptyDetailState } from '@features/craft-calculator/components/EmptyDetailState'
-import { ItemDetailPanel } from '@features/craft-calculator/components/ItemDetailPanel'
+import { lazy, Suspense, useEffect, useState } from "react";
+import type { Item } from "@core/domain/entities/Item";
+import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
+import { AppHeader } from "./app/AppHeader";
+import { AppShell } from "./app/AppShell";
+import { CatalogIcon } from "./app/AppIcons";
+import { ModuleHeader } from "./app/ModuleHeader";
+import { useAppRoute } from "./app/routing";
+import type { AppModule, AppRoute } from "./app/types";
+import { EmptyDetailState } from "@features/craft-calculator/components/EmptyDetailState";
+import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetailPanel";
 
 const ItemBrowserPanel = lazy(() =>
-  import('@features/item-browser/components/ItemBrowserPanel').then((module) => ({
-    default: module.ItemBrowserPanel,
-  })),
-)
+  import("@features/item-browser/components/ItemBrowserPanel").then(
+    (module) => ({
+      default: module.ItemBrowserPanel,
+    }),
+  ),
+);
 const PresetLibraryPage = lazy(() =>
-  import('@features/presets/components/PresetLibraryPage').then((module) => ({
+  import("@features/presets/components/PresetLibraryPage").then((module) => ({
     default: module.PresetLibraryPage,
   })),
-)
+);
 const RefiningComingSoonPage = lazy(() =>
-  import('@features/refining-calculator/components/RefiningComingSoonPage').then(
+  import("@features/refining-calculator/components/RefiningComingSoonPage").then(
     (module) => ({
       default: module.RefiningComingSoonPage,
     }),
   ),
-)
+);
 const PlansPage = lazy(() =>
-  import('@features/account/components/PlansPage').then((module) => ({
+  import("@features/account/components/PlansPage").then((module) => ({
     default: module.PlansPage,
   })),
-)
+);
 const AccountPage = lazy(() =>
-  import('@features/account/components/AccountPage').then((module) => ({
+  import("@features/account/components/AccountPage").then((module) => ({
     default: module.AccountPage,
   })),
-)
+);
 
 async function loadItemRepository(): Promise<ItemRepository> {
-  const { JsonItemRepository } = await import(
-    '@data/repositories/JsonItemRepository'
-  )
+  const { JsonItemRepository } =
+    await import("@data/repositories/JsonItemRepository");
 
-  return new JsonItemRepository()
+  return new JsonItemRepository();
 }
 
 function SidebarFallback() {
@@ -54,7 +55,7 @@ function SidebarFallback() {
       <div className="h-24 animate-pulse rounded-lg bg-surface-raised" />
       <p className="text-xs text-text-faint">Cargando catálogo…</p>
     </div>
-  )
+  );
 }
 
 function ModuleFallback({ label }: { readonly label: string }) {
@@ -70,50 +71,50 @@ function ModuleFallback({ label }: { readonly label: string }) {
         <p className="mt-4 text-xs text-text-faint">Cargando {label}…</p>
       </div>
     </div>
-  )
+  );
 }
 
 function App() {
-  const { route, navigate } = useAppRoute()
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null)
-  const [repository, setRepository] = useState<ItemRepository | null>(null)
-  const [repositoryError, setRepositoryError] = useState<string | null>(null)
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
+  const { route, navigate } = useAppRoute();
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [repository, setRepository] = useState<ItemRepository | null>(null);
+  const [repositoryError, setRepositoryError] = useState<string | null>(null);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
 
   useEffect(() => {
-    let isActive = true
+    let isActive = true;
 
     void loadItemRepository()
       .then((nextRepository) => {
-        if (!isActive) return
-        setRepository(nextRepository)
+        if (!isActive) return;
+        setRepository(nextRepository);
       })
       .catch((error: unknown) => {
-        if (!isActive) return
+        if (!isActive) return;
         setRepositoryError(
           error instanceof Error
             ? error.message
-            : 'No fue posible cargar el catálogo de ítems.',
-        )
-      })
+            : "No fue posible cargar el catálogo de ítems.",
+        );
+      });
 
     return () => {
-      isActive = false
-    }
-  }, [])
+      isActive = false;
+    };
+  }, []);
 
   function navigateTo(nextRoute: AppRoute) {
-    navigate(nextRoute)
-    setIsCatalogOpen(false)
+    navigate(nextRoute);
+    setIsCatalogOpen(false);
   }
 
   function navigateModule(module: AppModule) {
-    navigateTo(module)
+    navigateTo(module);
   }
 
   function selectItem(item: Item) {
-    setSelectedItem(item)
-    setIsCatalogOpen(false)
+    setSelectedItem(item);
+    setIsCatalogOpen(false);
   }
 
   const header = (
@@ -123,21 +124,22 @@ function App() {
       onNavigate={navigateTo}
       onOpenCatalog={() => setIsCatalogOpen(true)}
     />
-  )
+  );
 
-  const catalog = route === 'crafting' ? (
-    repository ? (
-      <Suspense fallback={<SidebarFallback />}>
-        <ItemBrowserPanel
-          repository={repository}
-          selectedId={selectedItem?.id ?? null}
-          onSelect={selectItem}
-        />
-      </Suspense>
-    ) : (
-      <SidebarFallback />
-    )
-  ) : undefined
+  const catalog =
+    route === "crafting" ? (
+      repository ? (
+        <Suspense fallback={<SidebarFallback />}>
+          <ItemBrowserPanel
+            repository={repository}
+            selectedId={selectedItem?.id ?? null}
+            onSelect={selectItem}
+          />
+        </Suspense>
+      ) : (
+        <SidebarFallback />
+      )
+    ) : undefined;
 
   return (
     <AppShell
@@ -147,7 +149,7 @@ function App() {
       isSidebarOpen={isCatalogOpen}
       onCloseSidebar={() => setIsCatalogOpen(false)}
     >
-      {route === 'crafting' && (
+      {route === "crafting" && (
         <>
           <ModuleHeader
             eyebrow="Módulo de crafteo"
@@ -187,7 +189,7 @@ function App() {
         </>
       )}
 
-      {route === 'refining' && (
+      {route === "refining" && (
         <>
           <ModuleHeader
             eyebrow="Módulo de refinamiento"
@@ -196,12 +198,14 @@ function App() {
             badge="Próximamente"
           />
           <Suspense fallback={<ModuleFallback label="refinamiento" />}>
-            <RefiningComingSoonPage onOpenCrafting={() => navigateModule('crafting')} />
+            <RefiningComingSoonPage
+              onOpenCrafting={() => navigateModule("crafting")}
+            />
           </Suspense>
         </>
       )}
 
-      {route === 'presets' && (
+      {route === "presets" && (
         <>
           <ModuleHeader
             eyebrow="Biblioteca local"
@@ -209,12 +213,14 @@ function App() {
             description="Administra configuraciones frecuentes de ciudad, especialidad, foco, bono diario y Premium guardadas en este navegador."
           />
           <Suspense fallback={<ModuleFallback label="presets" />}>
-            <PresetLibraryPage onOpenCrafting={() => navigateModule('crafting')} />
+            <PresetLibraryPage
+              onOpenCrafting={() => navigateModule("crafting")}
+            />
           </Suspense>
         </>
       )}
 
-      {route === 'plans' && (
+      {route === "plans" && (
         <>
           <ModuleHeader
             eyebrow="Planes de acceso"
@@ -227,7 +233,7 @@ function App() {
         </>
       )}
 
-      {route === 'account' && (
+      {route === "account" && (
         <>
           <ModuleHeader
             eyebrow="Cuenta"
@@ -240,7 +246,7 @@ function App() {
         </>
       )}
     </AppShell>
-  )
+  );
 }
 
-export default App
+export default App;

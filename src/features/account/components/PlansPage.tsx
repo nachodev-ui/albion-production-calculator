@@ -1,37 +1,40 @@
-import type { AppRoute } from '../../../app/types'
-import { useAccountSession } from '../context/AccountSessionContext'
-import { currentPlan, useAccountAccessStore } from '../store/accountAccessStore'
-import { CheckIcon, SparklesIcon } from './AccountIcons'
+import type { AppRoute } from "../../../app/types";
+import { useAccountSession } from "../context/AccountSessionContext";
+import {
+  currentPlan,
+  useAccountAccessStore,
+} from "../store/accountAccessStore";
+import { CheckIcon, SparklesIcon } from "./AccountIcons";
 
 interface PlansPageProps {
-  readonly onNavigate: (route: AppRoute) => void
+  readonly onNavigate: (route: AppRoute) => void;
 }
 
 const FREE_FEATURES = [
-  'Hasta 7 días de historial de mercado',
-  'Hasta 3 presets guardados por navegador',
-  'Comparación de precios y rentabilidad base',
-  'Cálculo de retorno, tarifas, fama y progreso',
-] as const
+  "Hasta 7 días de historial de mercado",
+  "Hasta 3 presets guardados por navegador",
+  "Comparación de precios y rentabilidad base",
+  "Cálculo de retorno, tarifas, fama y progreso",
+] as const;
 
 const PRO_FEATURES = [
-  'Hasta 28 días de historial de mercado',
-  'Optimizador con análisis de liquidez',
-  'Hasta 100 presets guardados',
-  'Exportación CSV habilitada',
-  'Hasta 10 alertas de mercado',
-  'Límites ampliados para análisis en batch',
-] as const
+  "Hasta 28 días de historial de mercado",
+  "Optimizador con análisis de liquidez",
+  "Hasta 100 presets guardados",
+  "Exportación CSV habilitada",
+  "Hasta 10 alertas de mercado",
+  "Límites ampliados para análisis en batch",
+] as const;
 
 interface PlanCardProps {
-  readonly title: string
-  readonly eyebrow: string
-  readonly description: string
-  readonly features: readonly string[]
-  readonly active: boolean
-  readonly highlighted?: boolean
-  readonly actionLabel: string
-  readonly onAction: () => void
+  readonly title: string;
+  readonly eyebrow: string;
+  readonly description: string;
+  readonly features: readonly string[];
+  readonly active: boolean;
+  readonly highlighted?: boolean;
+  readonly actionLabel: string;
+  readonly onAction: () => void;
 }
 
 function PlanCard({
@@ -48,8 +51,8 @@ function PlanCard({
     <article
       className={`relative overflow-hidden rounded-2xl border p-6 ${
         highlighted
-          ? 'border-accent-border bg-accent-muted/45 shadow-[0_20px_60px_rgba(0,0,0,0.2)]'
-          : 'border-border bg-surface'
+          ? "border-accent-border bg-accent-muted/45 shadow-[0_20px_60px_rgba(0,0,0,0.2)]"
+          : "border-border bg-surface"
       }`}
     >
       {highlighted && (
@@ -76,7 +79,10 @@ function PlanCard({
 
         <ul className="mt-6 space-y-3">
           {features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2.5 text-sm text-text-muted">
+            <li
+              key={feature}
+              className="flex items-start gap-2.5 text-sm text-text-muted"
+            >
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-positive-muted text-positive">
                 <CheckIcon className="h-3.5 w-3.5" />
               </span>
@@ -90,8 +96,8 @@ function PlanCard({
           onClick={onAction}
           className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${
             highlighted
-              ? 'bg-accent text-bg'
-              : 'border border-border bg-surface-raised text-text-muted hover:border-border-strong hover:text-text'
+              ? "bg-accent text-bg"
+              : "border border-border bg-surface-raised text-text-muted hover:border-border-strong hover:text-text"
           }`}
         >
           {highlighted && <SparklesIcon className="h-4 w-4" />}
@@ -99,25 +105,25 @@ function PlanCard({
         </button>
       </div>
     </article>
-  )
+  );
 }
 
 export function PlansPage({ onNavigate }: PlansPageProps) {
-  const session = useAccountSession()
-  const access = useAccountAccessStore((state) => state.access)
-  const plan = currentPlan(access)
-  const isPro = plan === 'pro'
+  const session = useAccountSession();
+  const access = useAccountAccessStore((state) => state.access);
+  const plan = currentPlan(access);
+  const isPro = plan === "pro";
 
   function openAccountOrLogin() {
     if (session.isAuthenticated) {
-      onNavigate('account')
-      return
+      onNavigate("account");
+      return;
     }
     if (session.authEnabled && session.authConfigured) {
-      void session.login()
-      return
+      void session.login();
+      return;
     }
-    onNavigate('account')
+    onNavigate("account");
   }
 
   return (
@@ -131,7 +137,9 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           Compara el acceso Free y Pro
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-text-muted">
-          La API central resuelve el plan efectivo y la interfaz desbloquea únicamente las capacidades autorizadas. En este hito, Pro se asigna manualmente desde administración.
+          La API central resuelve el plan efectivo y la interfaz desbloquea
+          únicamente las capacidades autorizadas. En este hito, Pro se asigna
+          manualmente desde administración.
         </p>
       </section>
 
@@ -142,7 +150,9 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           description="Todas las herramientas esenciales para calcular producción, consultar mercado y guardar una configuración básica."
           features={FREE_FEATURES}
           active={!isPro}
-          actionLabel={session.isAuthenticated ? 'Ver mi cuenta' : 'Comenzar con Free'}
+          actionLabel={
+            session.isAuthenticated ? "Ver mi cuenta" : "Comenzar con Free"
+          }
           onAction={openAccountOrLogin}
         />
         <PlanCard
@@ -152,17 +162,22 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           features={PRO_FEATURES}
           active={isPro}
           highlighted
-          actionLabel={isPro ? 'Administrar mi acceso' : 'Solicitar acceso Pro'}
+          actionLabel={isPro ? "Administrar mi acceso" : "Solicitar acceso Pro"}
           onAction={openAccountOrLogin}
         />
       </div>
 
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
-        <h3 className="text-sm font-semibold text-text">Activación durante el Hito 2</h3>
+        <h3 className="text-sm font-semibold text-text">
+          Activación durante el Hito 2
+        </h3>
         <p className="mt-2 text-xs leading-relaxed text-text-faint">
-          Todavía no existe checkout ni facturación automática. Una cuenta autenticada se crea al consultar su perfil; luego un administrador puede asignar o retirar Pro en PostgreSQL. El botón de actualizar permisos refleja el cambio sin almacenar secretos en el navegador.
+          Todavía no existe checkout ni facturación automática. Una cuenta
+          autenticada se crea al consultar su perfil; luego un administrador
+          puede asignar o retirar Pro en PostgreSQL. El botón de actualizar
+          permisos refleja el cambio sin almacenar secretos en el navegador.
         </p>
       </section>
     </div>
-  )
+  );
 }
