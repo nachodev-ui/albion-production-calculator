@@ -1,20 +1,24 @@
-import type { AppModule } from './types'
+import { AccountMenu } from '@features/account/components/AccountMenu'
+import type { AppRoute } from './types'
+import { isAppModule } from './types'
 import { AnvilIcon, CatalogIcon } from './AppIcons'
 import { MainNavigation } from './MainNavigation'
 
 interface AppHeaderProps {
-  readonly activeModule: AppModule
+  readonly activeRoute: AppRoute
   readonly itemCount: number
-  readonly onNavigate: (module: AppModule) => void
+  readonly onNavigate: (route: AppRoute) => void
   readonly onOpenCatalog: () => void
 }
 
 export function AppHeader({
-  activeModule,
+  activeRoute,
   itemCount,
   onNavigate,
   onOpenCatalog,
 }: AppHeaderProps) {
+  const activeModule = isAppModule(activeRoute) ? activeRoute : null
+
   return (
     <header className="relative z-50 shrink-0 border-b border-border bg-surface/92 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/78">
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent-border to-transparent" />
@@ -49,7 +53,7 @@ export function AppHeader({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {activeModule === 'crafting' && (
+          {activeRoute === 'crafting' && (
             <button
               type="button"
               onClick={onOpenCatalog}
@@ -60,7 +64,7 @@ export function AppHeader({
             </button>
           )}
 
-          <div className="hidden items-center gap-2 rounded-xl border border-border bg-bg/45 px-3 py-2 sm:flex">
+          <div className="hidden items-center gap-2 rounded-xl border border-border bg-bg/45 px-3 py-2 xl:flex">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-positive opacity-30" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-positive" />
@@ -74,6 +78,8 @@ export function AppHeader({
               </span>
             </span>
           </div>
+
+          <AccountMenu onNavigate={onNavigate} />
         </div>
       </div>
     </header>
