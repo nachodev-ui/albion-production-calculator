@@ -104,32 +104,30 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     if (isLoading) return
     if (!isAuthenticated) {
       clear()
-      setBillingError(null)
-      setBillingStatus('idle')
       return
     }
     void refreshAccess()
   }, [clear, isAuthenticated, isLoading, refreshAccess])
 
-  const login = useCallback(
-    () =>
-      loginWithRedirect({
-        appState: { returnTo: currentReturnTo() },
-        authorizationParams: {
-          audience: accountAuthConfig.audience,
-          scope: accountAuthConfig.scope,
-        },
-      }),
-    [loginWithRedirect],
-  )
+  const login = useCallback(async () => {
+    setBillingError(null)
+    setBillingStatus('idle')
+    await loginWithRedirect({
+      appState: { returnTo: currentReturnTo() },
+      authorizationParams: {
+        audience: accountAuthConfig.audience,
+        scope: accountAuthConfig.scope,
+      },
+    })
+  }, [loginWithRedirect])
 
-  const logout = useCallback(
-    async () =>
-      auth0Logout({
-        logoutParams: { returnTo: window.location.origin },
-      }),
-    [auth0Logout],
-  )
+  const logout = useCallback(async () => {
+    setBillingError(null)
+    setBillingStatus('idle')
+    await auth0Logout({
+      logoutParams: { returnTo: window.location.origin },
+    })
+  }, [auth0Logout])
 
   const runBillingAction = useCallback(
     async (
