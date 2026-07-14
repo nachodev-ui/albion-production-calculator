@@ -21,11 +21,11 @@ const configuredScope = (
 const cacheLocation = (
   process.env.VITE_AUTH0_CACHE_LOCATION ?? 'localstorage'
 ).trim().toLowerCase()
-const useRefreshTokensValue = (
-  process.env.VITE_AUTH0_USE_REFRESH_TOKENS ?? 'true'
+const sessionRefreshValue = (
+  process.env.VITE_AUTH0_SESSION_REFRESH_ENABLED ?? 'true'
 ).trim().toLowerCase()
-const useRefreshTokensFallbackValue = (
-  process.env.VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK ?? 'true'
+const sessionFallbackValue = (
+  process.env.VITE_AUTH0_SESSION_FALLBACK_ENABLED ?? 'true'
 ).trim().toLowerCase()
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -54,11 +54,8 @@ async function readJson<T>(url: string): Promise<T> {
 
 async function main(): Promise<void> {
   assertBoolean(enabledValue, 'VITE_AUTH0_ENABLED')
-  assertBoolean(useRefreshTokensValue, 'VITE_AUTH0_USE_REFRESH_TOKENS')
-  assertBoolean(
-    useRefreshTokensFallbackValue,
-    'VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK',
-  )
+  assertBoolean(sessionRefreshValue, 'VITE_AUTH0_SESSION_REFRESH_ENABLED')
+  assertBoolean(sessionFallbackValue, 'VITE_AUTH0_SESSION_FALLBACK_ENABLED')
   assert(
     cacheLocation === 'memory' || cacheLocation === 'localstorage',
     'VITE_AUTH0_CACHE_LOCATION must be memory or localstorage',
@@ -82,22 +79,22 @@ async function main(): Promise<void> {
   assert(audienceUrl.protocol === 'https:', 'VITE_AUTH0_AUDIENCE must use HTTPS')
 
   const requestedScopes = new Set(configuredScope.split(/\s+/).filter(Boolean))
-  if (useRefreshTokensValue === 'true') requestedScopes.add('offline_access')
+  if (sessionRefreshValue === 'true') requestedScopes.add('offline_access')
 
   for (const requiredScope of ['openid', 'profile', 'email', 'read:account']) {
     assert(requestedScopes.has(requiredScope), `Missing required scope: ${requiredScope}`)
   }
 
-  if (useRefreshTokensValue === 'true') {
+  if (sessionRefreshValue === 'true') {
     assert(
       requestedScopes.has('offline_access'),
-      'offline_access is required when refresh tokens are enabled',
+      'offline_access is required when session refresh is enabled',
     )
   }
-  if (useRefreshTokensFallbackValue === 'true') {
+  if (sessionFallbackValue === 'true') {
     assert(
-      useRefreshTokensValue === 'true',
-      'Refresh-token fallback requires VITE_AUTH0_USE_REFRESH_TOKENS=true',
+      sessionRefreshValue === 'true',
+      'Session fallback requires VITE_AUTH0_SESSION_REFRESH_ENABLED=true',
     )
   }
 
@@ -128,8 +125,8 @@ async function main(): Promise<void> {
   console.log(`SPA Client ID: ${clientId}`)
   console.log(`Scopes: ${effectiveScope}`)
   console.log(`Cache location: ${cacheLocation}`)
-  console.log(`Refresh tokens: ${useRefreshTokensValue}`)
-  console.log(`Refresh-token fallback: ${useRefreshTokensFallbackValue}`)
+  console.log(`Session refresh: ${sessionRefreshValue}`)
+  console.log(`Session fallback: ${sessionFallbackValue}`)
 }
 
 await main()
