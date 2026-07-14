@@ -61,23 +61,7 @@ jobs:
         run: pnpm auth0:check
 
       - name: Run lint
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          set +e
-          pnpm lint > artifacts/lint-output.log 2>&1
-          status=$?
-          cat artifacts/lint-output.log
-          exit "$status"
-
-      - name: Upload failing lint log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: lint-failure-log
-          path: artifacts/lint-output.log
-          if-no-files-found: ignore
-          retention-days: 1
+        run: pnpm lint
 
       - name: Run tests
         shell: bash
