@@ -10,6 +10,8 @@ describe("routeFromPathname", () => {
     ["/plans", "plans"],
     ["/account", "account"],
     ["/account/", "account"],
+    ["/profile", "profile"],
+    ["/profile/", "profile"],
     ["/admin", "admin"],
     ["/admin/", "admin"],
   ] as const)("maps %s to %s", (pathname, expected) => {
