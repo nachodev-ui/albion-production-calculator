@@ -29,11 +29,31 @@ function normalizeAssetId(value?: string | null): string | null {
   return normalized
 }
 
-export function albionItemImageUrl(itemType?: string | null, size = 128): string | null {
+export function albionItemImageUrls(
+  itemType?: string | null,
+  size = 128,
+  quality = 1,
+): readonly string[] {
   const normalized = normalizeAssetId(itemType)
-  if (!normalized) return null
+  if (!normalized) return []
   const safeSize = Math.min(512, Math.max(32, Math.round(size)))
-  return `https://render.albiononline.com/v1/item/${encodeURIComponent(normalized)}.png?quality=1&size=${safeSize}`
+  const safeQuality = Math.min(5, Math.max(1, Math.round(quality)))
+
+  // MurderLedger and Albion Online 2D request original item thumbnails from this
+  // CDN. It remains reliable for large decorative artwork, where the official
+  // render endpoint can reject or omit oversized images.
+  return [
+    `https://cdn.albiononline2d.com/thumbnails/orig/${normalized}-q${safeQuality}.png`,
+    `https://render.albiononline.com/v1/item/${encodeURIComponent(normalized)}.png?quality=${safeQuality}&size=${safeSize}`,
+  ]
+}
+
+export function albionItemImageUrl(
+  itemType?: string | null,
+  size = 128,
+  quality = 1,
+): string | null {
+  return albionItemImageUrls(itemType, size, quality)[0] ?? null
 }
 
 export function albionAvatarImageUrl(
