@@ -6,6 +6,8 @@ export interface AlbionPlayerSearchResult {
   readonly playerName: string
   readonly guildName?: string | null
   readonly allianceName?: string | null
+  readonly avatar?: string | null
+  readonly avatarRing?: string | null
   readonly killFame: number
   readonly deathFame: number
   readonly fameRatio: number
@@ -18,6 +20,8 @@ export interface AlbionPlayerProfile {
   readonly playerName: string
   readonly guildName?: string | null
   readonly allianceName?: string | null
+  readonly avatar?: string | null
+  readonly avatarRing?: string | null
   readonly verificationStatus: 'unverified' | 'verified'
   readonly killFame: number
   readonly deathFame: number
@@ -39,6 +43,19 @@ export interface AlbionProfileSummary {
   readonly fameRatio: number
 }
 
+export interface AlbionEquipment {
+  readonly mainHand?: string | null
+  readonly offHand?: string | null
+  readonly head?: string | null
+  readonly armor?: string | null
+  readonly shoes?: string | null
+  readonly bag?: string | null
+  readonly cape?: string | null
+  readonly mount?: string | null
+  readonly potion?: string | null
+  readonly food?: string | null
+}
+
 export interface AlbionProfileEvent {
   readonly eventId: number
   readonly occurredAt: string
@@ -49,6 +66,8 @@ export interface AlbionProfileEvent {
   readonly playerItemPower: number
   readonly opponentItemPower: number
   readonly weaponType?: string | null
+  readonly playerEquipment?: AlbionEquipment | null
+  readonly opponentEquipment?: AlbionEquipment | null
   readonly participantCount: number
   readonly groupMemberCount: number
 }
