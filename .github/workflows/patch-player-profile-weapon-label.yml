@@ -1,0 +1,62 @@
+name: Patch player profile weapon label
+
+on:
+  push:
+    branches: [fix/player-profile-weapon-presentation]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: fix/player-profile-weapon-presentation
+          fetch-depth: 0
+
+      - name: Apply focused presentation patch
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('src/features/player-profile/components/LinkedPlayerProfile.tsx')
+          content = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  "import {\n  equipmentForEvent,\n  selectFeaturedBuild,\n  selectMostUsedWeapon,\n} from '../profilePresentation'",
+                  "import {\n  albionWeaponDisplayName,\n  equipmentForEvent,\n  selectFeaturedBuild,\n  selectMostUsedWeapon,\n} from '../profilePresentation'",
+              ),
+              (
+                  "  const weaponUsage = selectMostUsedWeapon(data.events)\n  const featuredWeapon = weaponUsage?.weaponType ?? featuredBuild?.weaponType",
+                  "  const weaponUsage = selectMostUsedWeapon(data.events)\n  const weaponDisplayName = albionWeaponDisplayName(weaponUsage?.weaponType)\n  const featuredWeapon = weaponUsage?.weaponType ?? featuredBuild?.weaponType",
+              ),
+              (
+                  "                  <p className=\"truncate font-mono text-xs text-text-muted\" title={weaponUsage.weaponType}>\n                    {weaponUsage.weaponType}\n                  </p>",
+                  "                  <p\n                    className=\"truncate text-sm font-medium text-text\"\n                    title={`${weaponDisplayName} (${weaponUsage.weaponType})`}\n                  >\n                    {weaponDisplayName}\n                  </p>",
+              ),
+          ]
+
+          for old, new in replacements:
+              count = content.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one replacement target, found {count}: {old[:80]!r}')
+              content = content.replace(old, new)
+
+          path.write_text(content, encoding='utf-8')
+          Path('.github/workflows/patch-player-profile-weapon-label.yml').unlink()
+          PY
+
+      - name: Commit focused patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/player-profile/components/LinkedPlayerProfile.tsx .github/workflows/patch-player-profile-weapon-label.yml
+          git commit -m "fix: display localized weapon names in profile"
+          git push origin HEAD:fix/player-profile-weapon-presentation
