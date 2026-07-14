@@ -57,6 +57,7 @@ describe('player profile presentation', () => {
     expect(albionWeaponDisplayName('T4_UNKNOWN_WEAPON@2')).toBe(
       'T4_UNKNOWN_WEAPON@2',
     )
+    expect(albionWeaponDisplayName(null)).toBe('Arma desconocida')
   })
 
   it('omits the offhand slot only when the main weapon is two-handed', () => {
