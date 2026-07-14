@@ -131,7 +131,7 @@ export function EquipmentStrip({
   className = '',
   compact = false,
   emptyLabel = 'Equipamiento no disponible',
-  showEmptySlots = false,
+  showEmptySlots = true,
 }: EquipmentStripProps) {
   const populatedItems = equipmentItems(equipment)
   if (populatedItems.length === 0 && !showEmptySlots) {
