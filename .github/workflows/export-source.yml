@@ -1,0 +1,26 @@
+name: Export frontend source
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: github.head_ref == 'feat/albion-player-profile'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export repository source
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          tar --exclude=.git --exclude=node_modules --exclude=dist --exclude=artifacts/source.tar.gz -czf artifacts/source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-source
+          path: artifacts/source.tar.gz
+          if-no-files-found: error
+          retention-days: 2
