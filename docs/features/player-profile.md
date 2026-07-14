@@ -8,3 +8,5 @@ La ruta `/profile` permite a una cuenta autenticada vincular un personaje públi
 - La actividad reciente utiliza el caché de la API central.
 - La actualización manual respeta un cooldown y conserva los últimos datos disponibles ante fallos del proveedor.
 - Desvincular elimina el vínculo y la actividad guardada para esa cuenta.
+
+La interfaz usa rutas separadas para consultar, vincular, actualizar y desvincular el personaje, evitando ambigüedades en el contrato HTTP.
