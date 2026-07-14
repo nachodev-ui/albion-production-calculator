@@ -35,6 +35,11 @@ const AccountPage = lazy(() =>
     default: module.AccountPage,
   })),
 );
+const PlayerProfilePage = lazy(() =>
+  import("@features/player-profile/components/PlayerProfilePage").then((module) => ({
+    default: module.PlayerProfilePage,
+  })),
+);
 const AdminPage = lazy(() =>
   import("@features/admin/components/AdminPage").then((module) => ({
     default: module.AdminPage,
@@ -231,6 +236,18 @@ function App() {
           />
           <Suspense fallback={<ModuleFallback label="cuenta" />}>
             <AccountPage onNavigate={navigateTo} />
+          </Suspense>
+        </>
+      )}
+      {route === "profile" && (
+        <>
+          <ModuleHeader
+            eyebrow="Mi perfil"
+            title="Estadísticas de Albion"
+            description="Vincula un personaje público, consulta tu resumen PvP y revisa la actividad reciente."
+          />
+          <Suspense fallback={<ModuleFallback label="perfil de Albion" />}>
+            <PlayerProfilePage onNavigate={navigateTo} />
           </Suspense>
         </>
       )}
