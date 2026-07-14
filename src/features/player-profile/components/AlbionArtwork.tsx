@@ -1,7 +1,9 @@
+import type { SyntheticEvent } from 'react'
 import type { AlbionEquipment } from '../types'
 import {
+  EQUIPMENT_SLOTS,
   albionAvatarImageUrl,
-  albionItemImageUrl,
+  albionItemImageUrls,
   equipmentItems,
 } from '../profilePresentation'
 
@@ -22,6 +24,17 @@ function ImagePlaceholder({ label }: { readonly label: string }) {
   )
 }
 
+function useFallbackOrHide(event: SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget
+  const fallback = image.dataset.fallback
+  if (fallback) {
+    delete image.dataset.fallback
+    image.src = fallback
+    return
+  }
+  image.hidden = true
+}
+
 export function AlbionItemIcon({
   itemType,
   label,
@@ -30,7 +43,24 @@ export function AlbionItemIcon({
   imageClassName = '',
   decorative = false,
 }: ItemIconProps) {
-  const src = albionItemImageUrl(itemType, size)
+  const [src, fallback] = albionItemImageUrls(itemType, size)
+
+  if (decorative) {
+    if (!src) return null
+    return (
+      <img
+        src={src}
+        data-fallback={fallback}
+        alt=""
+        aria-hidden="true"
+        loading="eager"
+        decoding="async"
+        className={`object-contain ${className} ${imageClassName}`}
+        onError={useFallbackOrHide}
+      />
+    )
+  }
+
   return (
     <div
       className={`relative shrink-0 overflow-hidden rounded-xl border border-border bg-surface-raised/90 shadow-inner ${className}`}
@@ -40,14 +70,12 @@ export function AlbionItemIcon({
       {src && (
         <img
           src={src}
-          alt={decorative ? '' : `${label}: ${itemType}`}
-          aria-hidden={decorative || undefined}
-          loading={decorative ? 'eager' : 'lazy'}
+          data-fallback={fallback}
+          alt={`${label}: ${itemType}`}
+          loading="lazy"
           decoding="async"
           className={`absolute inset-0 h-full w-full object-contain ${imageClassName}`}
-          onError={(event) => {
-            event.currentTarget.hidden = true
-          }}
+          onError={useFallbackOrHide}
         />
       )}
     </div>
@@ -95,6 +123,7 @@ interface EquipmentStripProps {
   readonly className?: string
   readonly compact?: boolean
   readonly emptyLabel?: string
+  readonly showEmptySlots?: boolean
 }
 
 export function EquipmentStrip({
@@ -102,15 +131,23 @@ export function EquipmentStrip({
   className = '',
   compact = false,
   emptyLabel = 'Equipamiento no disponible',
+  showEmptySlots = false,
 }: EquipmentStripProps) {
-  const items = equipmentItems(equipment)
-  if (items.length === 0) {
+  const populatedItems = equipmentItems(equipment)
+  if (populatedItems.length === 0 && !showEmptySlots) {
     return (
       <p className={`rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-text-faint ${className}`}>
         {emptyLabel}
       </p>
     )
   }
+
+  const items = showEmptySlots
+    ? EQUIPMENT_SLOTS.map((slot) => ({
+        ...slot,
+        itemType: equipment[slot.key]?.trim() || null,
+      }))
+    : populatedItems
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
