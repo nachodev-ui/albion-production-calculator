@@ -14,6 +14,8 @@ const ITEMS_XML_URL = 'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/ma
 const ITEMS_LOCALIZATION_URL =
   'https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json'
 const OUTPUT_PATH = './src/data/datasets/items.json'
+const WEAPON_FAMILY_NAMES_OUTPUT_PATH =
+  './src/features/player-profile/data/weaponFamilyNames.es.json'
 const LOCALE = 'ES-ES'
 
 // ---------------------------------------------------------------------------
@@ -431,6 +433,38 @@ function parseItemNode(
   }
 }
 
+const EQUIPPABLE_WEAPON_ID_PATTERN = /^T[2-8]_(.+)$/
+const INITIATE_NAME_SUFFIX = /\s+del iniciado$/i
+
+function buildWeaponFamilyNames(items: readonly OutputItem[]): Record<string, string> {
+  const candidates = new Map<string, { tier: number; name: string }>()
+
+  for (const item of items) {
+    if (item.category !== 'weapon' || item.id.includes('_ARTEFACT_')) continue
+
+    const family = EQUIPPABLE_WEAPON_ID_PATTERN.exec(item.id)?.[1]
+    if (!family) continue
+
+    const current = candidates.get(family)
+    if (
+      !current ||
+      item.tier === 4 ||
+      (current.tier !== 4 && item.tier < current.tier)
+    ) {
+      candidates.set(family, {
+        tier: item.tier,
+        name: item.name.replace(INITIATE_NAME_SUFFIX, ''),
+      })
+    }
+  }
+
+  return Object.fromEntries(
+    [...candidates.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([family, entry]) => [family, entry.name]),
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -476,6 +510,17 @@ async function main(): Promise<void> {
   mkdirSync(dirname(OUTPUT_PATH), { recursive: true })
   writeFileSync(OUTPUT_PATH, JSON.stringify(items, null, 2), 'utf-8')
   console.log(`Dataset escrito en ${OUTPUT_PATH}`)
+
+  const weaponFamilyNames = buildWeaponFamilyNames(items)
+  mkdirSync(dirname(WEAPON_FAMILY_NAMES_OUTPUT_PATH), { recursive: true })
+  writeFileSync(
+    WEAPON_FAMILY_NAMES_OUTPUT_PATH,
+    JSON.stringify(weaponFamilyNames, null, 2),
+    'utf-8',
+  )
+  console.log(
+    `Mapa de ${Object.keys(weaponFamilyNames).length} familias de armas escrito en ${WEAPON_FAMILY_NAMES_OUTPUT_PATH}`,
+  )
 }
 
 main().catch((error) => {

@@ -1,3 +1,4 @@
+import weaponFamilyNames from './data/weaponFamilyNames.es.json'
 import type { AlbionEquipment, AlbionProfileEvent } from './types'
 
 export type EquipmentSlotKey = keyof AlbionEquipment
@@ -22,11 +23,44 @@ export const EQUIPMENT_SLOTS: readonly EquipmentSlotDefinition[] = [
 ]
 
 const ASSET_ID_PATTERN = /^[A-Za-z0-9_@.-]+$/
+const WEAPON_ITEM_PATTERN = /^T([1-8])_([^@]+)(?:@([0-4]))?$/
+const WEAPON_FAMILY_NAMES = weaponFamilyNames as Readonly<Record<string, string>>
 
 function normalizeAssetId(value?: string | null): string | null {
   const normalized = value?.trim() ?? ''
   if (!normalized || normalized.length > 180 || !ASSET_ID_PATTERN.test(normalized)) return null
   return normalized
+}
+
+export function isTwoHandedWeapon(itemType?: string | null): boolean {
+  const normalized = normalizeAssetId(itemType)
+  return normalized ? /^T[1-8]_2H_/.test(normalized) : false
+}
+
+export function equipmentSlotsFor(
+  equipment: AlbionEquipment,
+): readonly EquipmentSlotDefinition[] {
+  if (!isTwoHandedWeapon(equipment.mainHand)) return EQUIPMENT_SLOTS
+  return EQUIPMENT_SLOTS.filter((slot) => slot.key !== 'offHand')
+}
+
+export function albionWeaponDisplayName(itemType?: string | null): string {
+  const normalized = normalizeAssetId(itemType)
+  if (!normalized) return 'Arma desconocida'
+
+  const match = WEAPON_ITEM_PATTERN.exec(normalized)
+  if (!match) return normalized
+
+  const tier = match[1]
+  const family = match[2]
+  const enchantment = Number(match[3] ?? 0)
+  if (!tier || !family) return normalized
+
+  const localizedName = WEAPON_FAMILY_NAMES[family]
+  if (!localizedName) return normalized
+
+  const itemPowerLabel = enchantment > 0 ? `T${tier}.${enchantment}` : `T${tier}`
+  return `${localizedName} · ${itemPowerLabel}`
 }
 
 export function albionItemImageUrls(
@@ -79,7 +113,7 @@ export function equipmentForEvent(
 }
 
 export function equipmentItems(equipment: AlbionEquipment) {
-  return EQUIPMENT_SLOTS.flatMap((slot) => {
+  return equipmentSlotsFor(equipment).flatMap((slot) => {
     const itemType = equipment[slot.key]?.trim()
     return itemType ? [{ ...slot, itemType }] : []
   })
