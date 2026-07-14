@@ -16,11 +16,25 @@ const domain = (process.env.VITE_AUTH0_DOMAIN ?? '').trim()
 const clientId = (process.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
 const audience = (process.env.VITE_AUTH0_AUDIENCE ?? '').trim()
 const scope = (
-  process.env.VITE_AUTH0_SCOPE ?? 'openid profile email read:account'
+  process.env.VITE_AUTH0_SCOPE ??
+  'openid profile email offline_access read:account'
 ).trim()
+const cacheLocation = (
+  process.env.VITE_AUTH0_CACHE_LOCATION ?? 'memory'
+).trim().toLowerCase()
+const useRefreshTokensValue = (
+  process.env.VITE_AUTH0_USE_REFRESH_TOKENS ?? 'false'
+).trim().toLowerCase()
+const useRefreshTokensFallbackValue = (
+  process.env.VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK ?? 'false'
+).trim().toLowerCase()
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
+}
+
+function assertBoolean(value: string, field: string): void {
+  assert(value === 'true' || value === 'false', `${field} must be true or false`)
 }
 
 function endpointHost(value: unknown, field: string): string {
@@ -40,9 +54,15 @@ async function readJson<T>(url: string): Promise<T> {
 }
 
 async function main(): Promise<void> {
+  assertBoolean(enabledValue, 'VITE_AUTH0_ENABLED')
+  assertBoolean(useRefreshTokensValue, 'VITE_AUTH0_USE_REFRESH_TOKENS')
+  assertBoolean(
+    useRefreshTokensFallbackValue,
+    'VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK',
+  )
   assert(
-    enabledValue === 'true' || enabledValue === 'false',
-    'VITE_AUTH0_ENABLED must be true or false',
+    cacheLocation === 'memory' || cacheLocation === 'localstorage',
+    'VITE_AUTH0_CACHE_LOCATION must be memory or localstorage',
   )
 
   if (enabledValue === 'false') {
@@ -65,6 +85,19 @@ async function main(): Promise<void> {
   const requestedScopes = new Set(scope.split(/\s+/).filter(Boolean))
   for (const requiredScope of ['openid', 'profile', 'email', 'read:account']) {
     assert(requestedScopes.has(requiredScope), `Missing required scope: ${requiredScope}`)
+  }
+
+  if (useRefreshTokensValue === 'true') {
+    assert(
+      requestedScopes.has('offline_access'),
+      'offline_access is required when refresh tokens are enabled',
+    )
+  }
+  if (useRefreshTokensFallbackValue === 'true') {
+    assert(
+      useRefreshTokensValue === 'true',
+      'Refresh-token fallback requires VITE_AUTH0_USE_REFRESH_TOKENS=true',
+    )
   }
 
   const issuer = `https://${domain}/`
@@ -92,6 +125,9 @@ async function main(): Promise<void> {
   console.log(`Audience: ${audience}`)
   console.log(`SPA Client ID: ${clientId}`)
   console.log(`Scopes: ${scope}`)
+  console.log(`Cache location: ${cacheLocation}`)
+  console.log(`Refresh tokens: ${useRefreshTokensValue}`)
+  console.log(`Refresh-token fallback: ${useRefreshTokensFallbackValue}`)
 }
 
 await main()
