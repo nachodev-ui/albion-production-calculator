@@ -1,0 +1,47 @@
+name: Measure profile production bundle
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    if: github.head_ref == 'ops/measure-profile-production-bundle'
+    runs-on: ubuntu-latest
+    env:
+      VITE_CENTRAL_MARKET_API_URL: https://albion-market-api.onrender.com/api/v1
+      VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+      VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
+      VITE_AUTH0_ENABLED: 'true'
+      VITE_AUTH0_DOMAIN: albion-production-calculator.us.auth0.com
+      VITE_AUTH0_CLIENT_ID: 4Bhvhd3PcxNwmMyvK5ocLi9Q33hHr74y
+      VITE_AUTH0_AUDIENCE: https://albion-market-api
+      VITE_AUTH0_SCOPE: openid profile email read:account
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Build production application
+        run: pnpm build
+      - name: Generate production bundle report
+        continue-on-error: true
+        run: pnpm bundle:analyze
+      - name: Upload bundle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profile-production-bundle-report
+          path: artifacts/performance/bundle-report.json
+          if-no-files-found: error
+          retention-days: 3
