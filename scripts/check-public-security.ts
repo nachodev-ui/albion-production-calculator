@@ -13,6 +13,9 @@ const allowedViteKeys = new Set([
   'VITE_AUTH0_CLIENT_ID',
   'VITE_AUTH0_AUDIENCE',
   'VITE_AUTH0_SCOPE',
+  'VITE_AUTH0_CACHE_LOCATION',
+  'VITE_AUTH0_SESSION_REFRESH_ENABLED',
+  'VITE_AUTH0_SESSION_FALLBACK_ENABLED',
   'VITE_BILLING_ENABLED',
 ])
 
@@ -96,7 +99,7 @@ function assertSecurityHeaders(): void {
     'Permissions-Policy:',
     "object-src 'none'",
     "frame-ancestors 'none'",
-    "frame-src https:",
+    'frame-src https:',
     "script-src 'self'",
     "connect-src 'self' https:",
     "img-src 'self' data: https:",

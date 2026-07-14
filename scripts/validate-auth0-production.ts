@@ -15,12 +15,25 @@ const enabledValue = (process.env.VITE_AUTH0_ENABLED ?? 'false')
 const domain = (process.env.VITE_AUTH0_DOMAIN ?? '').trim()
 const clientId = (process.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
 const audience = (process.env.VITE_AUTH0_AUDIENCE ?? '').trim()
-const scope = (
+const configuredScope = (
   process.env.VITE_AUTH0_SCOPE ?? 'openid profile email read:account'
 ).trim()
+const cacheLocation = (
+  process.env.VITE_AUTH0_CACHE_LOCATION ?? 'localstorage'
+).trim().toLowerCase()
+const sessionRefreshValue = (
+  process.env.VITE_AUTH0_SESSION_REFRESH_ENABLED ?? 'true'
+).trim().toLowerCase()
+const sessionFallbackValue = (
+  process.env.VITE_AUTH0_SESSION_FALLBACK_ENABLED ?? 'true'
+).trim().toLowerCase()
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
+}
+
+function assertBoolean(value: string, field: string): void {
+  assert(value === 'true' || value === 'false', `${field} must be true or false`)
 }
 
 function endpointHost(value: unknown, field: string): string {
@@ -40,9 +53,12 @@ async function readJson<T>(url: string): Promise<T> {
 }
 
 async function main(): Promise<void> {
+  assertBoolean(enabledValue, 'VITE_AUTH0_ENABLED')
+  assertBoolean(sessionRefreshValue, 'VITE_AUTH0_SESSION_REFRESH_ENABLED')
+  assertBoolean(sessionFallbackValue, 'VITE_AUTH0_SESSION_FALLBACK_ENABLED')
   assert(
-    enabledValue === 'true' || enabledValue === 'false',
-    'VITE_AUTH0_ENABLED must be true or false',
+    cacheLocation === 'memory' || cacheLocation === 'localstorage',
+    'VITE_AUTH0_CACHE_LOCATION must be memory or localstorage',
   )
 
   if (enabledValue === 'false') {
@@ -62,9 +78,24 @@ async function main(): Promise<void> {
   const audienceUrl = new URL(audience)
   assert(audienceUrl.protocol === 'https:', 'VITE_AUTH0_AUDIENCE must use HTTPS')
 
-  const requestedScopes = new Set(scope.split(/\s+/).filter(Boolean))
+  const requestedScopes = new Set(configuredScope.split(/\s+/).filter(Boolean))
+  if (sessionRefreshValue === 'true') requestedScopes.add('offline_access')
+
   for (const requiredScope of ['openid', 'profile', 'email', 'read:account']) {
     assert(requestedScopes.has(requiredScope), `Missing required scope: ${requiredScope}`)
+  }
+
+  if (sessionRefreshValue === 'true') {
+    assert(
+      requestedScopes.has('offline_access'),
+      'offline_access is required when session refresh is enabled',
+    )
+  }
+  if (sessionFallbackValue === 'true') {
+    assert(
+      sessionRefreshValue === 'true',
+      'Session fallback requires VITE_AUTH0_SESSION_REFRESH_ENABLED=true',
+    )
   }
 
   const issuer = `https://${domain}/`
@@ -88,10 +119,14 @@ async function main(): Promise<void> {
   const jwks = await readJson<JwksDocument>(discovery.jwks_uri as string)
   assert(Array.isArray(jwks.keys) && jwks.keys.length > 0, 'Auth0 JWKS contains no signing keys')
 
+  const effectiveScope = [...requestedScopes].join(' ')
   console.log(`Auth0 production configuration is valid for ${issuer}`)
   console.log(`Audience: ${audience}`)
   console.log(`SPA Client ID: ${clientId}`)
-  console.log(`Scopes: ${scope}`)
+  console.log(`Scopes: ${effectiveScope}`)
+  console.log(`Cache location: ${cacheLocation}`)
+  console.log(`Session refresh: ${sessionRefreshValue}`)
+  console.log(`Session fallback: ${sessionFallbackValue}`)
 }
 
 await main()
