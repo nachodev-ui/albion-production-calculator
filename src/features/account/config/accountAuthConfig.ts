@@ -26,10 +26,27 @@ export function parseAuth0Boolean(
 
 export function parseAuth0CacheLocation(
   value: string | undefined,
+  fallback: Auth0CacheLocation = "memory",
 ): Auth0CacheLocation {
-  return value?.trim().toLowerCase() === "localstorage"
-    ? "localstorage"
-    : "memory";
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "localstorage") return "localstorage";
+  if (normalized === "memory") return "memory";
+  return fallback;
+}
+
+export function buildAuth0Scope(
+  value: string | undefined,
+  useRefreshTokens: boolean,
+): string {
+  const scopes = new Set(
+    (
+      value?.trim() || "openid profile email read:account"
+    )
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+  if (useRefreshTokens) scopes.add("offline_access");
+  return [...scopes].join(" ");
 }
 
 function normalizeDomain(value: string | undefined): string {
@@ -47,6 +64,10 @@ function normalizeBaseUrl(value: string | undefined): string {
 const domain = normalizeDomain(import.meta.env["VITE_AUTH0_DOMAIN"]);
 const clientId = (import.meta.env["VITE_AUTH0_CLIENT_ID"] ?? "").trim();
 const audience = (import.meta.env["VITE_AUTH0_AUDIENCE"] ?? "").trim();
+const useRefreshTokens = parseAuth0Boolean(
+  import.meta.env["VITE_AUTH0_USE_REFRESH_TOKENS"],
+  true,
+);
 
 export const accountAuthConfig: AccountAuthConfig = {
   enabled: parseAuth0Boolean(import.meta.env["VITE_AUTH0_ENABLED"]),
@@ -55,18 +76,15 @@ export const accountAuthConfig: AccountAuthConfig = {
   domain,
   clientId,
   audience,
-  scope: (
-    import.meta.env["VITE_AUTH0_SCOPE"] ??
-    "openid profile email offline_access read:account"
-  ).trim(),
+  scope: buildAuth0Scope(import.meta.env["VITE_AUTH0_SCOPE"], useRefreshTokens),
   cacheLocation: parseAuth0CacheLocation(
     import.meta.env["VITE_AUTH0_CACHE_LOCATION"],
+    "localstorage",
   ),
-  useRefreshTokens: parseAuth0Boolean(
-    import.meta.env["VITE_AUTH0_USE_REFRESH_TOKENS"],
-  ),
+  useRefreshTokens,
   useRefreshTokensFallback: parseAuth0Boolean(
     import.meta.env["VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK"],
+    true,
   ),
   centralApiBaseUrl: normalizeBaseUrl(
     import.meta.env["VITE_CENTRAL_MARKET_API_URL"],
