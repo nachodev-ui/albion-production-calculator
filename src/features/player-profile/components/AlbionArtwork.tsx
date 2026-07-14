@@ -1,10 +1,10 @@
 import type { SyntheticEvent } from 'react'
 import type { AlbionEquipment } from '../types'
 import {
-  EQUIPMENT_SLOTS,
   albionAvatarImageUrl,
   albionItemImageUrls,
   equipmentItems,
+  equipmentSlotsFor,
 } from '../profilePresentation'
 
 interface ItemIconProps {
@@ -143,7 +143,7 @@ export function EquipmentStrip({
   }
 
   const items = showEmptySlots
-    ? EQUIPMENT_SLOTS.map((slot) => ({
+    ? equipmentSlotsFor(equipment).map((slot) => ({
         ...slot,
         itemType: equipment[slot.key]?.trim() || null,
       }))
