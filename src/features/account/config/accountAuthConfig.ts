@@ -39,9 +39,7 @@ export function buildAuth0Scope(
   useRefreshTokens: boolean,
 ): string {
   const scopes = new Set(
-    (
-      value?.trim() || "openid profile email read:account"
-    )
+    (value?.trim() || "openid profile email read:account")
       .split(/\s+/)
       .filter(Boolean),
   );
@@ -65,7 +63,7 @@ const domain = normalizeDomain(import.meta.env["VITE_AUTH0_DOMAIN"]);
 const clientId = (import.meta.env["VITE_AUTH0_CLIENT_ID"] ?? "").trim();
 const audience = (import.meta.env["VITE_AUTH0_AUDIENCE"] ?? "").trim();
 const useRefreshTokens = parseAuth0Boolean(
-  import.meta.env["VITE_AUTH0_USE_REFRESH_TOKENS"],
+  import.meta.env["VITE_AUTH0_SESSION_REFRESH_ENABLED"],
   true,
 );
 
@@ -83,7 +81,7 @@ export const accountAuthConfig: AccountAuthConfig = {
   ),
   useRefreshTokens,
   useRefreshTokensFallback: parseAuth0Boolean(
-    import.meta.env["VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK"],
+    import.meta.env["VITE_AUTH0_SESSION_FALLBACK_ENABLED"],
     true,
   ),
   centralApiBaseUrl: normalizeBaseUrl(
