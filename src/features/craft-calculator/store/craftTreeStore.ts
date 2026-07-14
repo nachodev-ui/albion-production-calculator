@@ -19,6 +19,10 @@ import {
 } from './craftPresetStorage'
 import { loadManualPrices, saveManualPrices } from './manualPriceStorage'
 import type { ManualPricesByRoot } from './manualPriceStorage'
+import {
+  loadCraftWorkspace,
+  updateCraftWorkspace,
+} from './craftWorkspaceStorage'
 
 /**
  * Estado interactivo del árbol de cálculo para UN ítem raíz a la vez.
@@ -34,6 +38,7 @@ import type { ManualPricesByRoot } from './manualPriceStorage'
 interface CraftTreeState {
   readonly rootKey: string | null
   readonly expandedPaths: ReadonlySet<NodePath>
+  readonly expandedPathsByRoot: ReadonlyMap<string, ReadonlySet<NodePath>>
   readonly manualPrices: ReadonlyMap<NodePath, number>
   readonly manualPricesByRoot: ManualPricesByRoot
   readonly selectedRecipeOptions: ReadonlyMap<NodePath, number>
@@ -53,7 +58,7 @@ interface CraftTreeState {
   >
   readonly isPremium: boolean
 
-  /** Cambia de receta y restaura los precios guardados para esa raíz. */
+  /** Cambia de receta y restaura los valores guardados para esa raíz. */
   resetForItem: (
     itemId: BaseItemId,
     enchantment: EnchantmentLevel,
@@ -100,36 +105,45 @@ function persistAndSetPriceCache(
 
 const initialManualPricesByRoot = loadManualPrices()
 const initialPresetStorage = loadCraftPresetStorage()
+const initialWorkspace = loadCraftWorkspace()
 const initialDefaultPreset = initialPresetStorage.presets.find(
   (preset) => preset.id === initialPresetStorage.defaultPresetId,
 )
-const initialProductionConfig = initialDefaultPreset
+const presetProductionConfig = initialDefaultPreset
   ? applyPresetProductionConfig(
       DEFAULT_RETURN_RATE_CONFIG,
       initialDefaultPreset.productionConfig,
     )
   : DEFAULT_RETURN_RATE_CONFIG
+const initialProductionConfig =
+  initialWorkspace.productionConfig ?? presetProductionConfig
 const initialStationFeeConfig =
-  initialDefaultPreset?.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG
+  initialWorkspace.stationFeeConfig ??
+  initialDefaultPreset?.stationFeeConfig ??
+  DEFAULT_STATION_FEE_CONFIG
 const initialCraftingSpecializationConfig =
+  initialWorkspace.craftingSpecializationConfig ??
   initialDefaultPreset?.craftingSpecializationConfig ??
   DEFAULT_CRAFTING_SPECIALIZATION_CONFIG
-const initialIsPremium = initialDefaultPreset?.isPremium ?? true
+const initialIsPremium =
+  initialWorkspace.isPremium ?? initialDefaultPreset?.isPremium ?? true
 
 export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   rootKey: null,
   expandedPaths: new Set(),
+  expandedPathsByRoot: initialWorkspace.expandedPathsByRoot,
   manualPrices: new Map(),
   manualPricesByRoot: initialManualPricesByRoot,
   selectedRecipeOptions: new Map(),
-  selectedRecipeOptionsByRoot: new Map(),
+  selectedRecipeOptionsByRoot: initialWorkspace.selectedRecipeOptionsByRoot,
   productionConfig: initialProductionConfig,
   stationFeeConfig: initialStationFeeConfig,
   craftingSpecializationConfig: initialCraftingSpecializationConfig,
   itemValueOverride: null,
-  itemValueOverridesByRoot: new Map(),
+  itemValueOverridesByRoot: initialWorkspace.itemValueOverridesByRoot,
   stationUsageFeeOverride: null,
-  stationUsageFeeOverridesByRoot: new Map(),
+  stationUsageFeeOverridesByRoot:
+    initialWorkspace.stationUsageFeeOverridesByRoot,
   isPremium: initialIsPremium,
 
   resetForItem: (itemId, enchantment, expandRoot) => {
@@ -137,13 +151,18 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
     if (get().rootKey === key) return
 
     const savedPrices = get().manualPricesByRoot.get(key)
+    const savedExpandedPaths = get().expandedPathsByRoot.get(key)
     const savedRecipeOptions = get().selectedRecipeOptionsByRoot.get(key)
     const savedItemValue = get().itemValueOverridesByRoot.get(key)
     const savedStationUsageFee = get().stationUsageFeeOverridesByRoot.get(key)
 
     set({
       rootKey: key,
-      expandedPaths: expandRoot ? new Set(['root']) : new Set(),
+      expandedPaths: savedExpandedPaths
+        ? new Set(savedExpandedPaths)
+        : expandRoot
+          ? new Set(['root'])
+          : new Set(),
       manualPrices: savedPrices ? new Map(savedPrices) : new Map(),
       selectedRecipeOptions: savedRecipeOptions
         ? new Map(savedRecipeOptions)
@@ -162,7 +181,18 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
       next.add(path)
     }
 
-    set({ expandedPaths: next })
+    const rootKey = get().rootKey
+    const expandedPathsByRoot = new Map(get().expandedPathsByRoot)
+    if (rootKey) {
+      if (next.size === 0) expandedPathsByRoot.delete(rootKey)
+      else expandedPathsByRoot.set(rootKey, next)
+    }
+
+    updateCraftWorkspace((current) => ({
+      ...current,
+      expandedPathsByRoot,
+    }))
+    set({ expandedPaths: next, expandedPathsByRoot })
   },
 
   setManualPrice: (path, unitPrice) => {
@@ -236,6 +266,10 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
       selectedRecipeOptionsByRoot.set(rootKey, selectedRecipeOptions)
     }
 
+    updateCraftWorkspace((current) => ({
+      ...current,
+      selectedRecipeOptionsByRoot,
+    }))
     set({
       selectedRecipeOptions,
       selectedRecipeOptionsByRoot,
@@ -243,14 +277,26 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   },
 
   setProductionConfig: (config) => {
+    updateCraftWorkspace((current) => ({
+      ...current,
+      productionConfig: config,
+    }))
     set({ productionConfig: config })
   },
 
   setStationFeeConfig: (config) => {
+    updateCraftWorkspace((current) => ({
+      ...current,
+      stationFeeConfig: config,
+    }))
     set({ stationFeeConfig: config })
   },
 
   setCraftingSpecializationConfig: (config) => {
+    updateCraftWorkspace((current) => ({
+      ...current,
+      craftingSpecializationConfig: config,
+    }))
     set({ craftingSpecializationConfig: config })
   },
 
@@ -265,6 +311,10 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
       else itemValueOverridesByRoot.set(rootKey, normalized)
     }
 
+    updateCraftWorkspace((current) => ({
+      ...current,
+      itemValueOverridesByRoot,
+    }))
     set({
       itemValueOverride: normalized,
       itemValueOverridesByRoot,
@@ -292,6 +342,10 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
       else stationUsageFeeOverridesByRoot.set(rootKey, normalized)
     }
 
+    updateCraftWorkspace((current) => ({
+      ...current,
+      stationUsageFeeOverridesByRoot,
+    }))
     set({
       stationUsageFeeOverride: normalized,
       stationUsageFeeOverridesByRoot,
@@ -299,6 +353,10 @@ export const useCraftTreeStore = create<CraftTreeState>((set, get) => ({
   },
 
   setIsPremium: (isPremium) => {
+    updateCraftWorkspace((current) => ({
+      ...current,
+      isPremium,
+    }))
     set({ isPremium })
   },
 }))
