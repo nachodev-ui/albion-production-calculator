@@ -2,6 +2,10 @@ import { lazy, Suspense, useState } from 'react'
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
 import type { Item } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
+import {
+  loadCraftWorkspace,
+  updateCraftWorkspace,
+} from '../store/craftWorkspaceStorage'
 import { EnchantmentSelector } from './EnchantmentSelector'
 
 const LazyItemRecipeCard = lazy(() =>
@@ -43,8 +47,22 @@ export function ItemDetailPanel({
   item,
   repository,
 }: ItemDetailPanelProps) {
-  const [enchantment, setEnchantment] =
-    useState<EnchantmentLevel>(0)
+  const [enchantment, setEnchantment] = useState<EnchantmentLevel>(() => {
+    const stored = loadCraftWorkspace().enchantmentsByItem.get(item.id) ?? 0
+    return stored <= item.maxEnchantment ? stored : 0
+  })
+
+  function changeEnchantment(next: EnchantmentLevel) {
+    setEnchantment(next)
+    updateCraftWorkspace((current) => {
+      const enchantmentsByItem = new Map(current.enchantmentsByItem)
+      enchantmentsByItem.set(item.id, next)
+      return {
+        ...current,
+        enchantmentsByItem,
+      }
+    })
+  }
 
   return (
     <div className="mx-auto w-full max-w-7xl px-5 pb-12 pt-0 sm:px-6">
@@ -61,7 +79,7 @@ export function ItemDetailPanel({
 
         <EnchantmentSelector
           value={enchantment}
-          onChange={setEnchantment}
+          onChange={changeEnchantment}
           maxEnchantment={item.maxEnchantment}
         />
       </div>

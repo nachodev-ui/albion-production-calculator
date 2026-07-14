@@ -1,4 +1,10 @@
+import { useEffect, useRef } from 'react'
 import type { CraftingFameBreakdown } from '@core/usecases/calculateCraftingFame'
+import { useCraftTreeStore } from '../store/craftTreeStore'
+import {
+  loadCraftWorkspace,
+  updateCraftWorkspace,
+} from '../store/craftWorkspaceStorage'
 import { CraftingFameHint } from './CraftingFameHint'
 
 interface CraftQuantityInputProps {
@@ -12,12 +18,35 @@ export function CraftQuantityInput({
   onChange,
   fame,
 }: CraftQuantityInputProps) {
+  const rootKey = useCraftTreeStore((state) => state.rootKey)
+  const hydratedRootKey = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!rootKey || hydratedRootKey.current === rootKey) return
+
+    hydratedRootKey.current = rootKey
+    const storedQuantity = loadCraftWorkspace().quantitiesByRoot.get(rootKey)
+    if (storedQuantity && storedQuantity !== value) onChange(storedQuantity)
+  }, [onChange, rootKey, value])
+
   function handleChange(rawValue: string) {
     const next = Number(rawValue)
 
     if (!Number.isFinite(next)) return
 
-    onChange(Math.max(1, Math.floor(next)))
+    const quantity = Math.max(1, Math.floor(next))
+    onChange(quantity)
+
+    if (rootKey) {
+      updateCraftWorkspace((current) => {
+        const quantitiesByRoot = new Map(current.quantitiesByRoot)
+        quantitiesByRoot.set(rootKey, quantity)
+        return {
+          ...current,
+          quantitiesByRoot,
+        }
+      })
+    }
   }
 
   return (

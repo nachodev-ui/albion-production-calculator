@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import type { Item } from "@core/domain/entities/Item";
+import type { BaseItemId, Item } from "@core/domain/entities/Item";
 import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
 import { AppHeader } from "./app/AppHeader";
 import { AppShell } from "./app/AppShell";
@@ -9,6 +9,10 @@ import { useAppRoute } from "./app/routing";
 import type { AppModule, AppRoute } from "./app/types";
 import { EmptyDetailState } from "@features/craft-calculator/components/EmptyDetailState";
 import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetailPanel";
+import {
+  loadCraftWorkspace,
+  updateCraftWorkspace,
+} from "@features/craft-calculator/store/craftWorkspaceStorage";
 
 const ItemBrowserPanel = lazy(() =>
   import("@features/item-browser/components/ItemBrowserPanel").then(
@@ -81,16 +85,33 @@ function ModuleFallback({ label }: { readonly label: string }) {
 
 function App() {
   const { route, navigate } = useAppRoute();
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<BaseItemId | null>(
+    () => loadCraftWorkspace().selectedItemId,
+  );
   const [repository, setRepository] = useState<ItemRepository | null>(null);
   const [repositoryError, setRepositoryError] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const selectedItem =
+    repository && selectedItemId ? repository.getById(selectedItemId) : null;
 
   useEffect(() => {
     let isActive = true;
     void loadItemRepository()
       .then((nextRepository) => {
-        if (isActive) setRepository(nextRepository);
+        if (!isActive) return;
+
+        setRepository(nextRepository);
+        setSelectedItemId((currentItemId) => {
+          if (!currentItemId || nextRepository.getById(currentItemId)) {
+            return currentItemId;
+          }
+
+          updateCraftWorkspace((current) => ({
+            ...current,
+            selectedItemId: null,
+          }));
+          return null;
+        });
       })
       .catch((error: unknown) => {
         if (!isActive) return;
@@ -113,7 +134,11 @@ function App() {
     navigateTo(module);
   }
   function selectItem(item: Item) {
-    setSelectedItem(item);
+    setSelectedItemId(item.id);
+    updateCraftWorkspace((current) => ({
+      ...current,
+      selectedItemId: item.id,
+    }));
     setIsCatalogOpen(false);
   }
 
@@ -131,7 +156,7 @@ function App() {
         <Suspense fallback={<SidebarFallback />}>
           <ItemBrowserPanel
             repository={repository}
-            selectedId={selectedItem?.id ?? null}
+            selectedId={selectedItemId}
             onSelect={selectItem}
           />
         </Suspense>
@@ -177,7 +202,7 @@ function App() {
               item={selectedItem}
               repository={repository}
             />
-          ) : selectedItem ? (
+          ) : selectedItemId ? (
             <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
               <ModuleFallback label="calculadora de producción" />
             </div>
