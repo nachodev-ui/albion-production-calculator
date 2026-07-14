@@ -12,9 +12,7 @@ import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetai
 
 const ItemBrowserPanel = lazy(() =>
   import("@features/item-browser/components/ItemBrowserPanel").then(
-    (module) => ({
-      default: module.ItemBrowserPanel,
-    }),
+    (module) => ({ default: module.ItemBrowserPanel }),
   ),
 );
 const PresetLibraryPage = lazy(() =>
@@ -24,9 +22,7 @@ const PresetLibraryPage = lazy(() =>
 );
 const RefiningComingSoonPage = lazy(() =>
   import("@features/refining-calculator/components/RefiningComingSoonPage").then(
-    (module) => ({
-      default: module.RefiningComingSoonPage,
-    }),
+    (module) => ({ default: module.RefiningComingSoonPage }),
   ),
 );
 const PlansPage = lazy(() =>
@@ -39,11 +35,15 @@ const AccountPage = lazy(() =>
     default: module.AccountPage,
   })),
 );
+const AdminPage = lazy(() =>
+  import("@features/admin/components/AdminPage").then((module) => ({
+    default: module.AdminPage,
+  })),
+);
 
 async function loadItemRepository(): Promise<ItemRepository> {
   const { JsonItemRepository } =
     await import("@data/repositories/JsonItemRepository");
-
   return new JsonItemRepository();
 }
 
@@ -83,11 +83,9 @@ function App() {
 
   useEffect(() => {
     let isActive = true;
-
     void loadItemRepository()
       .then((nextRepository) => {
-        if (!isActive) return;
-        setRepository(nextRepository);
+        if (isActive) setRepository(nextRepository);
       })
       .catch((error: unknown) => {
         if (!isActive) return;
@@ -97,7 +95,6 @@ function App() {
             : "No fue posible cargar el catálogo de ítems.",
         );
       });
-
     return () => {
       isActive = false;
     };
@@ -107,11 +104,9 @@ function App() {
     navigate(nextRoute);
     setIsCatalogOpen(false);
   }
-
   function navigateModule(module: AppModule) {
     navigateTo(module);
   }
-
   function selectItem(item: Item) {
     setSelectedItem(item);
     setIsCatalogOpen(false);
@@ -125,7 +120,6 @@ function App() {
       onOpenCatalog={() => setIsCatalogOpen(true)}
     />
   );
-
   const catalog =
     route === "crafting" ? (
       repository ? (
@@ -166,7 +160,6 @@ function App() {
               </button>
             }
           />
-
           {repositoryError ? (
             <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
               <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
@@ -188,7 +181,6 @@ function App() {
           )}
         </>
       )}
-
       {route === "refining" && (
         <>
           <ModuleHeader
@@ -204,7 +196,6 @@ function App() {
           </Suspense>
         </>
       )}
-
       {route === "presets" && (
         <>
           <ModuleHeader
@@ -219,7 +210,6 @@ function App() {
           </Suspense>
         </>
       )}
-
       {route === "plans" && (
         <>
           <ModuleHeader
@@ -232,7 +222,6 @@ function App() {
           </Suspense>
         </>
       )}
-
       {route === "account" && (
         <>
           <ModuleHeader
@@ -242,6 +231,18 @@ function App() {
           />
           <Suspense fallback={<ModuleFallback label="cuenta" />}>
             <AccountPage onNavigate={navigateTo} />
+          </Suspense>
+        </>
+      )}
+      {route === "admin" && (
+        <>
+          <ModuleHeader
+            eyebrow="Administración segura"
+            title="Usuarios y acceso Pro"
+            description="Gestiona grants manuales, revisa suscripciones y consulta la auditoría. Cada operación se autoriza en la API central."
+          />
+          <Suspense fallback={<ModuleFallback label="administración" />}>
+            <AdminPage onNavigate={navigateTo} />
           </Suspense>
         </>
       )}
