@@ -1,0 +1,40 @@
+name: Diagnose player profile lint
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    if: github.head_ref == 'feat/albion-player-profile'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Capture lint output
+        shell: bash
+        run: |
+          set +e
+          pnpm lint > player-profile-lint.log 2>&1
+          status=$?
+          cat player-profile-lint.log
+          echo "$status" > player-profile-lint.status
+          exit 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: player-profile-lint-diagnostics
+          path: |
+            player-profile-lint.log
+            player-profile-lint.status
+          retention-days: 2
