@@ -238,6 +238,9 @@ export default function Auth0AccountSessionProvider({
     <Auth0Provider
       domain={accountAuthConfig.domain}
       clientId={accountAuthConfig.clientId}
+      cacheLocation={accountAuthConfig.cacheLocation}
+      useRefreshTokens={accountAuthConfig.useRefreshTokens}
+      useRefreshTokensFallback={accountAuthConfig.useRefreshTokensFallback}
       authorizationParams={{
         redirect_uri: window.location.origin,
         audience: accountAuthConfig.audience,

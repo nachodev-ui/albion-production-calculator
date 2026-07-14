@@ -1,3 +1,5 @@
+export type Auth0CacheLocation = "memory" | "localstorage";
+
 interface AccountAuthConfig {
   readonly enabled: boolean;
   readonly configured: boolean;
@@ -6,11 +8,43 @@ interface AccountAuthConfig {
   readonly clientId: string;
   readonly audience: string;
   readonly scope: string;
+  readonly cacheLocation: Auth0CacheLocation;
+  readonly useRefreshTokens: boolean;
+  readonly useRefreshTokensFallback: boolean;
   readonly centralApiBaseUrl: string;
 }
 
-function parseBoolean(value: string | undefined): boolean {
-  return value?.trim().toLowerCase() === "true";
+export function parseAuth0Boolean(
+  value: string | undefined,
+  fallback = false,
+): boolean {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return fallback;
+}
+
+export function parseAuth0CacheLocation(
+  value: string | undefined,
+  fallback: Auth0CacheLocation = "memory",
+): Auth0CacheLocation {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "localstorage") return "localstorage";
+  if (normalized === "memory") return "memory";
+  return fallback;
+}
+
+export function buildAuth0Scope(
+  value: string | undefined,
+  useRefreshTokens: boolean,
+): string {
+  const scopes = new Set(
+    (value?.trim() || "openid profile email read:account")
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+  if (useRefreshTokens) scopes.add("offline_access");
+  return [...scopes].join(" ");
 }
 
 function normalizeDomain(value: string | undefined): string {
@@ -28,18 +62,28 @@ function normalizeBaseUrl(value: string | undefined): string {
 const domain = normalizeDomain(import.meta.env["VITE_AUTH0_DOMAIN"]);
 const clientId = (import.meta.env["VITE_AUTH0_CLIENT_ID"] ?? "").trim();
 const audience = (import.meta.env["VITE_AUTH0_AUDIENCE"] ?? "").trim();
+const useRefreshTokens = parseAuth0Boolean(
+  import.meta.env["VITE_AUTH0_SESSION_REFRESH_ENABLED"],
+  true,
+);
 
 export const accountAuthConfig: AccountAuthConfig = {
-  enabled: parseBoolean(import.meta.env["VITE_AUTH0_ENABLED"]),
+  enabled: parseAuth0Boolean(import.meta.env["VITE_AUTH0_ENABLED"]),
   configured: domain.length > 0 && clientId.length > 0 && audience.length > 0,
-  billingEnabled: parseBoolean(import.meta.env["VITE_BILLING_ENABLED"]),
+  billingEnabled: parseAuth0Boolean(import.meta.env["VITE_BILLING_ENABLED"]),
   domain,
   clientId,
   audience,
-  scope: (
-    import.meta.env["VITE_AUTH0_SCOPE"] ??
-    "openid profile email read:account"
-  ).trim(),
+  scope: buildAuth0Scope(import.meta.env["VITE_AUTH0_SCOPE"], useRefreshTokens),
+  cacheLocation: parseAuth0CacheLocation(
+    import.meta.env["VITE_AUTH0_CACHE_LOCATION"],
+    "localstorage",
+  ),
+  useRefreshTokens,
+  useRefreshTokensFallback: parseAuth0Boolean(
+    import.meta.env["VITE_AUTH0_SESSION_FALLBACK_ENABLED"],
+    true,
+  ),
   centralApiBaseUrl: normalizeBaseUrl(
     import.meta.env["VITE_CENTRAL_MARKET_API_URL"],
   ),
