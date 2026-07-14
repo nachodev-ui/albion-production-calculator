@@ -69,6 +69,8 @@ function Manager({ onNavigate }: Props) {
   }, [token])
 
   useEffect(() => {
+    // The async callback updates state only after the external Auth0/API request.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load()
   }, [load])
 
