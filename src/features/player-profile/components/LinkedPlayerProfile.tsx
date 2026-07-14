@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import {
+  albionWeaponDisplayName,
   equipmentForEvent,
   selectFeaturedBuild,
   selectMostUsedWeapon,
@@ -229,6 +230,7 @@ export function LinkedPlayerProfile({
 }: LinkedPlayerProfileProps) {
   const featuredBuild = selectFeaturedBuild(data.events)
   const weaponUsage = selectMostUsedWeapon(data.events)
+  const weaponDisplayName = albionWeaponDisplayName(weaponUsage?.weaponType)
   const featuredWeapon = weaponUsage?.weaponType ?? featuredBuild?.weaponType
   const fights = data.summary.recentFightCount
   const victoryRate = fights > 0 ? (data.summary.recentKills / fights) * 100 : 0
@@ -418,8 +420,11 @@ export function LinkedPlayerProfile({
                   className="h-24 w-24"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-mono text-xs text-text-muted" title={weaponUsage.weaponType}>
-                    {weaponUsage.weaponType}
+                  <p
+                    className="truncate text-sm font-medium text-text"
+                    title={`${weaponDisplayName} (${weaponUsage.weaponType})`}
+                  >
+                    {weaponDisplayName}
                   </p>
                   <p className="mt-2 text-sm text-text">
                     {weaponUsage.uses} combates · {weaponUsage.victories} victorias
