@@ -126,6 +126,14 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           </button>
           <button
             type="button"
+            onClick={() => onNavigate("profile")}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text"
+          >
+            <UserIcon className="h-4 w-4" />
+            Mi perfil
+          </button>
+          <button
+            type="button"
             onClick={() => onNavigate("plans")}
             className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text"
           >
