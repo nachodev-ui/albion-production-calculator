@@ -24,11 +24,11 @@ function ImagePlaceholder({ label }: { readonly label: string }) {
   )
 }
 
-function useFallbackOrHide(event: SyntheticEvent<HTMLImageElement>) {
+function handleImageError(event: SyntheticEvent<HTMLImageElement>) {
   const image = event.currentTarget
-  const fallback = image.dataset.fallback
+  const fallback = image.dataset['fallback']
   if (fallback) {
-    delete image.dataset.fallback
+    delete image.dataset['fallback']
     image.src = fallback
     return
   }
@@ -56,7 +56,7 @@ export function AlbionItemIcon({
         loading="eager"
         decoding="async"
         className={`object-contain ${className} ${imageClassName}`}
-        onError={useFallbackOrHide}
+        onError={handleImageError}
       />
     )
   }
@@ -75,7 +75,7 @@ export function AlbionItemIcon({
           loading="lazy"
           decoding="async"
           className={`absolute inset-0 h-full w-full object-contain ${imageClassName}`}
-          onError={useFallbackOrHide}
+          onError={handleImageError}
         />
       )}
     </div>
