@@ -12,6 +12,8 @@ import {
   unlinkMyAlbionProfile,
 } from '../api/playerProfileApi'
 import type { AlbionPlayerSearchResult, AlbionProfileResponse, AlbionServer } from '../types'
+import { AlbionAvatar } from './AlbionArtwork'
+import { LinkedPlayerProfile } from './LinkedPlayerProfile'
 
 interface Props {
   readonly onNavigate: (route: AppRoute) => void
@@ -26,12 +28,14 @@ const SERVER_LABELS: Readonly<Record<AlbionServer, string>> = {
 const number = (value: number) =>
   new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 }).format(value)
 
-const date = (value?: string | null) => {
-  if (!value) return 'Sin actualización'
-  const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime())
-    ? value
-    : new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium', timeStyle: 'short' }).format(parsed)
+function ErrorBanner({ message }: { readonly message: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[1500px] px-5 sm:px-6">
+      <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+        {message}
+      </p>
+    </div>
+  )
 }
 
 function Manager({ onNavigate }: Props) {
@@ -134,75 +138,150 @@ function Manager({ onNavigate }: Props) {
     }
   }
 
-  if (loading) return <p className="px-5 py-12 text-center text-sm text-text-faint">Cargando tu perfil…</p>
+  if (loading) {
+    return <p className="px-5 py-12 text-center text-sm text-text-faint">Cargando tu perfil…</p>
+  }
 
   if (profile) {
-    const cards = [
-      ['Kills recientes', profile.summary.recentKills],
-      ['Muertes recientes', profile.summary.recentDeaths],
-      ['K/D reciente', profile.summary.kdRatio ?? '∞'],
-      ['Fama de kills', number(profile.summary.killFame)],
-      ['Fama perdida', number(profile.summary.deathFame)],
-    ] as const
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-5 px-5 pb-14 sm:px-6">
-        {error && <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">{error}</p>}
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display text-2xl text-text">{profile.profile.playerName}</h2>
-                <span className="rounded-full border border-border px-2 py-1 text-[10px] uppercase text-text-muted">{SERVER_LABELS[profile.profile.server]}</span>
-                <span className="rounded-full border border-warning/40 bg-warning-muted px-2 py-1 text-[10px] uppercase text-warning">No verificado</span>
-              </div>
-              <p className="mt-2 text-sm text-text-muted">{profile.profile.guildName || 'Sin gremio'}{profile.profile.allianceName ? ` · ${profile.profile.allianceName}` : ''}</p>
-              <p className="mt-1 text-xs text-text-faint">Actualizado: {date(profile.profile.lastRefreshedAt)}</p>
-            </div>
-            <button type="button" disabled={busy} onClick={() => void refresh()} className="rounded-xl bg-accent px-4 py-2.5 text-xs font-semibold text-bg disabled:opacity-50">Actualizar estadísticas</button>
-          </div>
-          {profile.profile.lastRefreshStatus === 'error' && <p className="mt-4 rounded-xl border border-warning/35 bg-warning-muted px-4 py-3 text-xs text-warning">El proveedor falló en el último intento. Se muestran los últimos datos guardados.</p>}
-        </section>
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          {cards.map(([label, value]) => <article key={label} className="rounded-xl border border-border bg-surface p-4"><p className="text-[10px] uppercase tracking-wider text-text-faint">{label}</p><p className="mt-2 font-mono text-xl text-text">{value}</p></article>)}
-        </section>
-        <section className="rounded-2xl border border-border bg-surface p-5">
-          <h2 className="font-display text-xl text-text">Actividad reciente</h2>
-          <div className="mt-4 divide-y divide-border">
-            {profile.events.length === 0 && <p className="py-8 text-center text-sm text-text-faint">No hay eventos recientes disponibles.</p>}
-            {profile.events.map((event) => <article key={`${event.result}-${event.eventId}`} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className={event.result === 'kill' ? 'font-semibold text-positive' : 'font-semibold text-negative'}>{event.result === 'kill' ? 'Victoria' : 'Derrota'} contra {event.opponentName}</p><p className="mt-1 text-xs text-text-faint">{date(event.occurredAt)} · {event.opponentGuild || 'Sin gremio'}</p></div><div className="text-right text-xs text-text-muted"><p>{number(event.killFame)} fama</p><p>{number(event.playerItemPower)} IP</p></div></article>)}
-          </div>
-        </section>
-        <section className="rounded-2xl border border-negative/25 bg-surface p-5">
-          <h2 className="font-display text-lg text-text">Cambiar o desvincular personaje</h2>
-          <p className="mt-2 text-xs text-text-muted">Escribe DESVINCULAR para eliminar el vínculo y su caché.</p>
-          <input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} className="mt-3 rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm text-text" />
-          <button type="button" disabled={busy || confirmation !== 'DESVINCULAR'} onClick={() => void unlink()} className="ml-2 rounded-lg border border-negative/50 px-4 py-2 text-xs font-semibold text-negative disabled:opacity-40">Desvincular</button>
-        </section>
+      <div className="space-y-5">
+        {error && <ErrorBanner message={error} />}
+        <LinkedPlayerProfile
+          data={profile}
+          busy={busy}
+          confirmation={confirmation}
+          setConfirmation={setConfirmation}
+          onRefresh={() => void refresh()}
+          onUnlink={() => void unlink()}
+        />
       </div>
     )
   }
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-5 px-5 pb-14 sm:px-6">
-      {error && <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">{error}</p>}
-      <section className="rounded-2xl border border-border bg-surface p-6">
-        <h2 className="font-display text-2xl text-text">Vincula tu personaje</h2>
-        <p className="mt-2 text-sm text-text-muted">La vinculación usa información pública y no demuestra propiedad del personaje.</p>
-        <form className="mt-6 grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto]" onSubmit={(event) => { event.preventDefault(); void search() }}>
-          <select value={server} onChange={(event) => setServer(event.target.value as AlbionServer)} className="rounded-xl border border-border bg-surface-raised px-3 py-2.5 text-sm text-text">{Object.entries(SERVER_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-          <input value={query} onChange={(event) => setQuery(event.target.value)} minLength={3} maxLength={32} placeholder="Nombre del personaje" className="rounded-xl border border-border bg-surface-raised px-3 py-2.5 text-sm text-text" />
-          <button type="submit" disabled={busy || query.trim().length < 3} className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-bg disabled:opacity-50">Buscar</button>
-        </form>
+      {error && (
+        <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+          {error}
+        </p>
+      )}
+      <section className="relative overflow-hidden rounded-3xl border border-accent-border/70 bg-surface p-6 shadow-[0_20px_65px_rgba(0,0,0,0.18)]">
+        <div
+          className="absolute inset-0 bg-[radial-gradient(circle_at_0%_0%,rgba(214,170,42,0.13),transparent_45%)]"
+          aria-hidden="true"
+        />
+        <div className="relative">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
+            Perfil público de Albion
+          </p>
+          <h2 className="mt-2 font-display text-3xl text-text">Vincula tu personaje</h2>
+          <p className="mt-2 max-w-2xl text-sm text-text-muted">
+            Busca tu personaje para mostrar su avatar, estadísticas PvP, equipamiento reciente y el detalle visual de sus enfrentamientos.
+          </p>
+          <p className="mt-2 text-xs text-text-faint">
+            La vinculación usa información pública y no demuestra propiedad del personaje.
+          </p>
+          <form
+            className="mt-6 grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto]"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void search()
+            }}
+          >
+            <select
+              value={server}
+              onChange={(event) => setServer(event.target.value as AlbionServer)}
+              className="rounded-xl border border-border bg-surface-raised px-3 py-2.5 text-sm text-text"
+            >
+              {Object.entries(SERVER_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              minLength={3}
+              maxLength={32}
+              placeholder="Nombre del personaje"
+              className="rounded-xl border border-border bg-surface-raised px-3 py-2.5 text-sm text-text"
+            />
+            <button
+              type="submit"
+              disabled={busy || query.trim().length < 3}
+              className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-bg disabled:opacity-50"
+            >
+              {busy ? 'Buscando…' : 'Buscar'}
+            </button>
+          </form>
+        </div>
       </section>
-      {results.map((player) => <article key={`${player.server}-${player.playerId}`} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-surface p-4"><div><p className="font-semibold text-text">{player.playerName}</p><p className="mt-1 text-xs text-text-faint">{player.guildName || 'Sin gremio'} · {SERVER_LABELS[player.server]}</p><p className="mt-2 text-xs text-text-muted">Fama PvP: {number(player.killFame)}</p></div><button type="button" disabled={busy} onClick={() => void link(player)} className="rounded-lg border border-accent-border bg-accent-muted px-4 py-2 text-xs font-semibold text-accent disabled:opacity-50">Confirmar personaje</button></article>)}
-      <button type="button" onClick={() => onNavigate('account')} className="text-xs text-text-muted underline">Volver a cuenta</button>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {results.map((player) => (
+          <article
+            key={`${player.server}-${player.playerId}`}
+            className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4"
+          >
+            <AlbionAvatar
+              avatar={player.avatar}
+              avatarRing={player.avatarRing}
+              playerName={player.playerName}
+              className="h-16 w-16 rounded-xl text-xl"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-semibold text-text">{player.playerName}</p>
+              <p className="mt-1 truncate text-xs text-text-faint">
+                {player.guildName || 'Sin gremio'} · {SERVER_LABELS[player.server]}
+              </p>
+              <p className="mt-2 text-xs text-text-muted">Fama PvP: {number(player.killFame)}</p>
+            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void link(player)}
+              className="rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs font-semibold text-accent disabled:opacity-50"
+            >
+              Vincular
+            </button>
+          </article>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => onNavigate('account')}
+        className="text-xs text-text-muted underline"
+      >
+        Volver a cuenta
+      </button>
     </div>
   )
 }
 
 export function PlayerProfilePage(props: Props) {
   const session = useAccountSession()
-  if (!session.authEnabled || !session.authConfigured) return <p className="px-5 py-10 text-center text-sm text-text-muted">La autenticación no está configurada.</p>
-  if (!session.isAuthenticated) return <div className="mx-auto max-w-3xl px-5 py-12 text-center"><h2 className="font-display text-2xl text-text">Tu perfil de Albion</h2><p className="mt-2 text-sm text-text-muted">Inicia sesión para vincular un personaje.</p><button type="button" onClick={() => void session.login()} className="mt-5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg">Iniciar sesión</button></div>
+  if (!session.authEnabled || !session.authConfigured) {
+    return (
+      <p className="px-5 py-10 text-center text-sm text-text-muted">
+        La autenticación no está configurada.
+      </p>
+    )
+  }
+  if (!session.isAuthenticated) {
+    return (
+      <div className="mx-auto max-w-3xl px-5 py-12 text-center">
+        <h2 className="font-display text-2xl text-text">Tu perfil de Albion</h2>
+        <p className="mt-2 text-sm text-text-muted">Inicia sesión para vincular un personaje.</p>
+        <button
+          type="button"
+          onClick={() => void session.login()}
+          className="mt-5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg"
+        >
+          Iniciar sesión
+        </button>
+      </div>
+    )
+  }
   return <Manager {...props} />
 }
