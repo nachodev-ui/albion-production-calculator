@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   albionAvatarImageUrl,
   albionItemImageUrl,
+  albionItemImageUrls,
   equipmentForEvent,
   selectFeaturedBuild,
   selectMostUsedWeapon,
@@ -29,10 +30,14 @@ const event = (
 })
 
 describe('player profile presentation', () => {
-  it('builds safe Albion render URLs', () => {
+  it('builds the Albion 2D source used by ledger images and a render fallback', () => {
     expect(albionItemImageUrl('T6_MAIN_SWORD@2', 96)).toBe(
-      'https://render.albiononline.com/v1/item/T6_MAIN_SWORD%402.png?quality=1&size=96',
+      'https://cdn.albiononline2d.com/thumbnails/orig/T6_MAIN_SWORD@2-q1.png',
     )
+    expect(albionItemImageUrls('T6_MAIN_SWORD@2', 96)).toEqual([
+      'https://cdn.albiononline2d.com/thumbnails/orig/T6_MAIN_SWORD@2-q1.png',
+      'https://render.albiononline.com/v1/item/T6_MAIN_SWORD%402.png?quality=1&size=96',
+    ])
     expect(albionAvatarImageUrl('AVATAR_01', 'RING_01')).toBe(
       'https://render.albiononline.com/v1/avatar/AVATAR_01.png?ring=RING_01',
     )
