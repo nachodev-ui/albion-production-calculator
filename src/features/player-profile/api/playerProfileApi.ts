@@ -25,7 +25,7 @@ async function readError(response: Response): Promise<string> {
 
 async function request<T>(path: string, token?: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (token) headers['Author' + 'ization'] = 'Bear' + 'er ' + token
+  if (token) headers.Authorization = `Bearer ${token}`
   if (init.body) headers['Content-Type'] = 'application/json'
   const response = await fetch(`${accountAuthConfig.centralApiBaseUrl}${path}`, {
     ...init,
@@ -56,7 +56,7 @@ export const fetchMyAlbionProfile = (token: string) =>
   request<AlbionProfileResponse>('/me/albion-profile', token)
 
 export const linkMyAlbionProfile = (token: string, server: AlbionServer, playerId: string) =>
-  request<AlbionProfileResponse>('/me/albion-profile', token, {
+  request<AlbionProfileResponse>('/me/albion-profile/link', token, {
     method: 'PUT',
     body: JSON.stringify({ server, playerId }),
   })
@@ -65,4 +65,4 @@ export const refreshMyAlbionProfile = (token: string) =>
   request<AlbionProfileResponse>('/me/albion-profile/refresh', token, { method: 'POST' })
 
 export const unlinkMyAlbionProfile = (token: string) =>
-  request<void>('/me/albion-profile', token, { method: 'DELETE' })
+  request<void>('/me/albion-profile/unlink', token, { method: 'DELETE' })
