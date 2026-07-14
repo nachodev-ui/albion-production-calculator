@@ -4,6 +4,7 @@ import type { AppRoute } from "./types";
 const ROUTE_PATHS: Readonly<Record<AppRoute, string>> = {
   crafting: "/",
   refining: "/refining",
+  "black-market": "/black-market",
   presets: "/presets",
   plans: "/plans",
   account: "/account",
@@ -19,6 +20,8 @@ export function routeFromPathname(pathname: string): AppRoute {
   switch (pathname.replace(/\/+$/, "") || "/") {
     case "/refining":
       return "refining";
+    case "/black-market":
+      return "black-market";
     case "/presets":
       return "presets";
     case "/plans":
