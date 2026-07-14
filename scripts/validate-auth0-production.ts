@@ -15,18 +15,17 @@ const enabledValue = (process.env.VITE_AUTH0_ENABLED ?? 'false')
 const domain = (process.env.VITE_AUTH0_DOMAIN ?? '').trim()
 const clientId = (process.env.VITE_AUTH0_CLIENT_ID ?? '').trim()
 const audience = (process.env.VITE_AUTH0_AUDIENCE ?? '').trim()
-const scope = (
-  process.env.VITE_AUTH0_SCOPE ??
-  'openid profile email offline_access read:account'
+const configuredScope = (
+  process.env.VITE_AUTH0_SCOPE ?? 'openid profile email read:account'
 ).trim()
 const cacheLocation = (
-  process.env.VITE_AUTH0_CACHE_LOCATION ?? 'memory'
+  process.env.VITE_AUTH0_CACHE_LOCATION ?? 'localstorage'
 ).trim().toLowerCase()
 const useRefreshTokensValue = (
-  process.env.VITE_AUTH0_USE_REFRESH_TOKENS ?? 'false'
+  process.env.VITE_AUTH0_USE_REFRESH_TOKENS ?? 'true'
 ).trim().toLowerCase()
 const useRefreshTokensFallbackValue = (
-  process.env.VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK ?? 'false'
+  process.env.VITE_AUTH0_USE_REFRESH_TOKENS_FALLBACK ?? 'true'
 ).trim().toLowerCase()
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -82,7 +81,9 @@ async function main(): Promise<void> {
   const audienceUrl = new URL(audience)
   assert(audienceUrl.protocol === 'https:', 'VITE_AUTH0_AUDIENCE must use HTTPS')
 
-  const requestedScopes = new Set(scope.split(/\s+/).filter(Boolean))
+  const requestedScopes = new Set(configuredScope.split(/\s+/).filter(Boolean))
+  if (useRefreshTokensValue === 'true') requestedScopes.add('offline_access')
+
   for (const requiredScope of ['openid', 'profile', 'email', 'read:account']) {
     assert(requestedScopes.has(requiredScope), `Missing required scope: ${requiredScope}`)
   }
@@ -121,10 +122,11 @@ async function main(): Promise<void> {
   const jwks = await readJson<JwksDocument>(discovery.jwks_uri as string)
   assert(Array.isArray(jwks.keys) && jwks.keys.length > 0, 'Auth0 JWKS contains no signing keys')
 
+  const effectiveScope = [...requestedScopes].join(' ')
   console.log(`Auth0 production configuration is valid for ${issuer}`)
   console.log(`Audience: ${audience}`)
   console.log(`SPA Client ID: ${clientId}`)
-  console.log(`Scopes: ${scope}`)
+  console.log(`Scopes: ${effectiveScope}`)
   console.log(`Cache location: ${cacheLocation}`)
   console.log(`Refresh tokens: ${useRefreshTokensValue}`)
   console.log(`Refresh-token fallback: ${useRefreshTokensFallbackValue}`)
