@@ -25,7 +25,7 @@ async function readError(response: Response): Promise<string> {
 
 async function request<T>(path: string, token?: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (token) headers.Authorization = `Bearer ${token}`
+  if (token) headers['Authorization'] = `Bearer ${token}`
   if (init.body) headers['Content-Type'] = 'application/json'
   const response = await fetch(`${accountAuthConfig.centralApiBaseUrl}${path}`, {
     ...init,
