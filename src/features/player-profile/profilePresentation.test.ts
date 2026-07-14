@@ -3,7 +3,10 @@ import {
   albionAvatarImageUrl,
   albionItemImageUrl,
   albionItemImageUrls,
+  albionWeaponDisplayName,
   equipmentForEvent,
+  equipmentSlotsFor,
+  isTwoHandedWeapon,
   selectFeaturedBuild,
   selectMostUsedWeapon,
 } from './profilePresentation'
@@ -42,6 +45,27 @@ describe('player profile presentation', () => {
       'https://render.albiononline.com/v1/avatar/AVATAR_01.png?ring=RING_01',
     )
     expect(albionItemImageUrl('../unsafe')).toBeNull()
+  })
+
+  it('localizes weapon families and keeps tier plus enchantment visible', () => {
+    expect(albionWeaponDisplayName('T4_2H_DUALAXE_KEEPER@3')).toBe(
+      'Patas de oso · T4.3',
+    )
+    expect(albionWeaponDisplayName('T6_MAIN_CURSEDSTAFF_CRYSTAL')).toBe(
+      'Bastón Putrefacto · T6',
+    )
+    expect(albionWeaponDisplayName('T4_UNKNOWN_WEAPON@2')).toBe(
+      'T4_UNKNOWN_WEAPON@2',
+    )
+  })
+
+  it('omits the offhand slot only when the main weapon is two-handed', () => {
+    const twoHanded = { mainHand: 'T4_2H_DUALAXE_KEEPER@3' }
+    const oneHanded = { mainHand: 'T6_MAIN_SWORD' }
+
+    expect(isTwoHandedWeapon(twoHanded.mainHand)).toBe(true)
+    expect(equipmentSlotsFor(twoHanded).some((slot) => slot.key === 'offHand')).toBe(false)
+    expect(equipmentSlotsFor(oneHanded).some((slot) => slot.key === 'offHand')).toBe(true)
   })
 
   it('keeps legacy weapon-only events visible', () => {
