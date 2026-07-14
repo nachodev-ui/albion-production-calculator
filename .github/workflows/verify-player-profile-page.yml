@@ -1,0 +1,34 @@
+name: Verify player profile page
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.head_ref == 'ops/verify-player-profile-page'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify direct profile route and deployed chunk
+        shell: bash
+        run: |
+          set -euo pipefail
+          origin='https://albion-production-calculator.pages.dev'
+          html="$(mktemp)"
+          curl --fail --silent --show-error --location --max-time 45 \
+            --header 'Cache-Control: no-cache' \
+            --output "$html" \
+            "${origin}/profile?deployment-check=${GITHUB_SHA}"
+          grep -Fq '<div id="root"></div>' "$html"
+
+          bundle="$(mktemp)"
+          mapfile -t assets < <(grep -oE '/assets/[^" ]+\.js' "$html" | sort -u)
+          test "${#assets[@]}" -gt 0
+          for asset in "${assets[@]}"; do
+            curl --fail --silent --show-error --location --max-time 45 "${origin}${asset}" >> "$bundle"
+          done
+          grep -Eq 'Mi perfil|Estadísticas de Albion|Vincula tu personaje' "$bundle"
+          echo 'Direct /profile route and profile UI bundle verified.'
