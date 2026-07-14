@@ -98,7 +98,20 @@ function App() {
     let isActive = true;
     void loadItemRepository()
       .then((nextRepository) => {
-        if (isActive) setRepository(nextRepository);
+        if (!isActive) return;
+
+        setRepository(nextRepository);
+        setSelectedItemId((currentItemId) => {
+          if (!currentItemId || nextRepository.getById(currentItemId)) {
+            return currentItemId;
+          }
+
+          updateCraftWorkspace((current) => ({
+            ...current,
+            selectedItemId: null,
+          }));
+          return null;
+        });
       })
       .catch((error: unknown) => {
         if (!isActive) return;
@@ -112,16 +125,6 @@ function App() {
       isActive = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!repository || !selectedItemId || selectedItem) return;
-
-    setSelectedItemId(null);
-    updateCraftWorkspace((current) => ({
-      ...current,
-      selectedItemId: null,
-    }));
-  }, [repository, selectedItem, selectedItemId]);
 
   function navigateTo(nextRoute: AppRoute) {
     navigate(nextRoute);
