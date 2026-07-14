@@ -19,6 +19,11 @@ const ItemBrowserPanel = lazy(() =>
     (module) => ({ default: module.ItemBrowserPanel }),
   ),
 );
+const BlackMarketPage = lazy(() =>
+  import("@features/black-market/components/BlackMarketPage").then((module) => ({
+    default: module.BlackMarketPage,
+  })),
+);
 const PresetLibraryPage = lazy(() =>
   import("@features/presets/components/PresetLibraryPage").then((module) => ({
     default: module.PresetLibraryPage,
@@ -40,9 +45,11 @@ const AccountPage = lazy(() =>
   })),
 );
 const PlayerProfilePage = lazy(() =>
-  import("@features/player-profile/components/PlayerProfilePage").then((module) => ({
-    default: module.PlayerProfilePage,
-  })),
+  import("@features/player-profile/components/PlayerProfilePage").then(
+    (module) => ({
+      default: module.PlayerProfilePage,
+    }),
+  ),
 );
 const AdminPage = lazy(() =>
   import("@features/admin/components/AdminPage").then((module) => ({
@@ -79,6 +86,16 @@ function ModuleFallback({ label }: { readonly label: string }) {
         </div>
         <p className="mt-4 text-xs text-text-faint">Cargando {label}…</p>
       </div>
+    </div>
+  );
+}
+
+function RepositoryError({ message }: { readonly message: string }) {
+  return (
+    <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
+      <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
+        {message}
+      </p>
     </div>
   );
 }
@@ -191,11 +208,7 @@ function App() {
             }
           />
           {repositoryError ? (
-            <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
-              <p className="rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
-                {repositoryError}
-              </p>
-            </div>
+            <RepositoryError message={repositoryError} />
           ) : selectedItem && repository ? (
             <ItemDetailPanel
               key={selectedItem.id}
@@ -203,9 +216,7 @@ function App() {
               repository={repository}
             />
           ) : selectedItemId ? (
-            <div className="mx-auto w-full max-w-7xl px-5 pb-12 sm:px-6">
-              <ModuleFallback label="calculadora de producción" />
-            </div>
+            <ModuleFallback label="calculadora de producción" />
           ) : (
             <EmptyDetailState onBrowseCatalog={() => setIsCatalogOpen(true)} />
           )}
@@ -224,6 +235,25 @@ function App() {
               onOpenCrafting={() => navigateModule("crafting")}
             />
           </Suspense>
+        </>
+      )}
+      {route === "black-market" && (
+        <>
+          <ModuleHeader
+            eyebrow="Mercado especial de Caerleon"
+            title="Black Market Analytics"
+            description="Evalúa rutas de compra, órdenes observadas, costos de transporte, impuestos, rentabilidad e historial desde un módulo Pro independiente."
+            badge="Pro"
+          />
+          {repositoryError ? (
+            <RepositoryError message={repositoryError} />
+          ) : repository ? (
+            <Suspense fallback={<ModuleFallback label="Black Market" />}>
+              <BlackMarketPage repository={repository} onNavigate={navigateTo} />
+            </Suspense>
+          ) : (
+            <ModuleFallback label="Black Market" />
+          )}
         </>
       )}
       {route === "presets" && (

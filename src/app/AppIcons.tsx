@@ -1,16 +1,16 @@
-import type { SVGProps } from 'react'
+import type { SVGProps } from "react";
 
-type IconProps = SVGProps<SVGSVGElement>
+type IconProps = SVGProps<SVGSVGElement>;
 
 const commonProps = {
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
   strokeWidth: 1.8,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-  'aria-hidden': true,
-}
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  "aria-hidden": true,
+};
 
 export function AnvilIcon(props: IconProps) {
   return (
@@ -18,7 +18,7 @@ export function AnvilIcon(props: IconProps) {
       <path d="M4 5h14l2 3-4 3H8L4 8V5Z" />
       <path d="M9 11v3c0 2-1.5 3.5-4 4v1h14v-2c-2.6-.6-4-1.7-4-3v-3" />
     </svg>
-  )
+  );
 }
 
 export function HammerIcon(props: IconProps) {
@@ -28,7 +28,7 @@ export function HammerIcon(props: IconProps) {
       <path d="m12 6 4-4 6 6-4 4" />
       <path d="m14 10-8.5 8.5a2.1 2.1 0 0 1-3-3L11 7" />
     </svg>
-  )
+  );
 }
 
 export function RefiningIcon(props: IconProps) {
@@ -38,7 +38,7 @@ export function RefiningIcon(props: IconProps) {
       <path d="m8 7 1-4h6l1 4" />
       <path d="M9 12h6" />
     </svg>
-  )
+  );
 }
 
 export function PresetIcon(props: IconProps) {
@@ -54,7 +54,7 @@ export function PresetIcon(props: IconProps) {
       <path d="M15 18h5" />
       <circle cx="13" cy="18" r="2" />
     </svg>
-  )
+  );
 }
 
 export function CatalogIcon(props: IconProps) {
@@ -64,7 +64,7 @@ export function CatalogIcon(props: IconProps) {
       <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20" />
       <path d="M8 7h7" />
     </svg>
-  )
+  );
 }
 
 export function CloseIcon(props: IconProps) {
@@ -73,7 +73,7 @@ export function CloseIcon(props: IconProps) {
       <path d="m6 6 12 12" />
       <path d="m18 6-12 12" />
     </svg>
-  )
+  );
 }
 
 export function ArrowRightIcon(props: IconProps) {
@@ -82,7 +82,7 @@ export function ArrowRightIcon(props: IconProps) {
       <path d="M5 12h14" />
       <path d="m13 6 6 6-6 6" />
     </svg>
-  )
+  );
 }
 
 export function ReturnIcon(props: IconProps) {
@@ -91,7 +91,7 @@ export function ReturnIcon(props: IconProps) {
       <path d="M20 7v5h-5" />
       <path d="M19 12a7 7 0 1 0-2 5" />
     </svg>
-  )
+  );
 }
 
 export function CalculatorIcon(props: IconProps) {
@@ -101,7 +101,7 @@ export function CalculatorIcon(props: IconProps) {
       <path d="M8 7h8" />
       <path d="M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 19h.01M12 19h4" />
     </svg>
-  )
+  );
 }
 
 export function ChartIcon(props: IconProps) {
@@ -112,7 +112,7 @@ export function ChartIcon(props: IconProps) {
       <path d="M16 19v-7" />
       <path d="M22 19H2" />
     </svg>
-  )
+  );
 }
 
 export function ShieldCheckIcon(props: IconProps) {
@@ -121,5 +121,18 @@ export function ShieldCheckIcon(props: IconProps) {
       <path d="M12 3 5 6v5c0 4.6 2.8 8 7 10 4.2-2 7-5.4 7-10V6l-7-3Z" />
       <path d="m9 12 2 2 4-5" />
     </svg>
-  )
+  );
+}
+
+export function BlackMarketIcon(props: IconProps) {
+  return (
+    <svg {...commonProps} {...props}>
+      <path d="M7 4h10v3a5 5 0 0 1-10 0V4Z" />
+      <path d="M7 6H4v1a4 4 0 0 0 4 4" />
+      <path d="M17 6h3v1a4 4 0 0 1-4 4" />
+      <path d="M12 12v4" />
+      <path d="M8 20h8" />
+      <path d="M9 16h6v4H9z" />
+    </svg>
+  );
 }

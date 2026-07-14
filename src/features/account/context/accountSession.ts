@@ -16,12 +16,17 @@ export interface AccountSessionValue {
   login: () => Promise<void>;
   logout: () => Promise<void>;
   refreshAccess: () => Promise<void>;
+  getAccessToken: () => Promise<string | null>;
   startCheckout: () => Promise<void>;
   openBillingPortal: () => Promise<void>;
 }
 
 async function noop(): Promise<void> {
   return undefined;
+}
+
+async function noToken(): Promise<string | null> {
+  return null;
 }
 
 export const ANONYMOUS_ACCOUNT_SESSION: AccountSessionValue = {
@@ -37,6 +42,7 @@ export const ANONYMOUS_ACCOUNT_SESSION: AccountSessionValue = {
   login: noop,
   logout: noop,
   refreshAccess: noop,
+  getAccessToken: noToken,
   startCheckout: noop,
   openBillingPortal: noop,
 };
