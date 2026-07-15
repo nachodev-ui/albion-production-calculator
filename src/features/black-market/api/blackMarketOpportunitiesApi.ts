@@ -48,7 +48,10 @@ function requiredBoolean(value: unknown, field: string): boolean {
 }
 
 function stringArray(value: unknown, field: string): readonly string[] {
-  if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+  if (
+    !Array.isArray(value) ||
+    !value.every((item) => typeof item === "string")
+  ) {
     throw new BlackMarketApiError(`Respuesta inválida: ${field}`, 502);
   }
   return value;
@@ -60,7 +63,8 @@ function parseServer(value: unknown): AlbionServer {
 }
 
 function parseSort(value: unknown): BlackMarketOpportunitySort {
-  if (value === "profit" || value === "roi" || value === "freshness") return value;
+  if (value === "profit" || value === "roi" || value === "freshness")
+    return value;
   throw new BlackMarketApiError("Respuesta inválida: sort", 502);
 }
 
@@ -83,7 +87,10 @@ function parseRisk(value: unknown): BlackMarketOpportunityRisk {
 
 function parseCompetition(value: unknown): BlackMarketOpportunityCompetition {
   if (!isRecord(value)) {
-    throw new BlackMarketApiError("Respuesta inválida: caerleonCompetition", 502);
+    throw new BlackMarketApiError(
+      "Respuesta inválida: caerleonCompetition",
+      502,
+    );
   }
   return {
     available: requiredBoolean(value["available"], "competition.available"),
@@ -285,7 +292,10 @@ export async function scanBlackMarketOpportunities(
     },
   );
   if (!response.ok) {
-    throw new BlackMarketApiError(await responseMessage(response), response.status);
+    throw new BlackMarketApiError(
+      await responseMessage(response),
+      response.status,
+    );
   }
   return parseBlackMarketOpportunities(await response.json());
 }

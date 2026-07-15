@@ -8,29 +8,30 @@ import type {
 export const BLACK_MARKET_SCANNER_STORAGE_KEY =
   "albion-production-calculator:black-market-scanner:v1";
 
-export const DEFAULT_BLACK_MARKET_SCANNER_FILTERS: BlackMarketOpportunityFilters = {
-  server: "west",
-  purchaseMarketKeys: [
-    "bridgewatch",
-    "martlock",
-    "lymhurst",
-    "fort_sterling",
-    "thetford",
-    "caerleon",
-  ],
-  tiers: [4, 5, 6, 7, 8],
-  enchantments: [0, 1, 2, 3, 4],
-  qualities: [1, 2, 3, 4, 5],
-  categories: ["weapon", "armor", "offhand", "accessory"],
-  minimumProfit: 10_000,
-  minimumReturnOnCostPercent: 5,
-  maximumCityAgeMinutes: 30,
-  maximumBlackMarketAgeMinutes: 20,
-  salesTaxPercent: 4,
-  transportCostPerUnit: 0,
-  sort: "profit",
-  limit: 100,
-};
+export const DEFAULT_BLACK_MARKET_SCANNER_FILTERS: BlackMarketOpportunityFilters =
+  {
+    server: "west",
+    purchaseMarketKeys: [
+      "bridgewatch",
+      "martlock",
+      "lymhurst",
+      "fort_sterling",
+      "thetford",
+      "caerleon",
+    ],
+    tiers: [4, 5, 6, 7, 8],
+    enchantments: [0, 1, 2, 3, 4],
+    qualities: [1, 2, 3, 4, 5],
+    categories: ["weapon", "armor", "offhand", "accessory"],
+    minimumProfit: 10_000,
+    minimumReturnOnCostPercent: 5,
+    maximumCityAgeMinutes: 30,
+    maximumBlackMarketAgeMinutes: 20,
+    salesTaxPercent: 4,
+    transportCostPerUnit: 0,
+    sort: "profit",
+    limit: 100,
+  };
 
 const MARKET_KEYS = new Set([
   "bridgewatch",
@@ -66,7 +67,16 @@ function numberArray(
   fallback: readonly number[],
 ): readonly number[] {
   if (!Array.isArray(value)) return fallback;
-  const result = [...new Set(value.filter((item): item is number => typeof item === "number" && Number.isInteger(item) && allowed.has(item)))];
+  const result = [
+    ...new Set(
+      value.filter(
+        (item): item is number =>
+          typeof item === "number" &&
+          Number.isInteger(item) &&
+          allowed.has(item),
+      ),
+    ),
+  ];
   return result.length > 0 ? result.sort((a, b) => a - b) : fallback;
 }
 
@@ -76,7 +86,13 @@ function stringArray<T extends string>(
   fallback: readonly T[],
 ): readonly T[] {
   if (!Array.isArray(value)) return fallback;
-  const result = [...new Set(value.filter((item): item is T => typeof item === "string" && allowed.has(item)))];
+  const result = [
+    ...new Set(
+      value.filter(
+        (item): item is T => typeof item === "string" && allowed.has(item),
+      ),
+    ),
+  ];
   return result.length > 0 ? result : fallback;
 }
 
@@ -86,13 +102,22 @@ function boundedNumber(
   minimum: number,
   maximum: number,
 ): number {
-  return typeof value === "number" && Number.isFinite(value) && value >= minimum && value <= maximum
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    value >= minimum &&
+    value <= maximum
     ? value
     : fallback;
 }
 
-export function parseBlackMarketScannerFilters(value: unknown): BlackMarketOpportunityFilters {
-  if (!isRecord(value) || value["version"] !== 1 || !isRecord(value["filters"])) {
+export function parseBlackMarketScannerFilters(
+  value: unknown,
+): BlackMarketOpportunityFilters {
+  if (
+    !isRecord(value) ||
+    value["version"] !== 1 ||
+    !isRecord(value["filters"])
+  ) {
     return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
   }
   const raw = value["filters"];
@@ -152,7 +177,8 @@ export function parseBlackMarketScannerFilters(value: unknown): BlackMarketOppor
 }
 
 export function loadBlackMarketScannerFilters(): BlackMarketOpportunityFilters {
-  if (typeof window === "undefined") return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
+  if (typeof window === "undefined")
+    return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
   try {
     const value = window.localStorage.getItem(BLACK_MARKET_SCANNER_STORAGE_KEY);
     return value
@@ -163,7 +189,9 @@ export function loadBlackMarketScannerFilters(): BlackMarketOpportunityFilters {
   }
 }
 
-export function saveBlackMarketScannerFilters(filters: BlackMarketOpportunityFilters): void {
+export function saveBlackMarketScannerFilters(
+  filters: BlackMarketOpportunityFilters,
+): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(

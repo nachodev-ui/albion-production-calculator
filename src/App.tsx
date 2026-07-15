@@ -20,11 +20,11 @@ const ItemBrowserPanel = lazy(() =>
   ),
 );
 const BlackMarketOpportunityScannerPage = lazy(() =>
-  import(
-    "@features/black-market/components/BlackMarketOpportunityScannerPage"
-  ).then((module) => ({
-    default: module.BlackMarketOpportunityScannerPage,
-  })),
+  import("@features/black-market/components/BlackMarketOpportunityScannerPage").then(
+    (module) => ({
+      default: module.BlackMarketOpportunityScannerPage,
+    }),
+  ),
 );
 const PresetLibraryPage = lazy(() =>
   import("@features/presets/components/PresetLibraryPage").then((module) => ({
