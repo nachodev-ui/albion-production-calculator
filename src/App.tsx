@@ -19,10 +19,12 @@ const ItemBrowserPanel = lazy(() =>
     (module) => ({ default: module.ItemBrowserPanel }),
   ),
 );
-const BlackMarketPage = lazy(() =>
-  import("@features/black-market/components/BlackMarketPage").then((module) => ({
-    default: module.BlackMarketPage,
-  })),
+const BlackMarketOpportunityScannerPage = lazy(() =>
+  import("@features/black-market/components/BlackMarketOpportunityScannerPage").then(
+    (module) => ({
+      default: module.BlackMarketOpportunityScannerPage,
+    }),
+  ),
 );
 const PresetLibraryPage = lazy(() =>
   import("@features/presets/components/PresetLibraryPage").then((module) => ({
@@ -241,15 +243,18 @@ function App() {
         <>
           <ModuleHeader
             eyebrow="Mercado especial de Caerleon"
-            title="Black Market Analytics"
-            description="Evalúa rutas de compra, órdenes observadas, costos de transporte, impuestos, rentabilidad e historial desde un módulo Pro independiente."
+            title="Black Market Opportunity Scanner"
+            description="Descubre comparaciones rentables entre ciudades y órdenes de compra del Black Market; abre cada resultado para validar su detalle económico e histórico."
             badge="Pro"
           />
           {repositoryError ? (
             <RepositoryError message={repositoryError} />
           ) : repository ? (
             <Suspense fallback={<ModuleFallback label="Black Market" />}>
-              <BlackMarketPage repository={repository} onNavigate={navigateTo} />
+              <BlackMarketOpportunityScannerPage
+                repository={repository}
+                onNavigate={navigateTo}
+              />
             </Suspense>
           ) : (
             <ModuleFallback label="Black Market" />

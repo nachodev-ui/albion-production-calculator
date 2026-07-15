@@ -1,4 +1,7 @@
 export type AlbionServer = "west" | "east" | "europe";
+export type BlackMarketCategory = "weapon" | "armor" | "offhand" | "accessory";
+export type BlackMarketOpportunitySort = "profit" | "roi" | "freshness";
+export type BlackMarketOpportunityRisk = "low" | "medium" | "high";
 
 export interface BlackMarketAnalysisRequest {
   readonly server: AlbionServer;
@@ -80,4 +83,100 @@ export interface BlackMarketWorkspace {
   readonly salesTaxPercent: number;
   readonly transportCost: number;
   readonly historyDays: number;
+}
+
+export interface BlackMarketOpportunityFilters {
+  readonly server: AlbionServer;
+  readonly purchaseMarketKeys: readonly string[];
+  readonly tiers: readonly number[];
+  readonly enchantments: readonly number[];
+  readonly qualities: readonly number[];
+  readonly categories: readonly BlackMarketCategory[];
+  readonly minimumProfit: number;
+  readonly minimumReturnOnCostPercent: number;
+  readonly maximumCityAgeMinutes: number;
+  readonly maximumBlackMarketAgeMinutes: number;
+  readonly salesTaxPercent: number;
+  readonly transportCostPerUnit: number;
+  readonly sort: BlackMarketOpportunitySort;
+  readonly limit: number;
+}
+
+export interface BlackMarketOpportunitiesRequest {
+  readonly server: AlbionServer;
+  readonly purchaseMarketKeys: readonly string[];
+  readonly tiers: readonly number[];
+  readonly enchantments: readonly number[];
+  readonly qualities: readonly number[];
+  readonly categories: readonly BlackMarketCategory[];
+  readonly minimumProfit: number;
+  readonly minimumReturnOnCostPercent: number;
+  readonly maximumCityAgeMinutes: number;
+  readonly maximumBlackMarketAgeMinutes: number;
+  readonly salesTaxRate: number;
+  readonly transportCostPerUnit: number;
+  readonly sort: BlackMarketOpportunitySort;
+  readonly limit: number;
+  readonly offset: number;
+}
+
+export interface BlackMarketOpportunityCompetition {
+  readonly available: boolean;
+  readonly purchaseUnitPrice: number | null;
+  readonly purchaseQuality: number | null;
+  readonly purchasePriceDate: string | null;
+  readonly ageMinutes: number | null;
+  readonly profit: number | null;
+  readonly canFillProfitably: boolean;
+}
+
+export interface BlackMarketOpportunity {
+  readonly id: string;
+  readonly itemIdentifier: string;
+  readonly tier: number;
+  readonly enchantment: number;
+  readonly category: BlackMarketCategory;
+  readonly purchaseMarketKey: string;
+  readonly purchaseQuality: number;
+  readonly purchaseUnitPrice: number;
+  readonly purchasePriceDate: string;
+  readonly purchaseAgeMinutes: number;
+  readonly blackMarketQuality: number;
+  readonly blackMarketBuyUnitPrice: number;
+  readonly blackMarketBuyPriceDate: string;
+  readonly blackMarketAgeMinutes: number;
+  readonly blackMarketSellUnitPrice: number | null;
+  readonly blackMarketSellPriceDate: string | null;
+  readonly blackMarketOrderDifference: number | null;
+  readonly estimatedSalesTax: number;
+  readonly transportCostPerUnit: number;
+  readonly netUnitRevenue: number;
+  readonly profit: number;
+  readonly marginPercent: number;
+  readonly returnOnCostPercent: number;
+  readonly breakEvenUnitPrice: number;
+  readonly caerleonCompetition: BlackMarketOpportunityCompetition;
+  readonly risk: BlackMarketOpportunityRisk;
+  readonly riskReasons: readonly string[];
+}
+
+export interface BlackMarketOpportunityCoverage {
+  readonly blackMarketRows: number;
+  readonly sourceMarketRows: number;
+  readonly latestBlackMarketAt: string | null;
+  readonly latestSourceMarketAt: string | null;
+  readonly selectedMarketKeys: readonly string[];
+}
+
+export interface BlackMarketOpportunitiesResponse {
+  readonly requestedAt: string;
+  readonly server: AlbionServer;
+  readonly totalMatching: number;
+  readonly returned: number;
+  readonly limit: number;
+  readonly offset: number;
+  readonly sort: BlackMarketOpportunitySort;
+  readonly coverage: BlackMarketOpportunityCoverage;
+  readonly data: readonly BlackMarketOpportunity[];
+  readonly warnings: readonly string[];
 }
