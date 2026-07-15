@@ -18,6 +18,7 @@ const FREE_FEATURES = [
 ] as const;
 
 const PRO_FEATURES = [
+  "Black Market Analytics con rentabilidad, ROI e historial",
   "Hasta 28 días de historial de mercado",
   "Optimizador con análisis de liquidez",
   "Hasta 100 presets guardados",
@@ -197,7 +198,7 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
         <PlanCard
           eyebrow="USD 4,99 al mes"
           title="Pro"
-          description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, automatizar comparaciones y administrar más configuraciones."
+          description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, rutas hacia el Black Market y administrar más configuraciones."
           features={PRO_FEATURES}
           active={isPro}
           highlighted

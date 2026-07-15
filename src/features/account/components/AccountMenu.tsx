@@ -33,6 +33,7 @@ const isolatedSession: AccountSessionValue = {
   login: async () => undefined,
   logout: async () => undefined,
   refreshAccess: async () => undefined,
+  getAccessToken: async () => null,
   startCheckout: async () => undefined,
   openBillingPortal: async () => undefined,
 };

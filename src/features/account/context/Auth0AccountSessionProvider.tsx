@@ -1,48 +1,48 @@
-import { Auth0Provider, useAuth0, type AppState } from '@auth0/auth0-react'
+import { Auth0Provider, useAuth0, type AppState } from "@auth0/auth0-react";
 import {
   useCallback,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
-} from 'react'
+} from "react";
 import {
   createBillingCheckout,
   createBillingPortal,
   fetchCurrentAccount,
-} from '../api/accountApi'
-import { accountAuthConfig } from '../config/accountAuthConfig'
-import { useAccountAccessStore } from '../store/accountAccessStore'
-import type { SessionProfile } from '../types'
+} from "../api/accountApi";
+import { accountAuthConfig } from "../config/accountAuthConfig";
+import { useAccountAccessStore } from "../store/accountAccessStore";
+import type { SessionProfile } from "../types";
 import {
   AccountSessionContext,
   type AccountSessionValue,
   type BillingActionStatus,
-} from './accountSession'
+} from "./accountSession";
 
 interface Auth0AccountSessionProviderProps {
-  readonly children: ReactNode
+  readonly children: ReactNode;
 }
 
 function currentReturnTo(): string {
-  return `${window.location.pathname}${window.location.search}${window.location.hash}`
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
 }
 
 function safeRedirectTarget(appState: AppState | undefined): string {
-  const returnTo = appState?.returnTo
+  const returnTo = appState?.returnTo;
   if (
-    typeof returnTo === 'string' &&
-    returnTo.startsWith('/') &&
-    !returnTo.startsWith('//')
+    typeof returnTo === "string" &&
+    returnTo.startsWith("/") &&
+    !returnTo.startsWith("//")
   ) {
-    return returnTo
+    return returnTo;
   }
-  return '/account'
+  return "/account";
 }
 
 function onRedirectCallback(appState?: AppState) {
-  window.history.replaceState({}, document.title, safeRedirectTarget(appState))
-  window.dispatchEvent(new PopStateEvent('popstate'))
+  window.history.replaceState({}, document.title, safeRedirectTarget(appState));
+  window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
 function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
@@ -54,14 +54,14 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     loginWithRedirect,
     logout: auth0Logout,
     getAccessTokenSilently,
-  } = useAuth0()
-  const beginLoading = useAccountAccessStore((state) => state.beginLoading)
-  const setAccess = useAccountAccessStore((state) => state.setAccess)
-  const setError = useAccountAccessStore((state) => state.setError)
-  const clear = useAccountAccessStore((state) => state.clear)
+  } = useAuth0();
+  const beginLoading = useAccountAccessStore((state) => state.beginLoading);
+  const setAccess = useAccountAccessStore((state) => state.setAccess);
+  const setError = useAccountAccessStore((state) => state.setError);
+  const clear = useAccountAccessStore((state) => state.clear);
   const [billingStatus, setBillingStatus] =
-    useState<BillingActionStatus>('idle')
-  const [billingError, setBillingError] = useState<string | null>(null)
+    useState<BillingActionStatus>("idle");
+  const [billingError, setBillingError] = useState<string | null>(null);
 
   const getAccountAccessToken = useCallback(
     () =>
@@ -72,24 +72,29 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
         },
       }),
     [getAccessTokenSilently],
-  )
+  );
+
+  const getAccessToken = useCallback(async (): Promise<string | null> => {
+    if (!isAuthenticated) return null;
+    return getAccountAccessToken();
+  }, [getAccountAccessToken, isAuthenticated]);
 
   const refreshAccess = useCallback(async () => {
     if (!isAuthenticated) {
-      clear()
-      return
+      clear();
+      return;
     }
 
-    beginLoading()
+    beginLoading();
     try {
-      const accessToken = await getAccountAccessToken()
-      setAccess(await fetchCurrentAccount(accessToken))
+      const accessToken = await getAccountAccessToken();
+      setAccess(await fetchCurrentAccount(accessToken));
     } catch (error: unknown) {
       setError(
         error instanceof Error
           ? error.message
-          : 'No fue posible sincronizar la cuenta.',
-      )
+          : "No fue posible sincronizar la cuenta.",
+      );
     }
   }, [
     beginLoading,
@@ -98,99 +103,99 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     isAuthenticated,
     setAccess,
     setError,
-  ])
+  ]);
 
   useEffect(() => {
-    if (isLoading) return
+    if (isLoading) return;
     if (!isAuthenticated) {
-      clear()
-      return
+      clear();
+      return;
     }
-    void refreshAccess()
-  }, [clear, isAuthenticated, isLoading, refreshAccess])
+    void refreshAccess();
+  }, [clear, isAuthenticated, isLoading, refreshAccess]);
 
   const login = useCallback(async () => {
-    setBillingError(null)
-    setBillingStatus('idle')
+    setBillingError(null);
+    setBillingStatus("idle");
     await loginWithRedirect({
       appState: { returnTo: currentReturnTo() },
       authorizationParams: {
         audience: accountAuthConfig.audience,
         scope: accountAuthConfig.scope,
       },
-    })
-  }, [loginWithRedirect])
+    });
+  }, [loginWithRedirect]);
 
   const logout = useCallback(async () => {
-    setBillingError(null)
-    setBillingStatus('idle')
+    setBillingError(null);
+    setBillingStatus("idle");
     await auth0Logout({
       logoutParams: { returnTo: window.location.origin },
-    })
-  }, [auth0Logout])
+    });
+  }, [auth0Logout]);
 
   const runBillingAction = useCallback(
     async (
-      status: Exclude<BillingActionStatus, 'idle'>,
+      status: Exclude<BillingActionStatus, "idle">,
       action: (accessToken: string) => Promise<{ readonly url: string }>,
     ) => {
       if (!accountAuthConfig.billingEnabled) {
-        setBillingError('La facturación sandbox todavía no está habilitada.')
-        return
+        setBillingError("La facturación sandbox todavía no está habilitada.");
+        return;
       }
       if (!isAuthenticated) {
-        await login()
-        return
+        await login();
+        return;
       }
 
-      setBillingError(null)
-      setBillingStatus(status)
+      setBillingError(null);
+      setBillingStatus(status);
       try {
-        const accessToken = await getAccountAccessToken()
-        const response = await action(accessToken)
-        window.location.assign(response.url)
+        const accessToken = await getAccountAccessToken();
+        const response = await action(accessToken);
+        window.location.assign(response.url);
       } catch (error: unknown) {
         setBillingError(
           error instanceof Error
             ? error.message
-            : 'No fue posible abrir la facturación.',
-        )
-        setBillingStatus('idle')
+            : "No fue posible abrir la facturación.",
+        );
+        setBillingStatus("idle");
       }
     },
     [getAccountAccessToken, isAuthenticated, login],
-  )
+  );
 
   const startCheckout = useCallback(
-    () => runBillingAction('checkout', createBillingCheckout),
+    () => runBillingAction("checkout", createBillingCheckout),
     [runBillingAction],
-  )
+  );
 
   const openBillingPortal = useCallback(
-    () => runBillingAction('portal', createBillingPortal),
+    () => runBillingAction("portal", createBillingPortal),
     [runBillingAction],
-  )
+  );
 
   const profile = useMemo<SessionProfile | null>(
     () =>
       user
         ? {
             name:
-              typeof user.name === 'string' && user.name.trim().length > 0
+              typeof user.name === "string" && user.name.trim().length > 0
                 ? user.name
                 : null,
             email:
-              typeof user.email === 'string' && user.email.trim().length > 0
+              typeof user.email === "string" && user.email.trim().length > 0
                 ? user.email
                 : null,
             picture:
-              typeof user.picture === 'string' && user.picture.trim().length > 0
+              typeof user.picture === "string" && user.picture.trim().length > 0
                 ? user.picture
                 : null,
           }
         : null,
     [user],
-  )
+  );
 
   const value = useMemo<AccountSessionValue>(
     () => ({
@@ -206,6 +211,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       login,
       logout,
       refreshAccess,
+      getAccessToken,
       startCheckout,
       openBillingPortal,
     }),
@@ -213,6 +219,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       authError?.message,
       billingError,
       billingStatus,
+      getAccessToken,
       isAuthenticated,
       isLoading,
       login,
@@ -222,13 +229,13 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       refreshAccess,
       startCheckout,
     ],
-  )
+  );
 
   return (
     <AccountSessionContext.Provider value={value}>
       {children}
     </AccountSessionContext.Provider>
-  )
+  );
 }
 
 export default function Auth0AccountSessionProvider({
@@ -250,5 +257,5 @@ export default function Auth0AccountSessionProvider({
     >
       <Auth0AccountBridge>{children}</Auth0AccountBridge>
     </Auth0Provider>
-  )
+  );
 }

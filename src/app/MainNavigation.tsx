@@ -1,5 +1,10 @@
 import type { AppModule } from "./types";
-import { HammerIcon, PresetIcon, RefiningIcon } from "./AppIcons";
+import {
+  BlackMarketIcon,
+  HammerIcon,
+  PresetIcon,
+  RefiningIcon,
+} from "./AppIcons";
 
 interface MainNavigationProps {
   readonly activeModule: AppModule | null;
@@ -19,6 +24,13 @@ const NAV_ITEMS = [
     description: "Próximamente",
     icon: RefiningIcon,
     badge: "Próximamente",
+  },
+  {
+    id: "black-market" as const,
+    label: "Black Market",
+    description: "Rutas y oportunidades",
+    icon: BlackMarketIcon,
+    badge: "Pro",
   },
   {
     id: "presets" as const,

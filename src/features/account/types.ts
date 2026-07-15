@@ -5,6 +5,7 @@ export const ENTITLEMENT_KEYS = {
   savedConfigurationsMax: "saved_configurations.max",
   exportsCsv: "exports.csv",
   marketAlertsMax: "alerts.market.max",
+  blackMarketAnalytics: "black_market.analytics",
 } as const;
 
 export type EntitlementKey =
@@ -47,4 +48,5 @@ export const FREE_ENTITLEMENTS: EntitlementMap = {
   [ENTITLEMENT_KEYS.savedConfigurationsMax]: 3,
   [ENTITLEMENT_KEYS.exportsCsv]: false,
   [ENTITLEMENT_KEYS.marketAlertsMax]: 0,
+  [ENTITLEMENT_KEYS.blackMarketAnalytics]: false,
 };
