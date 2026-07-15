@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { EnchantmentLevel } from "@core/domain/entities/Enchantment";
 import { buildItemIconUrl, type Item } from "@core/domain/entities/Item";
 import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
