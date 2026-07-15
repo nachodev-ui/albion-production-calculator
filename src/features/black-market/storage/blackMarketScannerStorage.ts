@@ -82,7 +82,7 @@ function numberArray(
 
 function stringArray<T extends string>(
   value: unknown,
-  allowed: ReadonlySet<T> | ReadonlySet<string>,
+  allowed: ReadonlySet<string>,
   fallback: readonly T[],
 ): readonly T[] {
   if (!Array.isArray(value)) return fallback;
