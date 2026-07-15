@@ -1,0 +1,38 @@
+name: Fix scanner storage type
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.head_ref == 'feat/black-market-opportunity-scanner'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/black-market-opportunity-scanner
+      - name: Fix generic allowed set type
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/features/black-market/storage/blackMarketScannerStorage.ts')
+          text = path.read_text()
+          text = text.replace(
+              'allowed: ReadonlySet<T> | ReadonlySet<string>,',
+              'allowed: ReadonlySet<string>,',
+          )
+          path.write_text(text)
+          PY
+      - name: Commit fix
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/features/black-market/storage/blackMarketScannerStorage.ts
+          git commit -m "fix: type scanner allowed values safely"
+          git push origin HEAD:feat/black-market-opportunity-scanner
