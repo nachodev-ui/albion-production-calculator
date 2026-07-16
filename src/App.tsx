@@ -160,6 +160,10 @@ function App() {
     }));
     setIsCatalogOpen(false);
   }
+  function openPreloadedCraftingItem(item: Item) {
+    setSelectedItemId(item.id);
+    navigateTo("crafting");
+  }
 
   const header = (
     <AppHeader
@@ -254,6 +258,7 @@ function App() {
               <BlackMarketOpportunityScannerPage
                 repository={repository}
                 onNavigate={navigateTo}
+                onOpenCrafting={openPreloadedCraftingItem}
               />
             </Suspense>
           ) : (
