@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { AccountSessionProvider } from "@features/account/context/AccountSessionContext";
 import { CalculationPrintPage } from "@features/craft-calculator/components/summary/CalculationPrintPage";
 import "./index.css";
+import "./mobile.css";
 import App from "./App.tsx";
 
 const printToken = new URLSearchParams(window.location.search).get(
