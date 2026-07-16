@@ -80,6 +80,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     useState<BillingActionStatus>("idle");
   const [billingError, setBillingError] = useState<string | null>(null);
   const activeSync = useRef<AbortController | null>(null);
+  const hydratedSubject = useRef<string | null>(null);
   const automaticallySyncedSubject = useRef<string | null>(null);
   const subject =
     typeof user?.sub === "string" && user.sub.trim().length > 0
@@ -106,12 +107,18 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     if (!isAuthenticated) {
       activeSync.current?.abort();
       activeSync.current = null;
+      hydratedSubject.current = null;
       clearAccountAccessSession();
       clear();
       return;
     }
 
     if (!subject) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
+      clearAccountAccessSession();
+      clear();
       setError("Auth0 no entregó un identificador válido para la cuenta.");
       return;
     }
@@ -158,6 +165,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     if (!isAuthenticated) {
       activeSync.current?.abort();
       activeSync.current = null;
+      hydratedSubject.current = null;
       automaticallySyncedSubject.current = null;
       clearAccountAccessSession();
       clear();
@@ -165,10 +173,23 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     }
 
     if (!subject) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
       automaticallySyncedSubject.current = null;
+      clearAccountAccessSession();
+      clear();
       setError("Auth0 no entregó un identificador válido para la cuenta.");
       return;
     }
+
+    if (hydratedSubject.current === subject) return;
+
+    activeSync.current?.abort();
+    activeSync.current = null;
+    hydratedSubject.current = subject;
+    automaticallySyncedSubject.current = null;
+    clear();
 
     const cached = loadAccountAccessSession(subject);
     if (cached) {
@@ -219,6 +240,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     setBillingStatus("idle");
     activeSync.current?.abort();
     activeSync.current = null;
+    hydratedSubject.current = null;
     automaticallySyncedSubject.current = null;
     clearAccountAccessSession();
     clear();
