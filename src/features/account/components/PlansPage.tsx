@@ -4,6 +4,7 @@ import {
   currentPlan,
   useAccountAccessStore,
 } from "../store/accountAccessStore";
+import { AccountAccessResolutionCard } from "./AccountAccessResolutionCard";
 import { CheckIcon, SparklesIcon } from "./AccountIcons";
 
 interface PlansPageProps {
@@ -115,12 +116,23 @@ function PlanCard({
 export function PlansPage({ onNavigate }: PlansPageProps) {
   const session = useAccountSession();
   const access = useAccountAccessStore((state) => state.access);
-  const plan = currentPlan(access);
+  const accessStatus = useAccountAccessStore((state) => state.status);
+  const accessError = useAccountAccessStore((state) => state.error);
+  const plan = access
+    ? currentPlan(access)
+    : session.isAuthenticated
+      ? null
+      : "free";
   const isPro = plan === "pro";
   const hasManagedSubscription =
     access?.subscription.status !== undefined &&
     access.subscription.status !== "none";
   const billingBusy = session.billingStatus !== "idle";
+  const accessPending =
+    session.isLoading ||
+    (session.isAuthenticated && access === null && accessStatus !== "error");
+  const accessFailed =
+    session.isAuthenticated && access === null && accessStatus === "error";
 
   function openAccountOrLogin() {
     if (session.isAuthenticated) {
@@ -183,30 +195,40 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
         </p>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <PlanCard
-          eyebrow="Acceso base"
-          title="Free"
-          description="Todas las herramientas esenciales para calcular producción, consultar mercado y guardar una configuración básica."
-          features={FREE_FEATURES}
-          active={!isPro}
-          actionLabel={
-            session.isAuthenticated ? "Ver mi cuenta" : "Comenzar con Free"
-          }
-          onAction={openAccountOrLogin}
+      {accessPending ? (
+        <AccountAccessResolutionCard status="loading" />
+      ) : accessFailed ? (
+        <AccountAccessResolutionCard
+          status="error"
+          error={accessError}
+          onRetry={() => void session.refreshAccess()}
         />
-        <PlanCard
-          eyebrow="USD 4,99 al mes"
-          title="Pro"
-          description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, rutas hacia el Black Market y administrar más configuraciones."
-          features={PRO_FEATURES}
-          active={isPro}
-          highlighted
-          actionLabel={proActionLabel()}
-          disabled={!session.billingEnabled || billingBusy}
-          onAction={handleProAction}
-        />
-      </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2">
+          <PlanCard
+            eyebrow="Acceso base"
+            title="Free"
+            description="Todas las herramientas esenciales para calcular producción, consultar mercado y guardar una configuración básica."
+            features={FREE_FEATURES}
+            active={plan === "free"}
+            actionLabel={
+              session.isAuthenticated ? "Ver mi cuenta" : "Comenzar con Free"
+            }
+            onAction={openAccountOrLogin}
+          />
+          <PlanCard
+            eyebrow="USD 4,99 al mes"
+            title="Pro"
+            description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, rutas hacia el Black Market y administrar más configuraciones."
+            features={PRO_FEATURES}
+            active={isPro}
+            highlighted
+            actionLabel={proActionLabel()}
+            disabled={!session.billingEnabled || billingBusy}
+            onAction={handleProAction}
+          />
+        </div>
+      )}
 
       <section className="mt-6 rounded-xl border border-border bg-surface p-5">
         <h3 className="text-sm font-semibold text-text">
