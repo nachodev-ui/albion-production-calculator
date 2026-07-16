@@ -45,13 +45,13 @@ function waitForRetry(delayMs: number, signal: AbortSignal): Promise<void> {
   if (signal.aborted) return Promise.reject(createAbortError());
 
   return new Promise((resolve, reject) => {
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = globalThis.setTimeout(() => {
       signal.removeEventListener("abort", abort);
       resolve();
     }, delayMs);
 
     function abort() {
-      window.clearTimeout(timeoutId);
+      globalThis.clearTimeout(timeoutId);
       signal.removeEventListener("abort", abort);
       reject(createAbortError());
     }
@@ -73,7 +73,7 @@ async function runAttempt(
   const abortFromParent = () => controller.abort();
   signal.addEventListener("abort", abortFromParent, { once: true });
 
-  const timeoutId = window.setTimeout(() => {
+  const timeoutId = globalThis.setTimeout(() => {
     timedOut = true;
     controller.abort();
   }, timeoutMs);
@@ -85,7 +85,7 @@ async function runAttempt(
     if (timedOut && isAbortError(error)) throw new AccountAccessTimeoutError();
     throw error;
   } finally {
-    window.clearTimeout(timeoutId);
+    globalThis.clearTimeout(timeoutId);
     signal.removeEventListener("abort", abortFromParent);
   }
 }
