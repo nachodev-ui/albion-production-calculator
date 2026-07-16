@@ -25,12 +25,16 @@ async function noToken(): Promise<string | null> {
 function StaticAccountSessionProvider({
   children,
   loading = false,
-}: AccountSessionProviderProps & { readonly loading?: boolean }) {
+  clearAccess = true,
+}: AccountSessionProviderProps & {
+  readonly loading?: boolean;
+  readonly clearAccess?: boolean;
+}) {
   const clear = useAccountAccessStore((state) => state.clear);
 
   useEffect(() => {
-    clear();
-  }, [clear]);
+    if (clearAccess) clear();
+  }, [clear, clearAccess]);
 
   const value = useMemo<AccountSessionValue>(
     () => ({
@@ -75,7 +79,7 @@ export function AccountSessionProvider({
   return (
     <Suspense
       fallback={
-        <StaticAccountSessionProvider loading>
+        <StaticAccountSessionProvider loading clearAccess={false}>
           {children}
         </StaticAccountSessionProvider>
       }
