@@ -1,0 +1,158 @@
+@media (max-width: 639px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  [data-app-header] {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  [data-app-header-inner] {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.65rem;
+    min-height: auto;
+    padding: 0.65rem 0.75rem 0.75rem;
+  }
+
+  [data-main-navigation-slot] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+    order: 3;
+  }
+
+  [data-header-actions] {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  [data-main-navigation-track] {
+    width: 100%;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [data-main-navigation-track]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-main-navigation-track] > button {
+    min-height: 44px;
+    scroll-snap-align: start;
+    padding-inline: 0.8rem;
+  }
+
+  main[aria-label="Contenido principal"] {
+    overflow-x: hidden;
+  }
+
+  main[aria-label="Contenido principal"] > div {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  section:has(select[aria-label="Lugar de producción"]) {
+    margin-bottom: 1rem;
+    border-radius: 0.9rem;
+    padding: 0.85rem;
+  }
+
+  section:has(select[aria-label="Lugar de producción"]) select,
+  section:has(select[aria-label="Lugar de producción"]) input,
+  section:has(select[aria-label="Lugar de producción"]) button {
+    max-width: 100%;
+  }
+
+  section:has(select[aria-label="Lugar de producción"]) select {
+    min-width: 0 !important;
+    width: 100%;
+    min-height: 44px;
+  }
+
+  section:has(select[aria-label="Lugar de producción"]) > div.grid > div,
+  section:has(select[aria-label="Lugar de producción"]) > div.grid > label {
+    min-width: 0;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div.grid
+    > div:has(select[aria-label="Lugar de producción"]) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div.grid
+    > div:has(select[aria-label="Lugar de producción"])
+    > div {
+    width: 100%;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div.grid
+    > div:has(select[aria-label="Lugar de producción"])
+    > select {
+    width: 100%;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div.grid
+    > div:not(:has(select)) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div.grid
+    > div:not(:has(select))
+    > span:last-child {
+    align-self: flex-start;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    > div:first-of-type,
+  section:has(select[aria-label="Lugar de producción"])
+    > div:nth-of-type(2) {
+    min-width: 0;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    div:has(> select):has(> button) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    div:has(> select):has(> button)
+    > button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    label:has(input[type="checkbox"]) {
+    min-height: 56px;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+  }
+
+  section:has(select[aria-label="Lugar de producción"])
+    .font-mono.text-lg {
+    font-size: 1.1rem;
+  }
+}
