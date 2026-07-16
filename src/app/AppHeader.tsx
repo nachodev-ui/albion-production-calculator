@@ -23,10 +23,16 @@ export function AppHeader({
   const activeModule = isAppModule(resolvedRoute) ? resolvedRoute : null
 
   return (
-    <header className="relative z-50 shrink-0 border-b border-border bg-surface/92 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/78">
+    <header
+      data-app-header
+      className="relative z-50 shrink-0 border-b border-border bg-surface/92 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/78"
+    >
       <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent-border to-transparent" />
 
-      <div className="mx-auto flex min-h-[76px] w-full items-center gap-4 px-4 py-3 sm:px-5 lg:gap-6 lg:px-6">
+      <div
+        data-app-header-inner
+        className="mx-auto flex min-h-[76px] w-full items-center gap-4 px-4 py-3 sm:px-5 lg:gap-6 lg:px-6"
+      >
         <button
           type="button"
           onClick={() => onNavigate('crafting')}
@@ -48,14 +54,14 @@ export function AppHeader({
           </span>
         </button>
 
-        <div className="min-w-0 flex-1">
+        <div data-main-navigation-slot className="min-w-0 flex-1">
           <MainNavigation
             activeModule={activeModule}
             onNavigate={onNavigate}
           />
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+        <div data-header-actions className="ml-auto flex shrink-0 items-center gap-2">
           {resolvedRoute === 'crafting' && (
             <button
               type="button"
