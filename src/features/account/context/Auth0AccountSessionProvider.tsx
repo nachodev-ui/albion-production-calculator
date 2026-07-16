@@ -2,17 +2,27 @@ import { Auth0Provider, useAuth0, type AppState } from "@auth0/auth0-react";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import {
   createBillingCheckout,
   createBillingPortal,
-  fetchCurrentAccount,
 } from "../api/accountApi";
+import { synchronizeAccountAccess } from "../api/accountAccessSync";
 import { accountAuthConfig } from "../config/accountAuthConfig";
-import { useAccountAccessStore } from "../store/accountAccessStore";
+import {
+  clearAccountAccessSession,
+  loadAccountAccessSession,
+  saveAccountAccessSession,
+} from "../store/accountAccessSessionCache";
+import {
+  accountAccessIsUnresolved,
+  useAccountAccessStore,
+} from "../store/accountAccessStore";
 import type { SessionProfile } from "../types";
 import {
   AccountSessionContext,
@@ -45,9 +55,13 @@ function onRedirectCallback(appState?: AppState) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === "AbortError";
+}
+
 function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
   const {
-    isLoading,
+    isLoading: authIsLoading,
     isAuthenticated,
     user,
     error: authError,
@@ -55,13 +69,23 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     logout: auth0Logout,
     getAccessTokenSilently,
   } = useAuth0();
+  const access = useAccountAccessStore((state) => state.access);
+  const accessStatus = useAccountAccessStore((state) => state.status);
   const beginLoading = useAccountAccessStore((state) => state.beginLoading);
   const setAccess = useAccountAccessStore((state) => state.setAccess);
+  const restoreAccess = useAccountAccessStore((state) => state.restoreAccess);
   const setError = useAccountAccessStore((state) => state.setError);
   const clear = useAccountAccessStore((state) => state.clear);
   const [billingStatus, setBillingStatus] =
     useState<BillingActionStatus>("idle");
   const [billingError, setBillingError] = useState<string | null>(null);
+  const activeSync = useRef<AbortController | null>(null);
+  const hydratedSubject = useRef<string | null>(null);
+  const automaticallySyncedSubject = useRef<string | null>(null);
+  const subject =
+    typeof user?.sub === "string" && user.sub.trim().length > 0
+      ? user.sub
+      : null;
 
   const getAccountAccessToken = useCallback(
     () =>
@@ -81,20 +105,49 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
 
   const refreshAccess = useCallback(async () => {
     if (!isAuthenticated) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
+      clearAccountAccessSession();
       clear();
       return;
     }
 
+    if (!subject) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
+      clearAccountAccessSession();
+      clear();
+      setError("Auth0 no entregó un identificador válido para la cuenta.");
+      return;
+    }
+
+    activeSync.current?.abort();
+    const controller = new AbortController();
+    activeSync.current = controller;
     beginLoading();
+
     try {
       const accessToken = await getAccountAccessToken();
-      setAccess(await fetchCurrentAccount(accessToken));
+      const nextAccess = await synchronizeAccountAccess(
+        accessToken,
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+
+      const syncedAt = new Date().toISOString();
+      setAccess(nextAccess);
+      saveAccountAccessSession(subject, nextAccess, syncedAt);
     } catch (error: unknown) {
+      if (controller.signal.aborted || isAbortError(error)) return;
       setError(
         error instanceof Error
           ? error.message
           : "No fue posible sincronizar la cuenta.",
       );
+    } finally {
+      if (activeSync.current === controller) activeSync.current = null;
     }
   }, [
     beginLoading,
@@ -103,16 +156,72 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     isAuthenticated,
     setAccess,
     setError,
+    subject,
   ]);
 
-  useEffect(() => {
-    if (isLoading) return;
+  useLayoutEffect(() => {
+    if (authIsLoading) return;
+
     if (!isAuthenticated) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
+      automaticallySyncedSubject.current = null;
+      clearAccountAccessSession();
       clear();
       return;
     }
+
+    if (!subject) {
+      activeSync.current?.abort();
+      activeSync.current = null;
+      hydratedSubject.current = null;
+      automaticallySyncedSubject.current = null;
+      clearAccountAccessSession();
+      clear();
+      setError("Auth0 no entregó un identificador válido para la cuenta.");
+      return;
+    }
+
+    if (hydratedSubject.current === subject) return;
+
+    activeSync.current?.abort();
+    activeSync.current = null;
+    hydratedSubject.current = subject;
+    automaticallySyncedSubject.current = null;
+    clear();
+
+    const cached = loadAccountAccessSession(subject);
+    if (cached) {
+      restoreAccess(cached.access, cached.syncedAt);
+    } else {
+      beginLoading();
+    }
+  }, [
+    authIsLoading,
+    beginLoading,
+    clear,
+    isAuthenticated,
+    restoreAccess,
+    setError,
+    subject,
+  ]);
+
+  useEffect(() => {
+    if (authIsLoading || !isAuthenticated || !subject) return;
+    if (automaticallySyncedSubject.current === subject) return;
+
+    automaticallySyncedSubject.current = subject;
     void refreshAccess();
-  }, [clear, isAuthenticated, isLoading, refreshAccess]);
+  }, [authIsLoading, isAuthenticated, refreshAccess, subject]);
+
+  useEffect(
+    () => () => {
+      activeSync.current?.abort();
+      activeSync.current = null;
+    },
+    [],
+  );
 
   const login = useCallback(async () => {
     setBillingError(null);
@@ -129,10 +238,16 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
   const logout = useCallback(async () => {
     setBillingError(null);
     setBillingStatus("idle");
+    activeSync.current?.abort();
+    activeSync.current = null;
+    hydratedSubject.current = null;
+    automaticallySyncedSubject.current = null;
+    clearAccountAccessSession();
+    clear();
     await auth0Logout({
       logoutParams: { returnTo: window.location.origin },
     });
-  }, [auth0Logout]);
+  }, [auth0Logout, clear]);
 
   const runBillingAction = useCallback(
     async (
@@ -197,6 +312,9 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
     [user],
   );
 
+  const accountIsLoading =
+    isAuthenticated && accountAccessIsUnresolved(accessStatus, access);
+
   const value = useMemo<AccountSessionValue>(
     () => ({
       authEnabled: true,
@@ -204,7 +322,7 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       billingEnabled: accountAuthConfig.billingEnabled,
       billingStatus,
       billingError,
-      isLoading,
+      isLoading: authIsLoading || accountIsLoading,
       isAuthenticated,
       profile,
       error: authError?.message ?? null,
@@ -216,12 +334,13 @@ function Auth0AccountBridge({ children }: Auth0AccountSessionProviderProps) {
       openBillingPortal,
     }),
     [
+      accountIsLoading,
       authError?.message,
+      authIsLoading,
       billingError,
       billingStatus,
       getAccessToken,
       isAuthenticated,
-      isLoading,
       login,
       logout,
       openBillingPortal,

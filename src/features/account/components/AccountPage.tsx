@@ -1,11 +1,13 @@
 import type { AppRoute } from "../../../app/types";
 import { useAccountSession } from "../hooks/useAccountSession";
 import {
+  accountAccessRequestIsActive,
   currentPlan,
   getEffectiveEntitlements,
   useAccountAccessStore,
 } from "../store/accountAccessStore";
 import { ENTITLEMENT_KEYS } from "../types";
+import { AccountAccessResolutionCard } from "./AccountAccessResolutionCard";
 import {
   CheckIcon,
   RefreshIcon,
@@ -50,6 +52,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const status = useAccountAccessStore((state) => state.status);
   const accessError = useAccountAccessStore((state) => state.error);
   const lastSyncedAt = useAccountAccessStore((state) => state.lastSyncedAt);
+  const accessRequestActive = accountAccessRequestIsActive(status);
 
   if (!session.authEnabled || !session.authConfigured) {
     return (
@@ -83,6 +86,14 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
     );
   }
 
+  if (session.isLoading) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-5 pb-14 pt-2 sm:px-6">
+        <AccountAccessResolutionCard status="loading" />
+      </div>
+    );
+  }
+
   if (!session.isAuthenticated) {
     return (
       <div className="mx-auto w-full max-w-4xl px-5 pb-14 pt-2 sm:px-6">
@@ -109,17 +120,27 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
     );
   }
 
+  if (access === null) {
+    return (
+      <div className="mx-auto w-full max-w-4xl px-5 pb-14 pt-2 sm:px-6">
+        <AccountAccessResolutionCard
+          status={status === "error" ? "error" : "loading"}
+          error={accessError}
+          onRetry={() => void session.refreshAccess()}
+        />
+      </div>
+    );
+  }
+
   const entitlements = getEffectiveEntitlements(access);
   const plan = currentPlan(access);
-  const hasManagedSubscription =
-    access?.subscription.status !== undefined &&
-    access.subscription.status !== "none";
+  const hasManagedSubscription = access.subscription.status !== "none";
   const checkoutSucceeded =
     new URLSearchParams(window.location.search).get("checkout") === "success";
   const displayName =
-    session.profile?.name ?? access?.user.displayName ?? "Usuario de Albion";
+    session.profile?.name ?? access.user.displayName ?? "Usuario de Albion";
   const email =
-    session.profile?.email ?? access?.user.email ?? "Correo no disponible";
+    session.profile?.email ?? access.user.email ?? "Correo no disponible";
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-14 pt-2 sm:px-6">
@@ -137,7 +158,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
       {(accessError || session.billingError) && (
         <p className="mb-5 rounded-xl border border-negative/40 bg-negative-muted px-4 py-3 text-sm text-negative">
-          {session.billingError ?? accessError}
+          {session.billingError ??
+            `${accessError} Se mantiene el último acceso verificado de esta sesión.`}
         </p>
       )}
 
@@ -167,20 +189,25 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           <dl className="mt-6 space-y-3 border-y border-border py-4 text-sm">
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Plan efectivo</dt>
-              <dd className="rounded-full border border-accent-border bg-accent-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
-                {plan}
+              <dd className="flex items-center gap-2">
+                <span className="rounded-full border border-accent-border bg-accent-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">
+                  {plan}
+                </span>
+                {accessRequestActive && (
+                  <RefreshIcon className="h-3.5 w-3.5 animate-spin text-text-faint" />
+                )}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Estado</dt>
               <dd className="text-right text-text">
-                {access?.subscription.status ?? "Free"}
+                {access.subscription.status}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-text-faint">Acceso hasta</dt>
               <dd className="text-right text-xs text-text-muted">
-                {formatDate(access?.subscription.accessUntil ?? null)}
+                {formatDate(access.subscription.accessUntil)}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-4">
@@ -195,13 +222,13 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             <button
               type="button"
               onClick={() => void session.refreshAccess()}
-              disabled={status === "loading"}
+              disabled={accessRequestActive}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-text-muted hover:border-border-strong hover:text-text disabled:cursor-wait disabled:opacity-60"
             >
               <RefreshIcon
-                className={`h-4 w-4 ${status === "loading" ? "animate-spin" : ""}`}
+                className={`h-4 w-4 ${accessRequestActive ? "animate-spin" : ""}`}
               />
-              Actualizar permisos
+              {accessRequestActive ? "Verificando permisos" : "Actualizar permisos"}
             </button>
             {session.billingEnabled && hasManagedSubscription ? (
               <button

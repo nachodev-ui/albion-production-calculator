@@ -5,6 +5,7 @@ import {
   type AccountSessionValue,
 } from "../context/accountSession";
 import {
+  accountAccessRequestIsActive,
   currentPlan,
   useAccountAccessStore,
 } from "../store/accountAccessStore";
@@ -51,7 +52,21 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
   const session = useContext(AccountSessionContext) ?? isolatedSession;
   const access = useAccountAccessStore((state) => state.access);
   const accessStatus = useAccountAccessStore((state) => state.status);
-  const plan = currentPlan(access);
+  const accessRequestActive = accountAccessRequestIsActive(accessStatus);
+
+  if (session.isLoading) {
+    return (
+      <button
+        type="button"
+        disabled
+        aria-label="Sincronizando cuenta"
+        className="inline-flex h-10 cursor-wait items-center gap-2 rounded-xl border border-accent-border/50 bg-accent-muted px-3 text-xs font-semibold text-accent opacity-80"
+      >
+        <RefreshIcon className="h-4 w-4 animate-spin" />
+        <span className="hidden sm:inline">Sincronizando…</span>
+      </button>
+    );
+  }
 
   if (!session.isAuthenticated) {
     if (session.authEnabled && session.authConfigured) {
@@ -81,6 +96,11 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
 
   const name = session.profile?.name ?? access?.user.displayName ?? null;
   const email = session.profile?.email ?? access?.user.email ?? null;
+  const plan = access
+    ? currentPlan(access)
+    : accessStatus === "error"
+      ? "sin verificar"
+      : "sincronizando";
 
   return (
     <details className="group relative">
@@ -111,9 +131,17 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           <p className="mt-0.5 truncate text-[11px] text-text-faint">
             {email ?? "Correo no disponible"}
           </p>
-          <span className="mt-2 inline-flex rounded-full border border-accent-border bg-accent-muted px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent">
-            {plan}
-          </span>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex rounded-full border border-accent-border bg-accent-muted px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-accent">
+              {plan}
+            </span>
+            {accessRequestActive && (
+              <span className="inline-flex items-center gap-1 text-[10px] text-text-faint">
+                <RefreshIcon className="h-3 w-3 animate-spin" />
+                Verificando
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="space-y-1 p-2">
@@ -144,13 +172,13 @@ export function AccountMenu({ onNavigate }: AccountMenuProps) {
           <button
             type="button"
             onClick={() => void session.refreshAccess()}
-            disabled={accessStatus === "loading"}
+            disabled={accessRequestActive}
             className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-text-muted hover:bg-surface-raised hover:text-text disabled:cursor-wait disabled:opacity-60"
           >
             <RefreshIcon
-              className={`h-4 w-4 ${accessStatus === "loading" ? "animate-spin" : ""}`}
+              className={`h-4 w-4 ${accessRequestActive ? "animate-spin" : ""}`}
             />
-            Actualizar permisos
+            {accessRequestActive ? "Verificando permisos" : "Actualizar permisos"}
           </button>
           <button
             type="button"
