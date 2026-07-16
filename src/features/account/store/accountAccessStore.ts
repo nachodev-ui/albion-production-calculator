@@ -7,7 +7,12 @@ import type {
 } from "../types";
 import { FREE_ENTITLEMENTS } from "../types";
 
-export type AccountAccessStatus = "anonymous" | "loading" | "ready" | "error";
+export type AccountAccessStatus =
+  | "anonymous"
+  | "loading"
+  | "refreshing"
+  | "ready"
+  | "error";
 
 interface AccountAccessState {
   readonly status: AccountAccessStatus;
@@ -15,6 +20,7 @@ interface AccountAccessState {
   readonly error: string | null;
   readonly lastSyncedAt: string | null;
   beginLoading: () => void;
+  restoreAccess: (access: AccountAccess, syncedAt: string) => void;
   setAccess: (access: AccountAccess) => void;
   setError: (message: string) => void;
   clear: () => void;
@@ -25,7 +31,18 @@ export const useAccountAccessStore = create<AccountAccessState>((set) => ({
   access: null,
   error: null,
   lastSyncedAt: null,
-  beginLoading: () => set({ status: "loading", error: null }),
+  beginLoading: () =>
+    set((state) => ({
+      status: state.access ? "refreshing" : "loading",
+      error: null,
+    })),
+  restoreAccess: (access, syncedAt) =>
+    set({
+      status: "ready",
+      access,
+      error: null,
+      lastSyncedAt: syncedAt,
+    }),
   setAccess: (access) =>
     set({
       status: "ready",
@@ -42,6 +59,22 @@ export const useAccountAccessStore = create<AccountAccessState>((set) => ({
       lastSyncedAt: null,
     }),
 }));
+
+export function accountAccessRequestIsActive(
+  status: AccountAccessStatus,
+): boolean {
+  return status === "loading" || status === "refreshing";
+}
+
+export function accountAccessIsUnresolved(
+  status: AccountAccessStatus,
+  access: AccountAccess | null,
+): boolean {
+  return (
+    access === null &&
+    (status === "anonymous" || status === "loading" || status === "refreshing")
+  );
+}
 
 export function getEffectiveEntitlements(
   access: AccountAccess | null,
