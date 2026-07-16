@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { Item } from "@core/domain/entities/Item";
 import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
 import type { AppRoute } from "../../../app/types";
 import { FeatureGate } from "../../account/components/FeatureGate";
@@ -21,9 +22,16 @@ import { BlackMarketScannerControls } from "./BlackMarketScannerControls";
 interface BlackMarketOpportunityScannerPageProps {
   readonly repository: ItemRepository;
   readonly onNavigate: (route: AppRoute) => void;
+  readonly onOpenCrafting: (item: Item) => void;
 }
 
-function Scanner({ repository }: { readonly repository: ItemRepository }) {
+function Scanner({
+  repository,
+  onOpenCrafting,
+}: {
+  readonly repository: ItemRepository;
+  readonly onOpenCrafting: (item: Item) => void;
+}) {
   const session = useAccountSession();
   const [filters, setFilters] = useState<BlackMarketOpportunityFilters>(() =>
     loadBlackMarketScannerFilters(),
@@ -171,8 +179,13 @@ function Scanner({ repository }: { readonly repository: ItemRepository }) {
       {selectedOpportunity && (
         <BlackMarketOpportunityDetailDialog
           opportunity={selectedOpportunity}
+          server={response?.server ?? filters.server}
           repository={repository}
           onClose={() => setSelectedOpportunity(null)}
+          onOpenCrafting={(item) => {
+            setSelectedOpportunity(null);
+            onOpenCrafting(item);
+          }}
         />
       )}
     </div>
@@ -182,6 +195,7 @@ function Scanner({ repository }: { readonly repository: ItemRepository }) {
 export function BlackMarketOpportunityScannerPage({
   repository,
   onNavigate,
+  onOpenCrafting,
 }: BlackMarketOpportunityScannerPageProps) {
   return (
     <FeatureGate
@@ -190,7 +204,7 @@ export function BlackMarketOpportunityScannerPage({
       description="La comparación masiva entre ciudades y órdenes de compra del Black Market es exclusiva para cuentas Pro y se autoriza nuevamente en la API central."
       onViewPlans={() => onNavigate("plans")}
     >
-      <Scanner repository={repository} />
+      <Scanner repository={repository} onOpenCrafting={onOpenCrafting} />
     </FeatureGate>
   );
 }
