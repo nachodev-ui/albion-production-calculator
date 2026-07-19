@@ -30,9 +30,9 @@ export function ModuleHeader({
             )}
           </div>
 
-          <h2 className="mt-2 text-balance font-display text-2xl tracking-tight text-text sm:text-3xl">
+          <h1 className="mt-2 text-balance font-display text-2xl tracking-tight text-text sm:text-3xl">
             {title}
-          </h2>
+          </h1>
 
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted">
             {description}
