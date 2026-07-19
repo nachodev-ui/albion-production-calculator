@@ -1,38 +1,23 @@
 name: Generate guide images
 
 on:
-  push:
-    branches:
-      - feat/guide-article-images
-    paths:
-      - scripts/guide-images/**
-      - .github/workflows/generate-guide-images.yml
-  pull_request:
-    branches:
-      - develop
-    paths:
-      - scripts/guide-images/**
-      - .github/workflows/generate-guide-images.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: guide-image-generation-feat-guide-article-images
-  cancel-in-progress: true
+  group: guide-image-generation
+  cancel-in-progress: false
 
 jobs:
   generate:
     name: Generate editorial guide screenshots
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout feature branch
+      - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: feat/guide-article-images
-          fetch-depth: 0
 
       - name: Configure Node.js
         uses: actions/setup-node@v4
@@ -44,18 +29,10 @@ jobs:
           npm install --no-save --package-lock=false --legacy-peer-deps playwright@1.55.0
           npx playwright install --with-deps chromium
 
-      - name: Normalize responsive image layouts
-        run: node scripts/guide-images/apply-layout-fixes.mjs
-
       - name: Generate PNG variants
         run: node scripts/guide-images/generate.mjs
 
-      - name: Integrate article and social metadata
-        run: |
-          node scripts/guide-images/integrate.mjs
-          node scripts/guide-images/apply-integration-fixes.mjs
-
-      - name: Verify generated assets
+      - name: Validate generated assets
         shell: bash
         run: |
           set -euo pipefail
@@ -66,11 +43,6 @@ jobs:
             exit 1
           fi
 
-          for image in "${images[@]}"; do
-            file "${image}"
-            test -s "${image}"
-          done
-
           node scripts/guide-images/validate-assets.mjs
 
       - name: Upload generated images
@@ -80,28 +52,3 @@ jobs:
           path: public/images/guides/*.png
           if-no-files-found: error
           retention-days: 30
-
-      - name: Commit generated assets and SEO integration
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add \
-            scripts/generate-seo-assets.mjs \
-            scripts/guide-images/generate.mjs \
-            src/app/seo/RouteSeo.tsx \
-            src/app/seo/route-seo.json \
-            src/features/seo-content/components/SeoGuidePage.tsx \
-            src/features/seo-content/components/SeoGuidePage.test.tsx \
-            public/images/guides/*.png
-
-          if git diff --cached --quiet; then
-            echo 'Guide images and SEO integration are already current.'
-            exit 0
-          fi
-
-          git commit -m 'feat: integrate guide article images'
-          git fetch origin feat/guide-article-images
-          git rebase origin/feat/guide-article-images
-          git push origin HEAD:feat/guide-article-images
