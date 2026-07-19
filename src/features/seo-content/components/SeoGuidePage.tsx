@@ -95,6 +95,9 @@ function GuideShell({
   readonly activeHref: string;
 }) {
   const image = GUIDE_IMAGES[activeHref];
+  if (!image) {
+    throw new Error(`No existe una imagen configurada para la guía: ${activeHref}`);
+  }
 
   return (
     <main className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-6">
