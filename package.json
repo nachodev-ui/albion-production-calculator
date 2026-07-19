@@ -10,6 +10,8 @@
     "build": "tsc -b && vite build",
     "postbuild": "node scripts/generate-seo-assets.mjs --dist",
     "seo:generate": "node scripts/generate-seo-assets.mjs",
+    "indexnow:check": "node scripts/check-indexnow-config.mjs",
+    "indexnow:submit": "node scripts/submit-indexnow.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -21,7 +23,7 @@
     "contracts:generate": "openapi-typescript contracts/central-api/openapi.yaml -o src/shared/contracts/central-api.generated.ts && openapi-typescript contracts/local-receiver/openapi.json -o src/shared/contracts/local-receiver.generated.ts",
     "contracts:compat": "tsx scripts/check-market-contracts.ts",
     "contracts:check": "pnpm contracts:lint && pnpm contracts:generate && pnpm contracts:compat && git diff --exit-code -- src/shared/contracts",
-    "security:check": "tsx scripts/check-public-security.ts",
+    "security:check": "tsx scripts/check-public-security.ts && node scripts/check-indexnow-config.mjs",
     "auth0:check": "tsx scripts/validate-auth0-production.ts",
     "bundle:check": "tsx scripts/check-bundle-budget.ts",
     "bundle:analyze": "pnpm build && tsx scripts/check-bundle-budget.ts --write-report"
