@@ -18,7 +18,9 @@ const artifactDirectory = resolve(
     join(projectRoot, "artifacts", "indexnow"),
 );
 const summaryPath = join(artifactDirectory, "summary.json");
-const dryRun = process.env.INDEXNOW_DRY_RUN === "true";
+const dryRun =
+  process.argv.includes("--dry-run") ||
+  process.env.INDEXNOW_DRY_RUN === "true";
 const previousConfigPath = process.env.INDEXNOW_PREVIOUS_CONFIG;
 
 function collectCanonicalUrls(seoConfig) {
