@@ -161,6 +161,7 @@ jobs:
 
       - name: Upload Wrangler deployment log
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: wrangler-production-deploy-${{ github.run_id }}
@@ -300,6 +301,7 @@ jobs:
 
       - name: Upload production verification log
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: production-verification-${{ github.run_id }}
