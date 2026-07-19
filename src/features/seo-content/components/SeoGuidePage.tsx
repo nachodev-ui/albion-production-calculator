@@ -11,6 +11,41 @@ interface GuideLink {
   readonly description: string;
 }
 
+interface GuideImage {
+  readonly square: string;
+  readonly fourThree: string;
+  readonly wide: string;
+  readonly alt: string;
+  readonly caption: string;
+}
+
+const GUIDE_IMAGES: Readonly<Record<string, GuideImage>> = {
+  "/guias/rentabilidad-crafteo-albion-online": {
+    square: "/images/guides/rentabilidad-crafteo-1x1.png",
+    fourThree: "/images/guides/rentabilidad-crafteo-4x3.png",
+    wide: "/images/guides/rentabilidad-crafteo-16x9.png",
+    alt: "Resumen ilustrativo de rentabilidad de crafteo con ingreso neto, costo efectivo, retorno, beneficio y ROI",
+    caption:
+      "Ejemplo visual del resumen de beneficio. Las cifras son ilustrativas y deben reemplazarse por precios recientes antes de fabricar.",
+  },
+  "/guias/retorno-materiales-rrr-albion-online": {
+    square: "/images/guides/retorno-materiales-rrr-1x1.png",
+    fourThree: "/images/guides/retorno-materiales-rrr-4x3.png",
+    wide: "/images/guides/retorno-materiales-rrr-16x9.png",
+    alt: "Ejemplo de materiales requeridos, devueltos y consumidos después de aplicar el RRR en Albion Online",
+    caption:
+      "Ejemplo visual del retorno esperado por material. Los redondeos reales dependen de cada tirada dentro del juego.",
+  },
+  "/guias/black-market-caerleon-rentable": {
+    square: "/images/guides/black-market-caerleon-1x1.png",
+    fourThree: "/images/guides/black-market-caerleon-4x3.png",
+    wide: "/images/guides/black-market-caerleon-16x9.png",
+    alt: "Comparación ilustrativa entre comprar y transportar o fabricar con RRR para vender en el Black Market de Caerleon",
+    caption:
+      "Comparación educativa de dos estrategias. La orden, el volumen y los costos deben comprobarse nuevamente antes de viajar a Caerleon.",
+  },
+};
+
 const GUIDE_LINKS: readonly GuideLink[] = [
   {
     href: "/guias/rentabilidad-crafteo-albion-online",
@@ -59,6 +94,8 @@ function GuideShell({
   readonly children: ReactNode;
   readonly activeHref: string;
 }) {
+  const image = GUIDE_IMAGES[activeHref];
+
   return (
     <main className="mx-auto w-full max-w-5xl px-5 pb-16 sm:px-6">
       <article className="rounded-2xl border border-border bg-surface-raised/55 p-5 shadow-xl shadow-black/10 sm:p-8 lg:p-10">
@@ -87,6 +124,26 @@ function GuideShell({
             fijos
           </p>
         </header>
+
+        <figure className="mt-8 overflow-hidden rounded-2xl border border-border bg-bg shadow-lg shadow-black/15">
+          <picture>
+            <source media="(max-width: 639px)" srcSet={image.square} />
+            <source media="(max-width: 1023px)" srcSet={image.fourThree} />
+            <img
+              src={image.wide}
+              alt={image.alt}
+              width={1600}
+              height={900}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              className="block h-auto w-full"
+            />
+          </picture>
+          <figcaption className="border-t border-border px-4 py-3 text-xs leading-5 text-text-faint sm:px-5">
+            {image.caption}
+          </figcaption>
+        </figure>
 
         <div className="prose-albion mt-8 space-y-6 text-[15px] leading-7 text-text-muted">
           {children}
