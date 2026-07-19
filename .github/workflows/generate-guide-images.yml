@@ -51,7 +51,9 @@ jobs:
         run: node scripts/guide-images/generate.mjs
 
       - name: Integrate article and social metadata
-        run: node scripts/guide-images/integrate.mjs
+        run: |
+          node scripts/guide-images/integrate.mjs
+          node scripts/guide-images/apply-integration-fixes.mjs
 
       - name: Verify generated assets
         shell: bash
