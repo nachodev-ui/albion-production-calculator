@@ -57,6 +57,16 @@ function validateConfig() {
 
     paths.add(entry.path);
     canonicals.add(canonical);
+
+    for (const alias of entry.aliases ?? []) {
+      if (!alias.startsWith("/") || alias === "/" || alias.endsWith("/")) {
+        throw new Error(`Alias SEO no válido en ${route}: ${alias}`);
+      }
+      if (paths.has(alias)) {
+        throw new Error(`Ruta o alias SEO duplicado: ${alias}`);
+      }
+      paths.add(alias);
+    }
   }
 }
 
@@ -254,10 +264,29 @@ function createRobots() {
   ].join("\n");
 }
 
+function createRedirects() {
+  const lines = ["/index.html / 301"];
+
+  for (const [, entry] of routes) {
+    if (entry.path !== "/") {
+      lines.push(`${entry.path}/ ${entry.path} 301`);
+      lines.push(`${entry.path}.html ${entry.path} 301`);
+    }
+
+    for (const alias of entry.aliases ?? []) {
+      lines.push(`${alias} ${entry.path} 301`);
+      lines.push(`${alias}/ ${entry.path} 301`);
+    }
+  }
+
+  return `${lines.join("\n")}\n`;
+}
+
 async function writeDiscoveryFiles(directory) {
   await mkdir(directory, { recursive: true });
   await writeFile(join(directory, "sitemap.xml"), createSitemap(), "utf8");
   await writeFile(join(directory, "robots.txt"), createRobots(), "utf8");
+  await writeFile(join(directory, "_redirects"), createRedirects(), "utf8");
 }
 
 validateConfig();
