@@ -35,6 +35,12 @@ const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
     "Administra configuraciones locales de ciudad, foco, especialización, bono diario y Premium para tus cálculos de Albion Online.",
     false,
   ],
+  guides: [
+    "/guias",
+    "Guías de Economía de Albion Online | Albion Calculator",
+    "Explora guías prácticas sobre rentabilidad de crafteo, retorno de materiales y Black Market de Caerleon, con fórmulas y enlaces a las calculadoras.",
+    true,
+  ],
   plans: [
     "/plans",
     "Planes Free y Pro para Albion Online | Albion Calculator",

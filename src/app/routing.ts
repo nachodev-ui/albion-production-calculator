@@ -6,6 +6,7 @@ const ROUTE_PATHS: Readonly<Record<AppRoute, string>> = {
   refining: "/refining",
   "black-market": "/black-market",
   presets: "/presets",
+  guides: "/guias",
   plans: "/plans",
   account: "/account",
   profile: "/profile",
@@ -28,6 +29,8 @@ export function routeFromPathname(pathname: string): AppRoute {
       return "black-market";
     case "/presets":
       return "presets";
+    case "/guias":
+      return "guides";
     case "/plans":
       return "plans";
     case "/account":
