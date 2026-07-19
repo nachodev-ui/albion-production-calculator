@@ -175,7 +175,7 @@ jobs:
 
           expected_host='albion-market-api.onrender.com'
           obsolete_host='albion-market-api-nachodev.fly.dev'
-          public_origin='https://albion-production-calculator.pages.dev'
+          public_origin='https://albioncalculator.app'
           deploy_log="${RUNNER_TEMP}/wrangler-production-deploy.log"
           verification_log="${RUNNER_TEMP}/production-verification.log"
 
@@ -284,7 +284,7 @@ jobs:
 
           echo "Immutable deployment URL: ${deployment_origin}"
           verify_bundle "${deployment_origin}" 12 immutable
-          verify_bundle "${public_origin}" 48 public
+          verify_bundle "${public_origin}" 48 canonical
 
           curl \
             --fail \
