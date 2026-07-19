@@ -12,6 +12,7 @@ export type SeoGuideRoute =
 export type AppRoute =
   | AppModule
   | SeoGuideRoute
+  | "guides"
   | "plans"
   | "account"
   | "profile"
@@ -28,4 +29,8 @@ export function isAppModule(route: AppRoute): route is AppModule {
 
 export function isSeoGuideRoute(route: AppRoute): route is SeoGuideRoute {
   return route.startsWith("guide-");
+}
+
+export function isGuidesSectionRoute(route: AppRoute): boolean {
+  return route === "guides" || isSeoGuideRoute(route);
 }
