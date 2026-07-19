@@ -44,6 +44,9 @@ jobs:
           npm install --no-save --package-lock=false --legacy-peer-deps playwright@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Normalize responsive image layouts
+        run: node scripts/guide-images/apply-layout-fixes.mjs
+
       - name: Generate PNG variants
         run: node scripts/guide-images/generate.mjs
 
@@ -77,12 +80,12 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/images/guides/*.png
+          git add scripts/guide-images/generate.mjs public/images/guides/*.png
 
           if git diff --cached --quiet; then
             echo 'Guide images are already current.'
             exit 0
           fi
 
-          git commit -m 'assets: generate guide article images'
+          git commit -m 'assets: refine guide article images'
           git push origin HEAD:feat/guide-article-images
