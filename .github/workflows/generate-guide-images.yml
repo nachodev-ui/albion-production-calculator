@@ -18,8 +18,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: guide-image-generation-${{ github.ref }}
-  cancel-in-progress: false
+  group: guide-image-generation-feat-guide-article-images
+  cancel-in-progress: true
 
 jobs:
   generate:
@@ -100,4 +100,6 @@ jobs:
           fi
 
           git commit -m 'feat: integrate guide article images'
+          git fetch origin feat/guide-article-images
+          git rebase origin/feat/guide-article-images
           git push origin HEAD:feat/guide-article-images
