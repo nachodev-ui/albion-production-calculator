@@ -92,7 +92,7 @@ export function StationFeeConfigPanel({
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(16rem,0.65fr)]">
-        <label>
+        <div>
           <span className="flex flex-wrap items-center gap-1.5 text-xs text-text-faint">
             Costo total mostrado por Albion
             <span className="rounded-md border border-positive/30 bg-positive-muted px-1.5 py-0.5 text-[10px] font-medium text-positive">
@@ -103,6 +103,7 @@ export function StationFeeConfigPanel({
 
           <div className="mt-1 flex items-center gap-2">
             <input
+              aria-label="Costo total mostrado por Albion"
               type="number"
               min="0"
               step="1"
@@ -143,7 +144,7 @@ export function StationFeeConfigPanel({
             {formatNumber(quantity, 0)}{' '}
             {quantity === 1 ? 'unidad seleccionada' : 'unidades seleccionadas'}.
           </p>
-        </label>
+        </div>
 
         <div className="rounded-md border border-border bg-surface p-3 text-xs">
           <div className="flex items-center justify-between gap-4">
