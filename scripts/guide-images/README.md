@@ -8,3 +8,5 @@ Este directorio contiene el generador reproducible de las imágenes editoriales 
 - Los archivos generados se guardan en `public/images/guides/`.
 
 El workflow `Generate guide images` ejecuta Playwright en Chromium, verifica nueve archivos y los versiona en la rama de trabajo.
+
+Generación editorial solicitada: 2026-07-19.
