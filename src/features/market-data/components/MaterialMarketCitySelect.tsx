@@ -40,7 +40,8 @@ interface MarketSelectOption {
   readonly value: MarketCityId | null
   readonly city: MarketCityId
   readonly marketName: string
-  readonly isDefault: boolean
+  readonly cityName: string
+  readonly isGeneral: boolean
   readonly comparison: MaterialMarketPriceOption | undefined
 }
 
@@ -113,16 +114,17 @@ export function MaterialMarketCitySelect({
     (option) => option.city === selectedCity,
   )
   const selectedTone = getMarketCityTone(selectedCity)
+  const generalCityName =
+    markets.find((market) => market.key === defaultCity)?.name ?? defaultCity
 
   const options: readonly MarketSelectOption[] = [
     {
-      key: 'default',
+      key: 'general',
       value: null,
       city: defaultCity,
-      marketName:
-        markets.find((market) => market.key === defaultCity)?.name ??
-        defaultCity,
-      isDefault: true,
+      marketName: 'Usar ciudad general',
+      cityName: generalCityName,
+      isGeneral: true,
       comparison: comparisons.find(
         (option) => option.city === defaultCity,
       ),
@@ -132,7 +134,8 @@ export function MaterialMarketCitySelect({
       value: market.key,
       city: market.key,
       marketName: market.name,
-      isDefault: false,
+      cityName: market.name,
+      isGeneral: false,
       comparison: comparisons.find(
         (option) => option.city === market.key,
       ),
@@ -260,21 +263,15 @@ export function MaterialMarketCitySelect({
         <CityMark city={selectedCity} />
 
         <span className="min-w-0 flex-1">
-          <span className="flex min-w-0 items-center gap-1.5">
-            {value === null && (
-              <span className="shrink-0 rounded border border-border bg-surface px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-faint">
-                Base
-              </span>
-            )}
-            <span
-              className="truncate text-xs font-semibold"
-              style={{ color: selectedTone.foreground }}
-            >
-              {selectedMarket?.name ?? selectedCity}
-            </span>
+          <span
+            className="block truncate text-xs font-semibold"
+            style={{ color: selectedTone.foreground }}
+          >
+            {selectedMarket?.name ?? selectedCity}
           </span>
 
           <span className="mt-0.5 block truncate font-mono text-[10px] tabular text-text-muted">
+            {value === null ? 'Ciudad general · ' : ''}
             {getPriceText(selectedComparison)}
           </span>
         </span>
@@ -347,21 +344,15 @@ export function MaterialMarketCitySelect({
                     <CityMark city={option.city} />
 
                     <span className="min-w-0 flex-1">
-                      <span className="flex min-w-0 items-center gap-1.5">
-                        {option.isDefault && (
-                          <span className="shrink-0 rounded border border-border bg-surface px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-faint">
-                            Base
-                          </span>
-                        )}
-                        <span
-                          className="truncate text-xs font-semibold"
-                          style={{ color: tone.foreground }}
-                        >
-                          {option.marketName}
-                        </span>
+                      <span
+                        className="block truncate text-xs font-semibold"
+                        style={{ color: tone.foreground }}
+                      >
+                        {option.marketName}
                       </span>
 
                       <span className="mt-0.5 block truncate font-mono text-[10px] tabular text-text-muted">
+                        {option.isGeneral ? `${option.cityName} · ` : ''}
                         {getPriceText(option.comparison)}
                       </span>
                     </span>

@@ -21,12 +21,16 @@ export function MaterialPurchaseConfigBar({
   onChange,
   onClearMaterialCities,
 }: MaterialPurchaseConfigBarProps) {
+  const generalCityName =
+    markets.find((market) => market.key === config.purchaseCity)?.name ??
+    config.purchaseCity
+
   return (
     <div className="mb-4 rounded-lg border border-border bg-surface p-3">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
         <label className="flex min-w-0 flex-col gap-1.5">
           <span className="text-[11px] font-medium text-text-faint">
-            Ciudad base de compra
+            Ciudad para materiales
           </span>
           <select
             value={config.purchaseCity}
@@ -44,7 +48,7 @@ export function MaterialPurchaseConfigBar({
             ))}
           </select>
           <span className="text-[10px] leading-relaxed text-text-faint">
-            Se utiliza en materiales que no tengan una ciudad individual.
+            Se aplica a los materiales sin una selección individual.
           </span>
         </label>
 
@@ -82,7 +86,7 @@ export function MaterialPurchaseConfigBar({
                     ? 'ciudad individual'
                     : 'ciudades individuales'
                 }`
-              : 'Todos usan la ciudad base'}
+              : `Todos usan ${generalCityName}`}
           </p>
           <button
             type="button"
@@ -90,7 +94,7 @@ export function MaterialPurchaseConfigBar({
             onClick={onClearMaterialCities}
             className="mt-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text-muted transition-colors hover:border-border-strong hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Aplicar ciudad base a todos
+            Usar {generalCityName} en todos
           </button>
         </div>
       </div>
