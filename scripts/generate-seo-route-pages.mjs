@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -140,9 +140,11 @@ function createRouteHtml(page) {
 }
 
 for (const page of pages) {
-  const outputDirectory = join(distDirectory, page.path);
-  await mkdir(outputDirectory, { recursive: true });
-  await writeFile(join(outputDirectory, "index.html"), createRouteHtml(page), "utf8");
+  await writeFile(
+    join(distDirectory, `${page.path}.html`),
+    createRouteHtml(page),
+    "utf8",
+  );
 }
 
 console.log(`Generated ${pages.length} route-specific SEO pages.`);
