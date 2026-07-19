@@ -1,0 +1,91 @@
+{
+  "site": {
+    "name": "Albion Calculator",
+    "alternateName": "Albion Online Calculator",
+    "origin": "https://albioncalculator.app",
+    "language": "es",
+    "locale": "es_CL"
+  },
+  "routes": {
+    "crafting": {
+      "path": "/",
+      "title": "Calculadora de Crafteo Albion Online | Albion Calculator",
+      "description": "Calcula el costo real de fabricar en Albion Online con retorno de materiales, foco, tarifas, impuestos, precios por ciudad y ganancia neta.",
+      "index": true,
+      "changefreq": "weekly",
+      "priority": 1,
+      "schemaType": "WebApplication",
+      "schemaName": "Calculadora de Crafteo de Albion Online"
+    },
+    "refining": {
+      "path": "/refining",
+      "title": "Calculadora de Refinamiento Albion Online | Próximamente",
+      "description": "Próximo módulo para calcular costos, retorno de materiales y rentabilidad de refinamiento en Albion Online.",
+      "index": false,
+      "changefreq": "monthly",
+      "priority": 0.2,
+      "schemaType": "WebPage",
+      "schemaName": "Calculadora de Refinamiento de Albion Online"
+    },
+    "black-market": {
+      "path": "/black-market",
+      "title": "Calculadora Black Market Albion Online | Beneficio y ROI",
+      "description": "Compara precios de ciudades con órdenes del Black Market de Caerleon y calcula impuesto, transporte, liquidez, beneficio y ROI por objeto.",
+      "index": true,
+      "changefreq": "weekly",
+      "priority": 0.9,
+      "schemaType": "WebApplication",
+      "schemaName": "Calculadora del Black Market de Albion Online"
+    },
+    "presets": {
+      "path": "/presets",
+      "title": "Presets de Producción | Albion Calculator",
+      "description": "Administra configuraciones locales de ciudad, foco, especialización, bono diario y Premium para tus cálculos de Albion Online.",
+      "index": false,
+      "changefreq": "monthly",
+      "priority": 0.2,
+      "schemaType": "WebPage",
+      "schemaName": "Presets de Producción"
+    },
+    "plans": {
+      "path": "/plans",
+      "title": "Planes Free y Pro para Albion Online | Albion Calculator",
+      "description": "Compara los planes Free y Pro para crafteo, historial de precios, Black Market, optimización de ganancias y configuraciones en la nube.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.6,
+      "schemaType": "WebPage",
+      "schemaName": "Planes Free y Pro de Albion Calculator"
+    },
+    "account": {
+      "path": "/account",
+      "title": "Mi Cuenta | Albion Calculator",
+      "description": "Consulta tu identidad, plan y permisos habilitados en Albion Calculator.",
+      "index": false,
+      "changefreq": "monthly",
+      "priority": 0.1,
+      "schemaType": "WebPage",
+      "schemaName": "Cuenta de Albion Calculator"
+    },
+    "profile": {
+      "path": "/profile",
+      "title": "Mi Perfil de Albion Online | Albion Calculator",
+      "description": "Vincula tu personaje y consulta estadísticas públicas, resumen PvP y actividad reciente de Albion Online.",
+      "index": false,
+      "changefreq": "weekly",
+      "priority": 0.1,
+      "schemaType": "WebPage",
+      "schemaName": "Perfil de Albion Online"
+    },
+    "admin": {
+      "path": "/admin",
+      "title": "Administración | Albion Calculator",
+      "description": "Área privada de administración de usuarios, permisos y acceso Pro.",
+      "index": false,
+      "changefreq": "monthly",
+      "priority": 0.1,
+      "schemaType": "WebPage",
+      "schemaName": "Administración de Albion Calculator"
+    }
+  }
+}
