@@ -1,15 +1,10 @@
 name: Generate guide images
 
 on:
-  push:
-    branches:
-      - feat/guide-article-images
-    paths:
-      - scripts/guide-images/**
-      - .github/workflows/generate-guide-images.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: guide-image-generation
@@ -18,15 +13,11 @@ concurrency:
 jobs:
   generate:
     name: Generate editorial guide screenshots
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout feature branch
+      - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: feat/guide-article-images
-          fetch-depth: 0
 
       - name: Configure Node.js
         uses: actions/setup-node@v4
@@ -35,13 +26,13 @@ jobs:
 
       - name: Install Playwright for image generation
         run: |
-          npm install --no-save --package-lock=false playwright@1.55.0
+          npm install --no-save --package-lock=false --legacy-peer-deps playwright@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Generate PNG variants
         run: node scripts/guide-images/generate.mjs
 
-      - name: Verify generated assets
+      - name: Validate generated assets
         shell: bash
         run: |
           set -euo pipefail
@@ -52,10 +43,7 @@ jobs:
             exit 1
           fi
 
-          for image in "${images[@]}"; do
-            file "${image}"
-            test -s "${image}"
-          done
+          node scripts/guide-images/validate-assets.mjs
 
       - name: Upload generated images
         uses: actions/upload-artifact@v4
@@ -64,19 +52,3 @@ jobs:
           path: public/images/guides/*.png
           if-no-files-found: error
           retention-days: 30
-
-      - name: Commit generated assets
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/images/guides/*.png
-
-          if git diff --cached --quiet; then
-            echo 'Guide images are already current.'
-            exit 0
-          fi
-
-          git commit -m 'assets: generate guide article images'
-          git push origin HEAD:feat/guide-article-images

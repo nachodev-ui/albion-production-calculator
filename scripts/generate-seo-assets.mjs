@@ -86,6 +86,26 @@ function validateConfig() {
       );
     }
 
+    if (entry.schemaType === "Article") {
+      const images = entry.images ?? [];
+      const expectedRatios = ["-1x1.png", "-4x3.png", "-16x9.png"];
+      if (
+        images.length !== expectedRatios.length ||
+        images.some(
+          (image, index) =>
+            !image.startsWith("/images/guides/") ||
+            !image.endsWith(expectedRatios[index]),
+        )
+      ) {
+        throw new Error(
+          `La ruta Article ${route} requiere imágenes PNG 1:1, 4:3 y 16:9 en ese orden.`,
+        );
+      }
+      if (!entry.imageAlt?.trim()) {
+        throw new Error(`La ruta Article ${route} requiere imageAlt.`);
+      }
+    }
+
     if (entry.breadcrumbs !== undefined) {
       if (!Array.isArray(entry.breadcrumbs) || entry.breadcrumbs.length < 2) {
         throw new Error(
@@ -227,6 +247,7 @@ function buildStructuredData(route, entry) {
           inLanguage: config.site.language,
           datePublished: entry.datePublished,
           dateModified: entry.dateModified,
+          image: entry.images.map(absoluteUrlFor),
           mainEntityOfPage: {
             "@id": `${canonical}#webpage`,
           },
@@ -267,6 +288,8 @@ function createRouteHtml(sourceHtml, route, entry) {
   const robots = entry.index
     ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
     : "noindex, nofollow, noarchive";
+  const socialImage = entry.images?.at(-1);
+  const socialImageUrl = socialImage ? absoluteUrlFor(socialImage) : null;
   let html = sourceHtml;
 
   html = replaceRequired(
@@ -301,6 +324,12 @@ function createRouteHtml(sourceHtml, route, entry) {
   );
   html = replaceRequired(
     html,
+    /<meta\s+property="og:type"\s+content="[^"]*"\s*\/?>/,
+    `<meta property="og:type" content="${entry.schemaType === "Article" ? "article" : "website"}" />`,
+    "og:type",
+  );
+  html = replaceRequired(
+    html,
     /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/,
     `<meta property="og:title" content="${escapeHtml(entry.title)}" />`,
     "og:title",
@@ -319,6 +348,12 @@ function createRouteHtml(sourceHtml, route, entry) {
   );
   html = replaceRequired(
     html,
+    /<meta\s+name="twitter:card"\s+content="[^"]*"\s*\/?>/,
+    `<meta name="twitter:card" content="${socialImageUrl ? "summary_large_image" : "summary"}" />`,
+    "twitter:card",
+  );
+  html = replaceRequired(
+    html,
     /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/,
     `<meta name="twitter:title" content="${escapeHtml(entry.title)}" />`,
     "twitter:title",
@@ -329,6 +364,24 @@ function createRouteHtml(sourceHtml, route, entry) {
     `<meta name="twitter:description" content="${escapeHtml(entry.description)}" />`,
     "twitter:description",
   );
+  if (socialImageUrl) {
+    const socialMetadata = [
+      `    <meta property="og:image" content="${socialImageUrl}" />`,
+      '    <meta property="og:image:type" content="image/png" />',
+      '    <meta property="og:image:width" content="1600" />',
+      '    <meta property="og:image:height" content="900" />',
+      `    <meta property="og:image:alt" content="${escapeHtml(entry.imageAlt)}" />`,
+      `    <meta name="twitter:image" content="${socialImageUrl}" />`,
+      `    <meta name="twitter:image:alt" content="${escapeHtml(entry.imageAlt)}" />`,
+    ].join("\n");
+    html = replaceRequired(
+      html,
+      /<\/head>/,
+      `${socialMetadata}\n  </head>`,
+      "el cierre de head para metadatos de imagen",
+    );
+  }
+
   html = replaceRequired(
     html,
     /<script(?:\s+id="route-seo-structured-data")?\s+type="application\/ld\+json">[\s\S]*?<\/script>/,
@@ -347,18 +400,24 @@ function createSitemap() {
   const urls = routes
     .filter(([, entry]) => entry.index)
     .map(([, entry]) => {
+      const imageEntries = (entry.images ?? []).flatMap((image) => [
+        "    <image:image>",
+        `      <image:loc>${escapeXml(absoluteUrlFor(image))}</image:loc>`,
+        "    </image:image>",
+      ]);
       return [
         "  <url>",
         `    <loc>${escapeXml(canonicalFor(entry))}</loc>`,
         `    <lastmod>${entry.dateModified ?? lastModified}</lastmod>`,
         `    <changefreq>${entry.changefreq}</changefreq>`,
         `    <priority>${Number(entry.priority).toFixed(1)}</priority>`,
+        ...imageEntries,
         "  </url>",
       ].join("\n");
     })
     .join("\n");
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls}\n</urlset>\n`;
 }
 
 function createRobots() {

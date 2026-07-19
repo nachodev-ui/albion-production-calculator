@@ -8,6 +8,8 @@ type SeoEntry = readonly [
   title: string,
   description: string,
   index: boolean,
+  imagePath?: string,
+  imageAlt?: string,
 ];
 
 const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
@@ -70,20 +72,32 @@ const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
     "Rentabilidad de Crafteo Albion Online | Guía y Fórmula",
     "Aprende a calcular costo real, retorno de materiales, tarifa, impuestos, beneficio, ROI y precio de equilibrio al craftear en Albion Online.",
     true,
+    "/images/guides/rentabilidad-crafteo-16x9.png",
+    "Resumen ilustrativo de rentabilidad de crafteo con ingreso neto, costo efectivo, retorno, beneficio y ROI",
   ],
   "guide-resource-return-rate": [
     "/guias/retorno-materiales-rrr-albion-online",
     "Retorno de Materiales RRR en Albion Online | Guía",
     "Entiende la fórmula del RRR, Production Bonus, foco, materiales recuperables y ahorro esperado por lote al fabricar en Albion Online.",
     true,
+    "/images/guides/retorno-materiales-rrr-16x9.png",
+    "Ejemplo de materiales requeridos, devueltos y consumidos después de aplicar el RRR en Albion Online",
   ],
   "guide-black-market-profit": [
     "/guias/black-market-caerleon-rentable",
     "Black Market Caerleon: Cómo Calcular Rentabilidad",
     "Calcula si comprar o fabricar para el Black Market de Caerleon es rentable después de impuesto, transporte, RRR, liquidez y riesgo.",
     true,
+    "/images/guides/black-market-caerleon-16x9.png",
+    "Comparación ilustrativa entre comprar y transportar o fabricar con RRR para vender en el Black Market de Caerleon",
   ],
 };
+
+function removeMeta(attribute: "name" | "property", key: string): void {
+  document.head
+    .querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`)
+    ?.remove();
+}
 
 function meta(
   attribute: "name" | "property",
@@ -103,7 +117,8 @@ function meta(
 
 export function RouteSeo({ route }: { readonly route: AppRoute }) {
   useEffect(() => {
-    const [path, title, description, index] = ROUTE_SEO[route];
+    const [path, title, description, index, imagePath, imageAlt] =
+      ROUTE_SEO[route];
     const canonical = `${ORIGIN}${path === "/" ? "/" : path}`;
     let link = document.head.querySelector<HTMLLinkElement>(
       'link[rel="canonical"]',
@@ -124,6 +139,28 @@ export function RouteSeo({ route }: { readonly route: AppRoute }) {
     meta("property", "og:url", canonical);
     meta("name", "twitter:title", title);
     meta("name", "twitter:description", description);
+
+    const socialImage = imagePath ? `${ORIGIN}${imagePath}` : null;
+    meta("property", "og:type", socialImage ? "article" : "website");
+    meta("name", "twitter:card", socialImage ? "summary_large_image" : "summary");
+
+    if (socialImage && imageAlt) {
+      meta("property", "og:image", socialImage);
+      meta("property", "og:image:type", "image/png");
+      meta("property", "og:image:width", "1600");
+      meta("property", "og:image:height", "900");
+      meta("property", "og:image:alt", imageAlt);
+      meta("name", "twitter:image", socialImage);
+      meta("name", "twitter:image:alt", imageAlt);
+    } else {
+      removeMeta("property", "og:image");
+      removeMeta("property", "og:image:type");
+      removeMeta("property", "og:image:width");
+      removeMeta("property", "og:image:height");
+      removeMeta("property", "og:image:alt");
+      removeMeta("name", "twitter:image");
+      removeMeta("name", "twitter:image:alt");
+    }
 
     if (!link) {
       link = document.createElement("link");
