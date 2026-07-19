@@ -63,7 +63,7 @@ export function StationFeeConfigPanel({
     <div className="mt-4 rounded-lg border border-border bg-surface-raised p-3">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <h4 className="text-sm font-medium text-text">
               Puesto y costo de fabricación
             </h4>
@@ -73,6 +73,8 @@ export function StationFeeConfigPanel({
               text="Ingresa el Total Cost que Albion muestra justo antes de confirmar el crafteo. Ese monto se suma directamente al costo del lote actual."
               align="left"
             />
+
+            <StationTotalCostHint />
           </div>
 
           <p className="mt-1 text-xs text-text-faint">
@@ -98,7 +100,6 @@ export function StationFeeConfigPanel({
             <span className="rounded-md border border-positive/30 bg-positive-muted px-1.5 py-0.5 text-[10px] font-medium text-positive">
               Recomendado
             </span>
-            <StationTotalCostHint />
           </span>
 
           <div className="mt-1 flex items-center gap-2">
