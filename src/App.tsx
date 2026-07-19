@@ -7,6 +7,7 @@ import { CatalogIcon } from "./app/AppIcons";
 import { ModuleHeader } from "./app/ModuleHeader";
 import { useAppRoute } from "./app/routing";
 import { RouteSeo } from "./app/seo/RouteSeo";
+import { isSeoGuideRoute } from "./app/types";
 import type { AppModule, AppRoute } from "./app/types";
 import { EmptyDetailState } from "@features/craft-calculator/components/EmptyDetailState";
 import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetailPanel";
@@ -57,6 +58,11 @@ const PlayerProfilePage = lazy(() =>
 const AdminPage = lazy(() =>
   import("@features/admin/components/AdminPage").then((module) => ({
     default: module.AdminPage,
+  })),
+);
+const SeoGuidePage = lazy(() =>
+  import("@features/seo-content/components/SeoGuidePage").then((module) => ({
+    default: module.SeoGuidePage,
   })),
 );
 
@@ -199,6 +205,11 @@ function App() {
         isSidebarOpen={isCatalogOpen}
         onCloseSidebar={() => setIsCatalogOpen(false)}
       >
+        {isSeoGuideRoute(route) && (
+          <Suspense fallback={<ModuleFallback label="guía" />}>
+            <SeoGuidePage route={route} />
+          </Suspense>
+        )}
         {route === "crafting" && (
           <>
             <ModuleHeader

@@ -54,6 +54,15 @@ function validateConfig() {
         `La descripción SEO de ${route} debe tener entre 50 y 170 caracteres.`,
       );
     }
+    if (
+      entry.schemaType === "Article" &&
+      (!/^\d{4}-\d{2}-\d{2}$/.test(entry.datePublished ?? "") ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(entry.dateModified ?? ""))
+    ) {
+      throw new Error(
+        `La ruta Article ${route} requiere datePublished y dateModified en formato YYYY-MM-DD.`,
+      );
+    }
 
     paths.add(entry.path);
     canonicals.add(canonical);
@@ -133,6 +142,42 @@ function buildStructuredData(route, entry) {
           browserRequirements: "Requires JavaScript",
           description: entry.description,
           inLanguage: config.site.language,
+          about: {
+            "@type": "VideoGame",
+            name: "Albion Online",
+          },
+        },
+      ],
+    };
+  }
+
+  if (entry.schemaType === "Article") {
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        webpage,
+        {
+          "@type": "Article",
+          "@id": `${canonical}#article`,
+          headline: entry.schemaName,
+          description: entry.description,
+          url: canonical,
+          inLanguage: config.site.language,
+          datePublished: entry.datePublished,
+          dateModified: entry.dateModified,
+          mainEntityOfPage: {
+            "@id": `${canonical}#webpage`,
+          },
+          author: {
+            "@type": "Organization",
+            name: config.site.name,
+            url: `${config.site.origin}/`,
+          },
+          publisher: {
+            "@type": "Organization",
+            name: config.site.name,
+            url: `${config.site.origin}/`,
+          },
           about: {
             "@type": "VideoGame",
             name: "Albion Online",
@@ -243,7 +288,7 @@ function createSitemap() {
       return [
         "  <url>",
         `    <loc>${escapeXml(canonicalFor(entry))}</loc>`,
-        `    <lastmod>${lastModified}</lastmod>`,
+        `    <lastmod>${entry.dateModified ?? lastModified}</lastmod>`,
         `    <changefreq>${entry.changefreq}</changefreq>`,
         `    <priority>${Number(entry.priority).toFixed(1)}</priority>`,
         "  </url>",
