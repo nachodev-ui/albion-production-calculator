@@ -15,6 +15,10 @@ function canonicalFor(entry) {
   return `${config.site.origin}${entry.path === "/" ? "/" : entry.path}`;
 }
 
+function absoluteUrlFor(path) {
+  return `${config.site.origin}${path === "/" ? "/" : path}`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -25,6 +29,24 @@ function escapeHtml(value) {
 
 function escapeXml(value) {
   return escapeHtml(value).replaceAll("'", "&apos;");
+}
+
+function buildBreadcrumbList(entry) {
+  if (!entry.breadcrumbs) {
+    return null;
+  }
+
+  const canonical = canonicalFor(entry);
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `${canonical}#breadcrumb`,
+    itemListElement: entry.breadcrumbs.map((breadcrumb, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: breadcrumb.name,
+      item: absoluteUrlFor(breadcrumb.path),
+    })),
+  };
 }
 
 function validateConfig() {
@@ -64,6 +86,37 @@ function validateConfig() {
       );
     }
 
+    if (entry.breadcrumbs !== undefined) {
+      if (!Array.isArray(entry.breadcrumbs) || entry.breadcrumbs.length < 2) {
+        throw new Error(
+          `La ruta SEO ${route} requiere al menos dos elementos de breadcrumb.`,
+        );
+      }
+
+      for (const breadcrumb of entry.breadcrumbs) {
+        if (!breadcrumb.name?.trim()) {
+          throw new Error(`Breadcrumb sin nombre en la ruta SEO ${route}.`);
+        }
+        if (!breadcrumb.path?.startsWith("/")) {
+          throw new Error(
+            `El breadcrumb ${breadcrumb.name} de ${route} debe comenzar con /.`,
+          );
+        }
+        if (breadcrumb.path !== "/" && breadcrumb.path.endsWith("/")) {
+          throw new Error(
+            `El breadcrumb ${breadcrumb.name} de ${route} no debe terminar con /.`,
+          );
+        }
+      }
+
+      const currentBreadcrumb = entry.breadcrumbs.at(-1);
+      if (currentBreadcrumb.path !== entry.path) {
+        throw new Error(
+          `El último breadcrumb de ${route} debe apuntar a ${entry.path}.`,
+        );
+      }
+    }
+
     paths.add(entry.path);
     canonicals.add(canonical);
 
@@ -81,8 +134,9 @@ function validateConfig() {
 
 function buildStructuredData(route, entry) {
   const canonical = canonicalFor(entry);
+  const breadcrumb = buildBreadcrumbList(entry);
   const webpage = {
-    "@type": "WebPage",
+    "@type": entry.schemaType === "CollectionPage" ? "CollectionPage" : "WebPage",
     "@id": `${canonical}#webpage`,
     url: canonical,
     name: entry.schemaName,
@@ -91,7 +145,15 @@ function buildStructuredData(route, entry) {
     isPartOf: {
       "@id": `${config.site.origin}/#website`,
     },
+    ...(breadcrumb
+      ? {
+          breadcrumb: {
+            "@id": breadcrumb["@id"],
+          },
+        }
+      : {}),
   };
+  const pageGraph = breadcrumb ? [webpage, breadcrumb] : [webpage];
 
   if (route === "crafting") {
     return {
@@ -106,7 +168,7 @@ function buildStructuredData(route, entry) {
           description: entry.description,
           inLanguage: config.site.language,
         },
-        webpage,
+        ...pageGraph,
         {
           "@type": "WebApplication",
           "@id": `${canonical}#application`,
@@ -131,7 +193,7 @@ function buildStructuredData(route, entry) {
     return {
       "@context": "https://schema.org",
       "@graph": [
-        webpage,
+        ...pageGraph,
         {
           "@type": "WebApplication",
           "@id": `${canonical}#application`,
@@ -155,7 +217,7 @@ function buildStructuredData(route, entry) {
     return {
       "@context": "https://schema.org",
       "@graph": [
-        webpage,
+        ...pageGraph,
         {
           "@type": "Article",
           "@id": `${canonical}#article`,
@@ -189,7 +251,7 @@ function buildStructuredData(route, entry) {
 
   return {
     "@context": "https://schema.org",
-    ...webpage,
+    "@graph": pageGraph,
   };
 }
 

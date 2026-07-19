@@ -9,6 +9,8 @@ describe("routeFromPathname", () => {
     ["/black-market", "black-market"],
     ["/black-market/", "black-market"],
     ["/presets", "presets"],
+    ["/guias", "guides"],
+    ["/guias/", "guides"],
     ["/plans", "plans"],
     ["/account", "account"],
     ["/account/", "account"],

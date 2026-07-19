@@ -10,7 +10,7 @@ function countOccurrences(markup: string, pattern: RegExp): number {
 }
 
 describe("app accessibility", () => {
-  it("renders primary navigation with current-page state and native buttons", () => {
+  it("renders primary navigation with current-page state and native links", () => {
     const markup = renderToStaticMarkup(
       <MainNavigation activeModule="crafting" onNavigate={vi.fn()} />,
     );
@@ -22,8 +22,8 @@ describe("app accessibility", () => {
     expect(markup).toContain("Black Market");
     expect(markup).toContain("Presets");
     expect(markup).toContain("Guías");
-    expect(countOccurrences(markup, /<button\b/g)).toBe(5);
-    expect(countOccurrences(markup, /type="button"/g)).toBe(5);
+    expect(markup).toContain('href="/guias"');
+    expect(countOccurrences(markup, /<a\b/g)).toBe(5);
   });
 
   it("labels header actions for keyboard and assistive technology users", () => {
