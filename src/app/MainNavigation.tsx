@@ -1,4 +1,4 @@
-import type { AppRoute } from "./types";
+import type { AppModule, AppRoute } from "./types";
 import { isSeoGuideRoute } from "./types";
 import {
   BlackMarketIcon,
@@ -9,7 +9,8 @@ import {
 } from "./AppIcons";
 
 interface MainNavigationProps {
-  readonly activeRoute: AppRoute;
+  readonly activeRoute?: AppRoute;
+  readonly activeModule?: AppModule;
   readonly onNavigate: (route: AppRoute) => void;
 }
 
@@ -50,16 +51,19 @@ const NAV_ITEMS = [
 
 export function MainNavigation({
   activeRoute,
+  activeModule,
   onNavigate,
 }: MainNavigationProps) {
+  const resolvedRoute = activeRoute ?? activeModule ?? "crafting";
+
   return (
     <nav aria-label="Navegación principal" className="min-w-0">
       <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-bg/45 p-1">
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.id === "guide-crafting-profit"
-              ? isSeoGuideRoute(activeRoute)
-              : activeRoute === item.id;
+              ? isSeoGuideRoute(resolvedRoute)
+              : resolvedRoute === item.id;
           const Icon = item.icon;
 
           return (
