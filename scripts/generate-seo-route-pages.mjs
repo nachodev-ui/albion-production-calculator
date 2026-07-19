@@ -89,49 +89,49 @@ function createRouteHtml(page) {
   );
   html = replaceRequired(
     html,
-    /<meta name="description" content="[^"]*"\s*\/?>/,
+    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/,
     `<meta name="description" content="${page.description}" />`,
     "la meta description",
   );
   html = replaceRequired(
     html,
-    /<link rel="canonical" href="[^"]*"\s*\/?>/,
+    /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/,
     `<link rel="canonical" href="${page.canonical}" />`,
     "la URL canónica",
   );
   html = replaceRequired(
     html,
-    /<meta property="og:title" content="[^"]*"\s*\/?>/,
+    /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/,
     `<meta property="og:title" content="${page.title}" />`,
     "og:title",
   );
   html = replaceRequired(
     html,
-    /<meta property="og:description" content="[^"]*"\s*\/?>/,
+    /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/,
     `<meta property="og:description" content="${page.description}" />`,
     "og:description",
   );
   html = replaceRequired(
     html,
-    /<meta property="og:url" content="[^"]*"\s*\/?>/,
+    /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/,
     `<meta property="og:url" content="${page.canonical}" />`,
     "og:url",
   );
   html = replaceRequired(
     html,
-    /<meta name="twitter:title" content="[^"]*"\s*\/?>/,
+    /<meta\s+name="twitter:title"\s+content="[^"]*"\s*\/?>/,
     `<meta name="twitter:title" content="${page.title}" />`,
     "twitter:title",
   );
   html = replaceRequired(
     html,
-    /<meta name="twitter:description" content="[^"]*"\s*\/?>/,
+    /<meta\s+name="twitter:description"\s+content="[^"]*"\s*\/?>/,
     `<meta name="twitter:description" content="${page.description}" />`,
     "twitter:description",
   );
   html = replaceRequired(
     html,
-    /<script type="application\/ld\+json">[\s\S]*?<\/script>/,
+    /<script\s+type="application\/ld\+json">[\s\S]*?<\/script>/,
     `<script type="application/ld+json">\n${JSON.stringify(page.structuredData, null, 2)}\n    </script>`,
     "los datos estructurados",
   );
