@@ -13,7 +13,7 @@ interface EmptyDetailStateProps {
 
 const STEPS = [
   ['01', 'Explora el catálogo', 'Elige una categoría, abre una rama de crafteo y selecciona el tier.'],
-  ['02', 'Ingresa precios reales', 'Usa los valores que pagaste para evitar estimaciones de mercado desactualizadas.'],
+  ['02', 'Ingresa precios reales', 'Usa los valores que pagaste o consulta precios de mercado por ciudad.'],
   ['03', 'Compara el resultado', 'Revisa RRR, costo neto, punto de equilibrio y rentabilidad antes de fabricar.'],
 ] as const
 
@@ -51,13 +51,13 @@ export function EmptyDetailState({ onBrowseCatalog }: EmptyDetailStateProps) {
             </div>
 
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
-              Comienza un cálculo
+              Albion Online crafting calculator
             </p>
-            <h3 className="mt-2 max-w-xl text-balance font-display text-3xl leading-tight text-text sm:text-4xl">
-              Descubre si vale la pena craftear antes de gastar tu plata
-            </h3>
+            <h2 className="mt-2 max-w-xl text-balance font-display text-3xl leading-tight text-text sm:text-4xl">
+              Calcula costos y ganancias de crafteo antes de gastar plata
+            </h2>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-text-muted sm:text-base">
-              Selecciona un objeto y convierte sus materiales, retornos y comisiones en una decisión económica clara.
+              Albion Calculator reúne materiales, retorno de recursos, foco, bonos por ciudad, impuestos y precios de mercado para convertir cada receta de Albion Online en una decisión económica clara.
             </p>
 
             <button
@@ -76,7 +76,7 @@ export function EmptyDetailState({ onBrowseCatalog }: EmptyDetailStateProps) {
                   className="rounded-xl border border-border bg-bg/35 p-4"
                 >
                   <Icon className="h-5 w-5 text-accent" />
-                  <h4 className="mt-3 text-sm font-semibold text-text">{title}</h4>
+                  <h3 className="mt-3 text-sm font-semibold text-text">{title}</h3>
                   <p className="mt-1 text-xs leading-relaxed text-text-faint">
                     {description}
                   </p>
@@ -117,9 +117,9 @@ export function EmptyDetailState({ onBrowseCatalog }: EmptyDetailStateProps) {
           </ol>
 
           <div className="mt-8 rounded-xl border border-border bg-surface-raised p-4">
-            <p className="text-xs font-medium text-text">Tus datos permanecen locales</p>
+            <p className="text-xs font-medium text-text">Empieza gratis y sin cuenta</p>
             <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
-              Los precios manuales y presets se guardan en este navegador. No necesitas una cuenta ni una API de precios.
+              Puedes calcular manualmente desde el navegador y vincular una cuenta cuando necesites historial, configuraciones en la nube o herramientas Pro.
             </p>
           </div>
         </aside>
