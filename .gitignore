@@ -15,6 +15,11 @@ dist-ssr
 # Generated reports
 artifacts/
 
+# Generated SEO discovery files
+/public/robots.txt
+/public/sitemap.xml
+/public/_redirects
+
 # Local deployment credentials
 secrets/
 *.secret
