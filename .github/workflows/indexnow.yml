@@ -1,0 +1,113 @@
+name: Notify IndexNow
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate and prepare the URL batch without sending it
+        required: false
+        type: boolean
+        default: false
+  workflow_run:
+    workflows:
+      - Deploy production
+    types:
+      - completed
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: indexnow-production
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    name: Notify participating search engines
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout deployed revision
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 2
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate IndexNow configuration
+        run: node scripts/check-indexnow-config.mjs
+
+      - name: Prepare previous SEO configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          previous_config="${RUNNER_TEMP}/previous-route-seo.json"
+          if git cat-file -e 'HEAD^:src/app/seo/route-seo.json' 2>/dev/null; then
+            git show 'HEAD^:src/app/seo/route-seo.json' > "${previous_config}"
+            echo "INDEXNOW_PREVIOUS_CONFIG=${previous_config}" >> "${GITHUB_ENV}"
+          fi
+
+      - name: Submit canonical URLs to IndexNow
+        env:
+          INDEXNOW_ARTIFACT_DIRECTORY: artifacts/indexnow
+          INDEXNOW_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: node scripts/submit-indexnow.mjs
+
+      - name: Publish summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f artifacts/indexnow/summary.json ]]; then
+            {
+              echo '## IndexNow submission'
+              echo
+              echo '```json'
+              cat artifacts/indexnow/summary.json
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+      - name: Upload IndexNow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: indexnow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/indexnow
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish IndexNow status
+        if: always() && github.event_name == 'workflow_run'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+          NOTIFICATION_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          state=failure
+          description='IndexNow notification failed'
+          if [[ "${NOTIFICATION_STATUS}" == 'success' ]]; then
+            state=success
+            description='Canonical URLs accepted by IndexNow'
+          fi
+
+          gh api \
+            --method POST \
+            "repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
+            -f state="${state}" \
+            -f context='indexnow/production' \
+            -f description="${description}" \
+            -f target_url="${RUN_URL}"
