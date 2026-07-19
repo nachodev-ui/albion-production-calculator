@@ -58,7 +58,7 @@ jobs:
         shell: bash
         env:
           NODE_PATH: ${{ runner.temp }}/production-market-ui-runtime/node_modules
-          FRONTEND_URL: https://albion-production-calculator.pages.dev
+          FRONTEND_URL: https://albioncalculator.app
           API_BASE_URL: https://albion-market-api.onrender.com/api/v1
           ITEM_ID: T4_MAIN_CURSEDSTAFF_CRYSTAL
           MARKET_KEY: thetford
