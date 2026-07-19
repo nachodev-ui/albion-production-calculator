@@ -100,7 +100,7 @@ function assertSecurityHeaders(): void {
     "object-src 'none'",
     "frame-ancestors 'none'",
     'frame-src https:',
-    "script-src 'self'",
+    "script-src 'self' https://static.cloudflareinsights.com",
     "connect-src 'self' https:",
     "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
