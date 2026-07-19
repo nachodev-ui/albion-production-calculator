@@ -59,6 +59,24 @@ const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
     "Área privada de administración de usuarios, permisos y acceso Pro.",
     false,
   ],
+  "guide-crafting-profit": [
+    "/guias/rentabilidad-crafteo-albion-online",
+    "Rentabilidad de Crafteo Albion Online | Guía y Fórmula",
+    "Aprende a calcular costo real, retorno de materiales, tarifa, impuestos, beneficio, ROI y precio de equilibrio al craftear en Albion Online.",
+    true,
+  ],
+  "guide-resource-return-rate": [
+    "/guias/retorno-materiales-rrr-albion-online",
+    "Retorno de Materiales RRR en Albion Online | Guía",
+    "Entiende la fórmula del RRR, Production Bonus, foco, materiales recuperables y ahorro esperado por lote al fabricar en Albion Online.",
+    true,
+  ],
+  "guide-black-market-profit": [
+    "/guias/black-market-caerleon-rentable",
+    "Black Market Caerleon: Cómo Calcular Rentabilidad",
+    "Calcula si comprar o fabricar para el Black Market de Caerleon es rentable después de impuesto, transporte, RRR, liquidez y riesgo.",
+    true,
+  ],
 };
 
 function meta(

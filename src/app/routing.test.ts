@@ -16,6 +16,22 @@ describe("routeFromPathname", () => {
     ["/profile/", "profile"],
     ["/admin", "admin"],
     ["/admin/", "admin"],
+    [
+      "/guias/rentabilidad-crafteo-albion-online",
+      "guide-crafting-profit",
+    ],
+    [
+      "/guias/retorno-materiales-rrr-albion-online",
+      "guide-resource-return-rate",
+    ],
+    [
+      "/guias/black-market-caerleon-rentable",
+      "guide-black-market-profit",
+    ],
+    [
+      "/guias/black-market-caerleon-rentable/",
+      "guide-black-market-profit",
+    ],
   ] as const)("maps %s to %s", (pathname, expected) => {
     expect(routeFromPathname(pathname)).toBe(expected);
   });

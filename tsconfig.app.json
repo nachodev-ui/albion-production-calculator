@@ -30,6 +30,7 @@
 
     /* Path aliases — deben coincidir con vite.config.ts */
     "paths": {
+      "@app/*": ["./src/app/*"],
       "@core/*": ["./src/core/*"],
       "@data/*": ["./src/data/*"],
       "@features/*": ["./src/features/*"],
