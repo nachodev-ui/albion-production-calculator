@@ -7,12 +7,18 @@ on:
     paths:
       - scripts/guide-images/**
       - .github/workflows/generate-guide-images.yml
+  pull_request:
+    branches:
+      - develop
+    paths:
+      - scripts/guide-images/**
+      - .github/workflows/generate-guide-images.yml
 
 permissions:
   contents: write
 
 concurrency:
-  group: guide-image-generation
+  group: guide-image-generation-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
