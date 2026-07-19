@@ -3,7 +3,19 @@ export type AppModule =
   | "refining"
   | "black-market"
   | "presets";
-export type AppRoute = AppModule | "plans" | "account" | "profile" | "admin";
+
+export type SeoGuideRoute =
+  | "guide-crafting-profit"
+  | "guide-resource-return-rate"
+  | "guide-black-market-profit";
+
+export type AppRoute =
+  | AppModule
+  | SeoGuideRoute
+  | "plans"
+  | "account"
+  | "profile"
+  | "admin";
 
 export function isAppModule(route: AppRoute): route is AppModule {
   return (
@@ -12,4 +24,8 @@ export function isAppModule(route: AppRoute): route is AppModule {
     route === "black-market" ||
     route === "presets"
   );
+}
+
+export function isSeoGuideRoute(route: AppRoute): route is SeoGuideRoute {
+  return route.startsWith("guide-");
 }

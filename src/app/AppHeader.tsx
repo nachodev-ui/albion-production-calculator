@@ -1,6 +1,5 @@
 import { AccountMenu } from '@features/account/components/AccountMenu'
 import type { AppModule, AppRoute } from './types'
-import { isAppModule } from './types'
 import { AnvilIcon, CatalogIcon } from './AppIcons'
 import { MainNavigation } from './MainNavigation'
 
@@ -20,7 +19,6 @@ export function AppHeader({
   onOpenCatalog,
 }: AppHeaderProps) {
   const resolvedRoute = activeRoute ?? legacyActiveModule ?? 'crafting'
-  const activeModule = isAppModule(resolvedRoute) ? resolvedRoute : null
 
   return (
     <header className="relative z-50 shrink-0 border-b border-border bg-surface/92 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/78">
@@ -50,7 +48,7 @@ export function AppHeader({
 
         <div className="min-w-0 flex-1">
           <MainNavigation
-            activeModule={activeModule}
+            activeRoute={resolvedRoute}
             onNavigate={onNavigate}
           />
         </div>

@@ -87,6 +87,42 @@
       "priority": 0.1,
       "schemaType": "WebPage",
       "schemaName": "Administración de Albion Calculator"
+    },
+    "guide-crafting-profit": {
+      "path": "/guias/rentabilidad-crafteo-albion-online",
+      "title": "Rentabilidad de Crafteo Albion Online | Guía y Fórmula",
+      "description": "Aprende a calcular costo real, retorno de materiales, tarifa, impuestos, beneficio, ROI y precio de equilibrio al craftear en Albion Online.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "schemaType": "Article",
+      "schemaName": "Cómo calcular la rentabilidad de crafteo en Albion Online",
+      "datePublished": "2026-07-19",
+      "dateModified": "2026-07-19"
+    },
+    "guide-resource-return-rate": {
+      "path": "/guias/retorno-materiales-rrr-albion-online",
+      "title": "Retorno de Materiales RRR en Albion Online | Guía",
+      "description": "Entiende la fórmula del RRR, Production Bonus, foco, materiales recuperables y ahorro esperado por lote al fabricar en Albion Online.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "schemaType": "Article",
+      "schemaName": "Retorno de materiales RRR en Albion Online: fórmula y ejemplos",
+      "datePublished": "2026-07-19",
+      "dateModified": "2026-07-19"
+    },
+    "guide-black-market-profit": {
+      "path": "/guias/black-market-caerleon-rentable",
+      "title": "Black Market Caerleon: Cómo Calcular Rentabilidad",
+      "description": "Calcula si comprar o fabricar para el Black Market de Caerleon es rentable después de impuesto, transporte, RRR, liquidez y riesgo.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "schemaType": "Article",
+      "schemaName": "Cómo saber si vender en el Black Market de Caerleon es rentable",
+      "datePublished": "2026-07-19",
+      "dateModified": "2026-07-19"
     }
   }
 }
