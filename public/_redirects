@@ -1,10 +1,10 @@
 /crafting / 301
 /refining/ /refining 301
 /black-market/ /black-market 301
-/black-market /black-market/index.html 200
+/black-market /black-market.html 200
 /presets/ /presets 301
 /plans/ /plans 301
-/plans /plans/index.html 200
+/plans /plans.html 200
 /account/ /account 301
 /profile/ /profile 301
 /admin/ /admin 301
