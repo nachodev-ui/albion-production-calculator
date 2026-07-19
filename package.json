@@ -4,8 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/generate-seo-assets.mjs --public",
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/generate-seo-route-pages.mjs",
+    "prebuild": "node scripts/generate-seo-assets.mjs --public",
+    "build": "tsc -b && vite build",
+    "postbuild": "node scripts/generate-seo-assets.mjs --dist",
+    "seo:generate": "node scripts/generate-seo-assets.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

@@ -6,6 +6,7 @@ import { AppShell } from "./app/AppShell";
 import { CatalogIcon } from "./app/AppIcons";
 import { ModuleHeader } from "./app/ModuleHeader";
 import { useAppRoute } from "./app/routing";
+import { RouteSeo } from "./app/seo/RouteSeo";
 import type { AppModule, AppRoute } from "./app/types";
 import { EmptyDetailState } from "@features/craft-calculator/components/EmptyDetailState";
 import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetailPanel";
@@ -189,146 +190,149 @@ function App() {
     ) : undefined;
 
   return (
-    <AppShell
-      header={header}
-      sidebar={catalog}
-      sidebarLabel="Catálogo de crafteo"
-      isSidebarOpen={isCatalogOpen}
-      onCloseSidebar={() => setIsCatalogOpen(false)}
-    >
-      {route === "crafting" && (
-        <>
-          <ModuleHeader
-            eyebrow="Módulo de crafteo"
-            title="Calculadora de producción"
-            description="Selecciona un objeto, configura las condiciones de producción y compara materiales, retorno, costos y rentabilidad antes de craftear."
-            actions={
-              <button
-                type="button"
-                onClick={() => setIsCatalogOpen(true)}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border lg:hidden"
-              >
-                <CatalogIcon className="h-4 w-4" />
-                Explorar catálogo
-              </button>
-            }
-          />
-          {repositoryError ? (
-            <RepositoryError message={repositoryError} />
-          ) : selectedItem && repository ? (
-            <ItemDetailPanel
-              key={selectedItem.id}
-              item={selectedItem}
-              repository={repository}
+    <>
+      <RouteSeo route={route} />
+      <AppShell
+        header={header}
+        sidebar={catalog}
+        sidebarLabel="Catálogo de crafteo"
+        isSidebarOpen={isCatalogOpen}
+        onCloseSidebar={() => setIsCatalogOpen(false)}
+      >
+        {route === "crafting" && (
+          <>
+            <ModuleHeader
+              eyebrow="Módulo de crafteo"
+              title="Calculadora de producción"
+              description="Selecciona un objeto, configura las condiciones de producción y compara materiales, retorno, costos y rentabilidad antes de craftear."
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setIsCatalogOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border lg:hidden"
+                >
+                  <CatalogIcon className="h-4 w-4" />
+                  Explorar catálogo
+                </button>
+              }
             />
-          ) : selectedItemId ? (
-            <ModuleFallback label="calculadora de producción" />
-          ) : (
-            <EmptyDetailState onBrowseCatalog={() => setIsCatalogOpen(true)} />
-          )}
-        </>
-      )}
-      {route === "refining" && (
-        <>
-          <ModuleHeader
-            eyebrow="Módulo de refinamiento"
-            title="Calculadora de refinamiento"
-            description="Un espacio dedicado a convertir recursos, retornos y tarifas de estación en costos netos y decisiones de venta claras."
-            badge="Próximamente"
-          />
-          <Suspense fallback={<ModuleFallback label="refinamiento" />}>
-            <RefiningComingSoonPage
-              onOpenCrafting={() => navigateModule("crafting")}
-            />
-          </Suspense>
-        </>
-      )}
-      {route === "black-market" && (
-        <>
-          <ModuleHeader
-            eyebrow="Mercado especial de Caerleon"
-            title="Black Market Opportunity Scanner"
-            description="Descubre comparaciones rentables entre ciudades y órdenes de compra del Black Market; abre cada resultado para validar su detalle económico e histórico."
-            badge="Pro"
-          />
-          {repositoryError ? (
-            <RepositoryError message={repositoryError} />
-          ) : repository ? (
-            <Suspense fallback={<ModuleFallback label="Black Market" />}>
-              <BlackMarketOpportunityScannerPage
+            {repositoryError ? (
+              <RepositoryError message={repositoryError} />
+            ) : selectedItem && repository ? (
+              <ItemDetailPanel
+                key={selectedItem.id}
+                item={selectedItem}
                 repository={repository}
-                onNavigate={navigateTo}
-                onOpenCrafting={openPreloadedCraftingItem}
+              />
+            ) : selectedItemId ? (
+              <ModuleFallback label="calculadora de producción" />
+            ) : (
+              <EmptyDetailState onBrowseCatalog={() => setIsCatalogOpen(true)} />
+            )}
+          </>
+        )}
+        {route === "refining" && (
+          <>
+            <ModuleHeader
+              eyebrow="Módulo de refinamiento"
+              title="Calculadora de refinamiento"
+              description="Un espacio dedicado a convertir recursos, retornos y tarifas de estación en costos netos y decisiones de venta claras."
+              badge="Próximamente"
+            />
+            <Suspense fallback={<ModuleFallback label="refinamiento" />}>
+              <RefiningComingSoonPage
+                onOpenCrafting={() => navigateModule("crafting")}
               />
             </Suspense>
-          ) : (
-            <ModuleFallback label="Black Market" />
-          )}
-        </>
-      )}
-      {route === "presets" && (
-        <>
-          <ModuleHeader
-            eyebrow="Biblioteca local"
-            title="Presets de producción"
-            description="Administra configuraciones frecuentes de ciudad, especialidad, foco, bono diario y Premium guardadas en este navegador."
-          />
-          <Suspense fallback={<ModuleFallback label="presets" />}>
-            <PresetLibraryPage
-              onOpenCrafting={() => navigateModule("crafting")}
+          </>
+        )}
+        {route === "black-market" && (
+          <>
+            <ModuleHeader
+              eyebrow="Mercado especial de Caerleon"
+              title="Black Market Opportunity Scanner"
+              description="Descubre comparaciones rentables entre ciudades y órdenes de compra del Black Market; abre cada resultado para validar su detalle económico e histórico."
+              badge="Pro"
             />
-          </Suspense>
-        </>
-      )}
-      {route === "plans" && (
-        <>
-          <ModuleHeader
-            eyebrow="Planes de acceso"
-            title="Free y Pro"
-            description="Compara límites y herramientas disponibles. El acceso efectivo siempre lo resuelve la API central mediante entitlements."
-          />
-          <Suspense fallback={<ModuleFallback label="planes" />}>
-            <PlansPage onNavigate={navigateTo} />
-          </Suspense>
-        </>
-      )}
-      {route === "account" && (
-        <>
-          <ModuleHeader
-            eyebrow="Cuenta"
-            title="Perfil y permisos"
-            description="Consulta tu identidad autenticada, plan efectivo y capacidades habilitadas por la API central."
-          />
-          <Suspense fallback={<ModuleFallback label="cuenta" />}>
-            <AccountPage onNavigate={navigateTo} />
-          </Suspense>
-        </>
-      )}
-      {route === "profile" && (
-        <>
-          <ModuleHeader
-            eyebrow="Mi perfil"
-            title="Estadísticas de Albion"
-            description="Vincula un personaje público, consulta tu resumen PvP y revisa la actividad reciente."
-          />
-          <Suspense fallback={<ModuleFallback label="perfil de Albion" />}>
-            <PlayerProfilePage onNavigate={navigateTo} />
-          </Suspense>
-        </>
-      )}
-      {route === "admin" && (
-        <>
-          <ModuleHeader
-            eyebrow="Administración segura"
-            title="Usuarios y acceso Pro"
-            description="Gestiona grants manuales, revisa suscripciones y consulta la auditoría. Cada operación se autoriza en la API central."
-          />
-          <Suspense fallback={<ModuleFallback label="administración" />}>
-            <AdminPage onNavigate={navigateTo} />
-          </Suspense>
-        </>
-      )}
-    </AppShell>
+            {repositoryError ? (
+              <RepositoryError message={repositoryError} />
+            ) : repository ? (
+              <Suspense fallback={<ModuleFallback label="Black Market" />}>
+                <BlackMarketOpportunityScannerPage
+                  repository={repository}
+                  onNavigate={navigateTo}
+                  onOpenCrafting={openPreloadedCraftingItem}
+                />
+              </Suspense>
+            ) : (
+              <ModuleFallback label="Black Market" />
+            )}
+          </>
+        )}
+        {route === "presets" && (
+          <>
+            <ModuleHeader
+              eyebrow="Biblioteca local"
+              title="Presets de producción"
+              description="Administra configuraciones frecuentes de ciudad, especialidad, foco, bono diario y Premium guardadas en este navegador."
+            />
+            <Suspense fallback={<ModuleFallback label="presets" />}>
+              <PresetLibraryPage
+                onOpenCrafting={() => navigateModule("crafting")}
+              />
+            </Suspense>
+          </>
+        )}
+        {route === "plans" && (
+          <>
+            <ModuleHeader
+              eyebrow="Planes de acceso"
+              title="Free y Pro"
+              description="Compara límites y herramientas disponibles. El acceso efectivo siempre lo resuelve la API central mediante entitlements."
+            />
+            <Suspense fallback={<ModuleFallback label="planes" />}>
+              <PlansPage onNavigate={navigateTo} />
+            </Suspense>
+          </>
+        )}
+        {route === "account" && (
+          <>
+            <ModuleHeader
+              eyebrow="Cuenta"
+              title="Perfil y permisos"
+              description="Consulta tu identidad autenticada, plan efectivo y capacidades habilitadas por la API central."
+            />
+            <Suspense fallback={<ModuleFallback label="cuenta" />}>
+              <AccountPage onNavigate={navigateTo} />
+            </Suspense>
+          </>
+        )}
+        {route === "profile" && (
+          <>
+            <ModuleHeader
+              eyebrow="Mi perfil"
+              title="Estadísticas de Albion"
+              description="Vincula un personaje público, consulta tu resumen PvP y revisa la actividad reciente."
+            />
+            <Suspense fallback={<ModuleFallback label="perfil de Albion" />}>
+              <PlayerProfilePage onNavigate={navigateTo} />
+            </Suspense>
+          </>
+        )}
+        {route === "admin" && (
+          <>
+            <ModuleHeader
+              eyebrow="Administración segura"
+              title="Usuarios y acceso Pro"
+              description="Gestiona grants manuales, revisa suscripciones y consulta la auditoría. Cada operación se autoriza en la API central."
+            />
+            <Suspense fallback={<ModuleFallback label="administración" />}>
+              <AdminPage onNavigate={navigateTo} />
+            </Suspense>
+          </>
+        )}
+      </AppShell>
+    </>
   );
 }
 

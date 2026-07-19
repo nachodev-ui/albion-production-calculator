@@ -4,9 +4,9 @@
   "reportPath": "artifacts/performance/bundle-report.json",
   "budgets": {
     "totalRawBytes": 3800000,
-    "totalGzipBytes": 366000,
+    "totalGzipBytes": 375000,
     "javascriptRawBytes": 3600000,
-    "javascriptGzipBytes": 335000,
+    "javascriptGzipBytes": 336000,
     "cssRawBytes": 90000,
     "cssGzipBytes": 20000,
     "largestFileRawBytes": 3000000,
