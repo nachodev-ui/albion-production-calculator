@@ -9,6 +9,7 @@
   "routes": {
     "crafting": {
       "path": "/",
+      "aliases": ["/crafting"],
       "title": "Calculadora de Crafteo Albion Online | Albion Calculator",
       "description": "Calcula el costo real de fabricar en Albion Online con retorno de materiales, foco, tarifas, impuestos, precios por ciudad y ganancia neta.",
       "index": true,
