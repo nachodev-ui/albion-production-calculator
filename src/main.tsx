@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { AccountSessionProvider } from "@features/account/context/AccountSessionContext";
 import { CalculationPrintPage } from "@features/craft-calculator/components/summary/CalculationPrintPage";
+import { SeoMetadata } from "./app/seo";
 import "./index.css";
 import App from "./App.tsx";
 
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
       <CalculationPrintPage token={printToken} />
     ) : (
       <AccountSessionProvider>
+        <SeoMetadata />
         <App />
       </AccountSessionProvider>
     )}
