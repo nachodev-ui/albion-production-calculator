@@ -48,6 +48,27 @@
       "schemaType": "WebPage",
       "schemaName": "Presets de Producción"
     },
+    "guides": {
+      "path": "/guias",
+      "title": "Guías de Economía de Albion Online | Albion Calculator",
+      "description": "Explora guías prácticas sobre rentabilidad de crafteo, retorno de materiales y Black Market de Caerleon, con fórmulas y enlaces a las calculadoras.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "schemaType": "CollectionPage",
+      "schemaName": "Guías de economía de Albion Online",
+      "dateModified": "2026-07-19",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Guías",
+          "path": "/guias"
+        }
+      ]
+    },
     "plans": {
       "path": "/plans",
       "title": "Planes Free y Pro para Albion Online | Albion Calculator",
@@ -98,7 +119,21 @@
       "schemaType": "Article",
       "schemaName": "Cómo calcular la rentabilidad de crafteo en Albion Online",
       "datePublished": "2026-07-19",
-      "dateModified": "2026-07-19"
+      "dateModified": "2026-07-19",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Guías",
+          "path": "/guias"
+        },
+        {
+          "name": "Rentabilidad de crafteo",
+          "path": "/guias/rentabilidad-crafteo-albion-online"
+        }
+      ]
     },
     "guide-resource-return-rate": {
       "path": "/guias/retorno-materiales-rrr-albion-online",
@@ -110,7 +145,21 @@
       "schemaType": "Article",
       "schemaName": "Retorno de materiales RRR en Albion Online: fórmula y ejemplos",
       "datePublished": "2026-07-19",
-      "dateModified": "2026-07-19"
+      "dateModified": "2026-07-19",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Guías",
+          "path": "/guias"
+        },
+        {
+          "name": "Retorno de materiales RRR",
+          "path": "/guias/retorno-materiales-rrr-albion-online"
+        }
+      ]
     },
     "guide-black-market-profit": {
       "path": "/guias/black-market-caerleon-rentable",
@@ -122,7 +171,21 @@
       "schemaType": "Article",
       "schemaName": "Cómo saber si vender en el Black Market de Caerleon es rentable",
       "datePublished": "2026-07-19",
-      "dateModified": "2026-07-19"
+      "dateModified": "2026-07-19",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Guías",
+          "path": "/guias"
+        },
+        {
+          "name": "Black Market de Caerleon",
+          "path": "/guias/black-market-caerleon-rentable"
+        }
+      ]
     }
   }
 }
