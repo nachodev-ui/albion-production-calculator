@@ -9,7 +9,9 @@
   "routes": {
     "crafting": {
       "path": "/",
-      "aliases": ["/crafting"],
+      "aliases": [
+        "/crafting"
+      ],
       "title": "Calculadora de Crafteo Albion Online | Albion Calculator",
       "description": "Calcula el costo real de fabricar en Albion Online con retorno de materiales, foco, tarifas, impuestos, precios por ciudad y ganancia neta.",
       "index": true,
@@ -133,7 +135,13 @@
           "name": "Rentabilidad de crafteo",
           "path": "/guias/rentabilidad-crafteo-albion-online"
         }
-      ]
+      ],
+      "images": [
+        "/images/guides/rentabilidad-crafteo-1x1.png",
+        "/images/guides/rentabilidad-crafteo-4x3.png",
+        "/images/guides/rentabilidad-crafteo-16x9.png"
+      ],
+      "imageAlt": "Resumen ilustrativo de rentabilidad de crafteo con ingreso neto, costo efectivo, retorno, beneficio y ROI"
     },
     "guide-resource-return-rate": {
       "path": "/guias/retorno-materiales-rrr-albion-online",
@@ -159,7 +167,13 @@
           "name": "Retorno de materiales RRR",
           "path": "/guias/retorno-materiales-rrr-albion-online"
         }
-      ]
+      ],
+      "images": [
+        "/images/guides/retorno-materiales-rrr-1x1.png",
+        "/images/guides/retorno-materiales-rrr-4x3.png",
+        "/images/guides/retorno-materiales-rrr-16x9.png"
+      ],
+      "imageAlt": "Ejemplo de materiales requeridos, devueltos y consumidos después de aplicar el RRR en Albion Online"
     },
     "guide-black-market-profit": {
       "path": "/guias/black-market-caerleon-rentable",
@@ -185,7 +199,13 @@
           "name": "Black Market de Caerleon",
           "path": "/guias/black-market-caerleon-rentable"
         }
-      ]
+      ],
+      "images": [
+        "/images/guides/black-market-caerleon-1x1.png",
+        "/images/guides/black-market-caerleon-4x3.png",
+        "/images/guides/black-market-caerleon-16x9.png"
+      ],
+      "imageAlt": "Comparación ilustrativa entre comprar y transportar o fabricar con RRR para vender en el Black Market de Caerleon"
     }
   }
 }

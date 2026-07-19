@@ -198,7 +198,7 @@ function profitabilityScene(format) {
         .bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, ${palette.accent}, #f0cf77); }
         .annotation { margin-top: auto; border-left: 3px solid ${palette.accent}; background: ${palette.accentMuted}; border-radius: 0 14px 14px 0; padding: 14px 16px; color: ${palette.muted}; font-size: 13px; line-height: 1.45; }
         .${ratioClass(format)}.profitability .profit-grid { ${format.suffix === "1x1" ? "grid-template-rows: 1.12fr .88fr;" : ""} }
-        .${ratioClass(format)}.profitability .breakdown { ${format.suffix === "1x1" ? "display:none;" : ""} }
+        .${ratioClass(format)}.profitability .breakdown { ${compact ? "display:none;" : ""} }
       `,
       body: `
         <div class="profit-grid">
@@ -311,7 +311,7 @@ function blackMarketScene(format) {
       description:
         "La misma orden puede producir resultados distintos según el costo de compra, el RRR y el capital comprometido.",
       css: `
-        .bm-layout { height:100%; display:grid; grid-template-columns:${square ? "1fr" : "repeat(2, 1fr)"}; gap:18px; }
+        .bm-layout { height:100%; display:grid; grid-template-columns:repeat(2, 1fr); gap:18px; }
         .strategy { padding:${square ? 20 : 28}px; display:flex; flex-direction:column; position:relative; }
         .strategy.winner { border-color:rgba(120,211,155,.55); background:linear-gradient(155deg, rgba(39,57,43,.82), rgba(31,27,20,.96)); }
         .strategy-tag { width:max-content; border:1px solid ${palette.border}; border-radius:999px; padding:7px 10px; color:${palette.faint}; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; }
@@ -325,7 +325,7 @@ function blackMarketScene(format) {
         .strategy-result span { display:block; color:${palette.faint}; font-size:10px; }
         .strategy-result strong { display:block; margin-top:5px; font-size:${square ? 21 : 25}px; }
         .winner-ribbon { position:absolute; top:20px; right:20px; color:${palette.positive}; font-size:11px; font-weight:800; }
-        .${ratioClass(format)}.black-market .bm-layout { ${square ? "grid-template-rows:1fr 1fr;" : ""} }
+        .${ratioClass(format)}.black-market .bm-layout { }
       `,
       body: `
         <div class="bm-layout">
