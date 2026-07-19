@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { routeFromPathname } from "./routing";
 import type { AppRoute } from "./types";
 
 const SITE_NAME = "Albion Calculator";
@@ -68,6 +69,11 @@ const ROUTE_SEO: Readonly<Record<AppRoute, RouteSeoConfig>> = {
   },
 };
 
+function currentRoute(): AppRoute {
+  if (typeof window === "undefined") return "crafting";
+  return routeFromPathname(window.location.pathname);
+}
+
 function setMeta(selector: string, attribute: string, value: string): void {
   let element = document.head.querySelector<HTMLMetaElement>(selector);
   if (!element) {
@@ -128,4 +134,18 @@ export function useRouteSeo(route: AppRoute): void {
   useEffect(() => {
     applyRouteSeo(route);
   }, [route]);
+}
+
+export function SeoMetadata() {
+  const [route, setRoute] = useState<AppRoute>(currentRoute);
+
+  useRouteSeo(route);
+
+  useEffect(() => {
+    const handleRouteChange = () => setRoute(currentRoute());
+    window.addEventListener("popstate", handleRouteChange);
+    return () => window.removeEventListener("popstate", handleRouteChange);
+  }, []);
+
+  return null;
 }
