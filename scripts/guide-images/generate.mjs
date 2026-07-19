@@ -14,6 +14,7 @@ const formats = [
 
 const iconUrl = (identifier) =>
   `https://render.albiononline.com/v1/item/${identifier}.png?size=217`;
+const ratioClass = (format) => `ratio-${format.suffix}`;
 
 const icons = {
   item: iconUrl("T6_MAIN_SWORD"),
@@ -137,7 +138,7 @@ function frame(content, format, scene) {
 </style>
 </head>
 <body>
-  <main class="canvas ${scene} ${format.suffix}">
+  <main class="canvas ${scene} ${ratioClass(format)}">
     <div class="topbar">
       <div class="brand">
         <div class="brand-mark">⚒</div>
@@ -196,8 +197,8 @@ function profitabilityScene(format) {
         .bar { margin-top: 10px; height: 8px; border-radius: 999px; background: rgba(143,131,114,.15); overflow: hidden; }
         .bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, ${palette.accent}, #f0cf77); }
         .annotation { margin-top: auto; border-left: 3px solid ${palette.accent}; background: ${palette.accentMuted}; border-radius: 0 14px 14px 0; padding: 14px 16px; color: ${palette.muted}; font-size: 13px; line-height: 1.45; }
-        .${format.suffix}.profitability .profit-grid { ${format.suffix === "1x1" ? "grid-template-rows: 1.12fr .88fr;" : ""} }
-        .${format.suffix}.profitability .breakdown { ${format.suffix === "1x1" ? "display:none;" : ""} }
+        .${ratioClass(format)}.profitability .profit-grid { ${format.suffix === "1x1" ? "grid-template-rows: 1.12fr .88fr;" : ""} }
+        .${ratioClass(format)}.profitability .breakdown { ${format.suffix === "1x1" ? "display:none;" : ""} }
       `,
       body: `
         <div class="profit-grid">
@@ -258,9 +259,9 @@ function rrrScene(format) {
         .material-stat span { display:block; color:${palette.faint}; font-size:10px; }
         .material-stat strong { display:block; margin-top:5px; font-size:17px; }
         .rrr-note { margin-top:auto; padding:14px 16px; border-radius:14px; border:1px solid rgba(209,173,77,.3); background:${palette.accentMuted}; color:${palette.muted}; font-size:12px; line-height:1.45; }
-        .${format.suffix}.rrr .rrr-layout { ${square ? "grid-template-rows: .72fr 1.28fr;" : ""} }
-        .${format.suffix}.rrr .rate-card { ${square ? "flex-direction:row; gap:34px; text-align:left; padding:20px 30px;" : ""} }
-        .${format.suffix}.rrr .saving { ${square ? "margin-top:0;" : ""} }
+        .${ratioClass(format)}.rrr .rrr-layout { ${square ? "grid-template-rows: .72fr 1.28fr;" : ""} }
+        .${ratioClass(format)}.rrr .rate-card { ${square ? "flex-direction:row; gap:34px; text-align:left; padding:20px 30px;" : ""} }
+        .${ratioClass(format)}.rrr .saving { ${square ? "margin-top:0;" : ""} }
       `,
       body: `
         <div class="rrr-layout">
@@ -324,7 +325,7 @@ function blackMarketScene(format) {
         .strategy-result span { display:block; color:${palette.faint}; font-size:10px; }
         .strategy-result strong { display:block; margin-top:5px; font-size:${square ? 21 : 25}px; }
         .winner-ribbon { position:absolute; top:20px; right:20px; color:${palette.positive}; font-size:11px; font-weight:800; }
-        .${format.suffix}.black-market .bm-layout { ${square ? "grid-template-rows:1fr 1fr;" : ""} }
+        .${ratioClass(format)}.black-market .bm-layout { ${square ? "grid-template-rows:1fr 1fr;" : ""} }
       `,
       body: `
         <div class="bm-layout">
