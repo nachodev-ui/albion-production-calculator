@@ -95,7 +95,7 @@ function assertSecurityHeaders(): void {
     'Content-Security-Policy:',
     'X-Content-Type-Options: nosniff',
     'X-Frame-Options: DENY',
-    'Referrer-Policy: no-referrer',
+    'Referrer-Policy: strict-origin-when-cross-origin',
     'Permissions-Policy:',
     "object-src 'none'",
     "frame-ancestors 'none'",
@@ -105,6 +105,8 @@ function assertSecurityHeaders(): void {
     "img-src 'self' data: https:",
     "font-src 'self' https://fonts.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    'X-Robots-Tag: noindex, nofollow',
+    'Cache-Control: public, max-age=31536000, immutable',
   ]
 
   const missing = required.filter((entry) => !headers.includes(entry))
