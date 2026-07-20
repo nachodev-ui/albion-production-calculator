@@ -107,6 +107,7 @@ function assertSecurityHeaders(): void {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     'X-Robots-Tag: noindex, nofollow',
     'Cache-Control: public, max-age=31536000, immutable',
+    'Cache-Control: no-cache, no-store, must-revalidate',
   ]
 
   const missing = required.filter((entry) => !headers.includes(entry))
