@@ -15,7 +15,7 @@ import type {
 } from '@core/domain/entities/ProductionEconomy'
 import { createSavedCalculation } from '@features/account/api/savedDataApi'
 import { useAccountSession } from '@features/account/hooks/useAccountSession'
-import type { MarketQuality } from '@features/market-data/types/MarketPrice'
+import { useMarketDataStore } from '@features/market-data/store/marketDataStore'
 import { InfoHint } from '@shared/components/InfoHint'
 import {
   buildCalculationSummary,
@@ -39,7 +39,6 @@ interface CalculationSummaryActionsProps {
   readonly stationFeeConfig: StationFeeConfig
   readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly isPremium: boolean
-  readonly quality: MarketQuality
   readonly unitSellPrice: number | null
   readonly repository: ItemRepository
 }
@@ -87,11 +86,11 @@ export function CalculationSummaryActions({
   stationFeeConfig,
   craftingSpecializationConfig,
   isPremium,
-  quality,
   unitSellPrice,
   repository,
 }: CalculationSummaryActionsProps) {
   const { isAuthenticated, getAccessToken, login } = useAccountSession()
+  const quality = useMarketDataStore((state) => state.config.quality)
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
   const feedbackTimer = useRef<number | null>(null)
 
