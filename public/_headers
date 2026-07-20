@@ -11,6 +11,27 @@
 /assets/*.css
   Cache-Control: public, max-age=31536000, immutable
 
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/black-market
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/guias
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/guias/rentabilidad-crafteo-albion-online
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/guias/retorno-materiales-rrr-albion-online
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/guias/black-market-caerleon-rentable
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/plans
+  Cache-Control: no-cache, no-store, must-revalidate
+
 https://albion-production-calculator.pages.dev/*
   X-Robots-Tag: noindex, nofollow
   Link: <https://albioncalculator.app/:splat>; rel="canonical"
@@ -24,16 +45,21 @@ https://www.albioncalculator.app/*
   Link: <https://albioncalculator.app/:splat>; rel="canonical"
 
 /refining
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Robots-Tag: noindex, nofollow
 
 /presets
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Robots-Tag: noindex, nofollow
 
 /account
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Robots-Tag: noindex, nofollow
 
 /profile
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Robots-Tag: noindex, nofollow
 
 /admin
+  Cache-Control: no-cache, no-store, must-revalidate
   X-Robots-Tag: noindex, nofollow
