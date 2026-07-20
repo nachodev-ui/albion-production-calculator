@@ -2,16 +2,6 @@ import { accountAuthConfig } from '../config/accountAuthConfig'
 import type { CalculationSummarySnapshot } from '@features/craft-calculator/utils/calculationSummary'
 import type { CraftPreset } from '@features/craft-calculator/store/craftPresetStorage'
 
-export class SavedDataApiError extends Error {
-  readonly status: number
-
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = 'SavedDataApiError'
-    this.status = status
-  }
-}
-
 export interface CloudPreset {
   readonly id: string
   readonly name: string
@@ -41,38 +31,11 @@ interface CalculationWriteInput {
   readonly snapshot: CalculationSummarySnapshot
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function requiredString(value: unknown, field: string): string {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new SavedDataApiError(`Invalid saved data field: ${field}`, 502)
-  }
-  return value
-}
-
-function nullableString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0 ? value : null
-}
-
-async function responseMessage(response: Response): Promise<string> {
-  try {
-    const payload: unknown = await response.json()
-    if (isRecord(payload) && typeof payload['error'] === 'string') {
-      return payload['error']
-    }
-  } catch {
-    // Keep the generic message when the body is not JSON.
-  }
-  return `Saved data request failed with status ${response.status}`
-}
-
-async function request(
+async function request<T>(
   path: string,
   accessToken: string,
   options: RequestInit,
-): Promise<Response> {
+): Promise<T> {
   const response = await fetch(`${accountAuthConfig.centralApiBaseUrl}${path}`, {
     ...options,
     headers: {
@@ -85,85 +48,54 @@ async function request(
   })
 
   if (!response.ok) {
-    throw new SavedDataApiError(await responseMessage(response), response.status)
+    const payload = (await response.json().catch(() => null)) as {
+      readonly error?: string
+    } | null
+    throw new Error(payload?.error ?? `Error HTTP ${response.status}`)
   }
-  return response
-}
-
-function parseCloudPreset(value: unknown): CloudPreset {
-  if (!isRecord(value) || !isRecord(value['payload'])) {
-    throw new SavedDataApiError('Invalid cloud preset response', 502)
-  }
-  return {
-    id: requiredString(value['id'], 'preset.id'),
-    name: requiredString(value['name'], 'preset.name'),
-    payload: value['payload'] as unknown as CraftPreset,
-    isDefault: value['isDefault'] === true,
-    createdAt: requiredString(value['createdAt'], 'preset.createdAt'),
-    updatedAt: requiredString(value['updatedAt'], 'preset.updatedAt'),
-  }
-}
-
-function parseSavedCalculation(value: unknown): SavedCalculation {
-  if (!isRecord(value) || !isRecord(value['snapshot'])) {
-    throw new SavedDataApiError('Invalid saved calculation response', 502)
-  }
-  return {
-    id: requiredString(value['id'], 'calculation.id'),
-    name: nullableString(value['name']),
-    kind: requiredString(value['kind'], 'calculation.kind'),
-    snapshot: value['snapshot'] as unknown as CalculationSummarySnapshot,
-    createdAt: requiredString(value['createdAt'], 'calculation.createdAt'),
-  }
+  if (response.status === 204) return undefined as T
+  return (await response.json()) as T
 }
 
 export async function fetchCloudPresets(
   accessToken: string,
   signal?: AbortSignal,
 ): Promise<readonly CloudPreset[]> {
-  const response = await request('/me/presets', accessToken, {
-    method: 'GET',
-    signal,
-  })
-  const payload: unknown = await response.json()
-  if (!isRecord(payload) || !Array.isArray(payload['presets'])) {
-    throw new SavedDataApiError('Invalid cloud preset list response', 502)
-  }
-  return payload['presets'].map(parseCloudPreset)
+  const payload = await request<{ readonly presets: readonly CloudPreset[] }>(
+    '/me/presets',
+    accessToken,
+    { method: 'GET', signal },
+  )
+  return payload.presets
 }
 
-export async function createCloudPreset(
+export function createCloudPreset(
   accessToken: string,
   input: PresetWriteInput,
 ): Promise<CloudPreset> {
-  const response = await request('/me/presets', accessToken, {
+  return request('/me/presets', accessToken, {
     method: 'POST',
     body: JSON.stringify(input),
   })
-  return parseCloudPreset(await response.json())
 }
 
-export async function updateCloudPreset(
+export function updateCloudPreset(
   accessToken: string,
   cloudPresetId: string,
   input: PresetWriteInput,
 ): Promise<CloudPreset> {
-  const response = await request(
+  return request(
     `/me/presets/${encodeURIComponent(cloudPresetId)}`,
     accessToken,
-    {
-      method: 'PUT',
-      body: JSON.stringify(input),
-    },
+    { method: 'PUT', body: JSON.stringify(input) },
   )
-  return parseCloudPreset(await response.json())
 }
 
-export async function deleteCloudPreset(
+export function deleteCloudPreset(
   accessToken: string,
   cloudPresetId: string,
 ): Promise<void> {
-  await request(`/me/presets/${encodeURIComponent(cloudPresetId)}`, accessToken, {
+  return request(`/me/presets/${encodeURIComponent(cloudPresetId)}`, accessToken, {
     method: 'DELETE',
   })
 }
@@ -173,34 +105,31 @@ export async function fetchSavedCalculations(
   limit = 50,
   signal?: AbortSignal,
 ): Promise<readonly SavedCalculation[]> {
-  const response = await request(
+  const payload = await request<{
+    readonly calculations: readonly SavedCalculation[]
+  }>(
     `/me/calculations?limit=${encodeURIComponent(String(limit))}`,
     accessToken,
     { method: 'GET', signal },
   )
-  const payload: unknown = await response.json()
-  if (!isRecord(payload) || !Array.isArray(payload['calculations'])) {
-    throw new SavedDataApiError('Invalid saved calculation list response', 502)
-  }
-  return payload['calculations'].map(parseSavedCalculation)
+  return payload.calculations
 }
 
-export async function createSavedCalculation(
+export function createSavedCalculation(
   accessToken: string,
   input: CalculationWriteInput,
 ): Promise<SavedCalculation> {
-  const response = await request('/me/calculations', accessToken, {
+  return request('/me/calculations', accessToken, {
     method: 'POST',
     body: JSON.stringify(input),
   })
-  return parseSavedCalculation(await response.json())
 }
 
-export async function deleteSavedCalculation(
+export function deleteSavedCalculation(
   accessToken: string,
   calculationId: string,
 ): Promise<void> {
-  await request(
+  return request(
     `/me/calculations/${encodeURIComponent(calculationId)}`,
     accessToken,
     { method: 'DELETE' },
