@@ -15,4 +15,20 @@ export default defineConfig({
       '@shared': path.resolve(__dirname, './src/shared'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (
+            id.includes('/src/features/account/') ||
+            id.includes('/src/features/admin/') ||
+            id.includes('/src/features/presets/')
+          ) {
+            return 'account-library'
+          }
+          if (id.includes('/src/features/seo-content/')) return 'guides'
+        },
+      },
+    },
+  },
 })
