@@ -3,6 +3,8 @@ import type {
   BlackMarketCategory,
   BlackMarketOpportunityFilters,
   BlackMarketOpportunitySort,
+  BlackMarketStrategyFilter,
+  BlackMarketStrategySort,
 } from "../types";
 
 export const BLACK_MARKET_SCANNER_STORAGE_KEY =
@@ -29,6 +31,15 @@ export const DEFAULT_BLACK_MARKET_SCANNER_FILTERS: BlackMarketOpportunityFilters
     maximumBlackMarketAgeMinutes: 20,
     salesTaxPercent: 4,
     transportCostPerUnit: 0,
+    focusValuePerPoint: 0,
+    lowerQualityFallbackPercent: 0,
+    materialTransportCostPerBatch: 0,
+    finishedTransportCostPerUnit: 0,
+    escortCostPerBatch: 0,
+    deathProbabilityPercent: 0,
+    timeCostPerBatch: 0,
+    strategyFilter: "all",
+    strategySort: "best-profit",
     sort: "profit",
     limit: 100,
   };
@@ -59,6 +70,24 @@ function isServer(value: unknown): value is AlbionServer {
 
 function isSort(value: unknown): value is BlackMarketOpportunitySort {
   return value === "profit" || value === "roi" || value === "freshness";
+}
+
+function isStrategyFilter(value: unknown): value is BlackMarketStrategyFilter {
+  return (
+    value === "all" ||
+    value === "buy-finished" ||
+    value === "craft-without-focus" ||
+    value === "craft-with-focus"
+  );
+}
+
+function isStrategySort(value: unknown): value is BlackMarketStrategySort {
+  return (
+    value === "api" ||
+    value === "best-profit" ||
+    value === "best-roi" ||
+    value === "advantage"
+  );
 }
 
 function numberArray(
@@ -115,7 +144,7 @@ export function parseBlackMarketScannerFilters(
 ): BlackMarketOpportunityFilters {
   if (
     !isRecord(value) ||
-    value["version"] !== 1 ||
+    (value["version"] !== 1 && value["version"] !== 2) ||
     !isRecord(value["filters"])
   ) {
     return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
@@ -169,10 +198,61 @@ export function parseBlackMarketScannerFilters(
     transportCostPerUnit: Math.floor(
       boundedNumber(raw["transportCostPerUnit"], 0, 0, 1_000_000_000_000),
     ),
+    focusValuePerPoint: boundedNumber(
+      raw["focusValuePerPoint"],
+      0,
+      0,
+      1_000_000,
+    ),
+    lowerQualityFallbackPercent: boundedNumber(
+      raw["lowerQualityFallbackPercent"],
+      0,
+      0,
+      100,
+    ),
+    materialTransportCostPerBatch: Math.floor(
+      boundedNumber(
+        raw["materialTransportCostPerBatch"],
+        0,
+        0,
+        1_000_000_000_000,
+      ),
+    ),
+    finishedTransportCostPerUnit: Math.floor(
+      boundedNumber(
+        raw["finishedTransportCostPerUnit"],
+        0,
+        0,
+        1_000_000_000_000,
+      ),
+    ),
+    escortCostPerBatch: Math.floor(
+      boundedNumber(
+        raw["escortCostPerBatch"],
+        0,
+        0,
+        1_000_000_000_000,
+      ),
+    ),
+    deathProbabilityPercent: boundedNumber(
+      raw["deathProbabilityPercent"],
+      0,
+      0,
+      100,
+    ),
+    timeCostPerBatch: Math.floor(
+      boundedNumber(raw["timeCostPerBatch"], 0, 0, 1_000_000_000_000),
+    ),
+    strategyFilter: isStrategyFilter(raw["strategyFilter"])
+      ? raw["strategyFilter"]
+      : DEFAULT_BLACK_MARKET_SCANNER_FILTERS.strategyFilter,
+    strategySort: isStrategySort(raw["strategySort"])
+      ? raw["strategySort"]
+      : DEFAULT_BLACK_MARKET_SCANNER_FILTERS.strategySort,
     sort: isSort(raw["sort"])
       ? raw["sort"]
       : DEFAULT_BLACK_MARKET_SCANNER_FILTERS.sort,
-    limit: Math.floor(boundedNumber(raw["limit"], 100, 25, 500)),
+    limit: Math.floor(boundedNumber(raw["limit"], 100, 25, 100)),
   };
 }
 
@@ -196,7 +276,7 @@ export function saveBlackMarketScannerFilters(
   try {
     window.localStorage.setItem(
       BLACK_MARKET_SCANNER_STORAGE_KEY,
-      JSON.stringify({ version: 1, filters }),
+      JSON.stringify({ version: 2, filters }),
     );
   } catch {
     // Keep scanner available if browser storage is unavailable.
