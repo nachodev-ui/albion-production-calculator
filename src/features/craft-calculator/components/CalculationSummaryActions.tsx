@@ -15,6 +15,7 @@ import type {
 } from '@core/domain/entities/ProductionEconomy'
 import { createSavedCalculation } from '@features/account/api/savedDataApi'
 import { useAccountSession } from '@features/account/hooks/useAccountSession'
+import type { MarketQuality } from '@features/market-data/types/MarketPrice'
 import { InfoHint } from '@shared/components/InfoHint'
 import {
   buildCalculationSummary,
@@ -22,6 +23,10 @@ import {
   createCalculationSummarySnapshot,
 } from '../utils/calculationSummary'
 import type { CalculationSummaryInput } from '../utils/calculationSummary'
+import {
+  collectUsedMaterialPrices,
+  type SavedCalculationSnapshot,
+} from '../utils/savedCalculationSnapshot'
 import { createSharedCalculationUrl } from '../utils/sharedCalculation'
 import { saveCalculationPrintSummary } from '../utils/printSummaryStorage'
 
@@ -34,6 +39,7 @@ interface CalculationSummaryActionsProps {
   readonly stationFeeConfig: StationFeeConfig
   readonly craftingSpecializationConfig: CraftingSpecializationConfig
   readonly isPremium: boolean
+  readonly quality: MarketQuality
   readonly unitSellPrice: number | null
   readonly repository: ItemRepository
 }
@@ -81,6 +87,7 @@ export function CalculationSummaryActions({
   stationFeeConfig,
   craftingSpecializationConfig,
   isPremium,
+  quality,
   unitSellPrice,
   repository,
 }: CalculationSummaryActionsProps) {
@@ -175,6 +182,14 @@ export function CalculationSummaryActions({
     }
   }
 
+  function createSnapshot(): SavedCalculationSnapshot {
+    return {
+      ...createCalculationSummarySnapshot(createSummaryInput()),
+      quality,
+      usedPrices: collectUsedMaterialPrices(calculation.root, repository),
+    }
+  }
+
   function createSummary(): string {
     return buildCalculationSummary(createSummaryInput())
   }
@@ -220,8 +235,7 @@ export function CalculationSummaryActions({
 
   function handlePrint() {
     try {
-      const snapshot = createCalculationSummarySnapshot(createSummaryInput())
-      const token = saveCalculationPrintSummary(snapshot)
+      const token = saveCalculationPrintSummary(createSnapshot())
       const printUrl = new URL(window.location.href)
 
       printUrl.hash = ''
@@ -258,7 +272,7 @@ export function CalculationSummaryActions({
       await createSavedCalculation(accessToken, {
         name: `${item.name} ${level}`,
         kind: 'craft',
-        snapshot: createCalculationSummarySnapshot(createSummaryInput()),
+        snapshot: createSnapshot(),
       })
       showFeedback('saved')
     } catch {
@@ -268,9 +282,7 @@ export function CalculationSummaryActions({
 
   async function handleShareLink() {
     try {
-      const url = await createSharedCalculationUrl(
-        createCalculationSummarySnapshot(createSummaryInput()),
-      )
+      const url = await createSharedCalculationUrl(createSnapshot())
       await copyText(url)
       showFeedback('link-copied')
     } catch {
@@ -308,13 +320,13 @@ export function CalculationSummaryActions({
 
             <InfoHint
               label="Guardar y compartir cálculo"
-              text="Guarda una captura completa en tu cuenta o crea un enlace que conserva el objeto, los precios utilizados, la configuración, el RRR y el resultado económico."
+              text="Guarda una captura completa en tu cuenta o crea un enlace que conserva el objeto, la calidad, los precios utilizados, la configuración, el RRR y el resultado económico."
               align="left"
             />
           </div>
 
           <p className="mt-1 text-xs leading-relaxed text-text-faint">
-            El enlace contiene una captura comprimida; no publica tu cuenta ni tus
+            El enlace contiene una captura compacta; no publica tu cuenta ni tus
             presets privados.
           </p>
 
