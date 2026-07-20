@@ -1,4 +1,4 @@
-import type { CalculationSummarySnapshot } from './calculationSummary'
+import type { SavedCalculationSnapshot } from './savedCalculationSnapshot'
 
 function encode(value: string): string {
   return btoa(unescape(encodeURIComponent(value)))
@@ -14,8 +14,8 @@ function decode(value: string): string {
 
 export function isCalculationSummarySnapshot(
   value: unknown,
-): value is CalculationSummarySnapshot {
-  const summary = value as Partial<CalculationSummarySnapshot> | null
+): value is SavedCalculationSnapshot {
+  const summary = value as Partial<SavedCalculationSnapshot> | null
   return Boolean(
     summary &&
       typeof summary.itemName === 'string' &&
@@ -26,14 +26,14 @@ export function isCalculationSummarySnapshot(
 }
 
 export async function encodeSharedCalculation(
-  summary: CalculationSummarySnapshot,
+  summary: SavedCalculationSnapshot,
 ): Promise<string> {
   return encode(JSON.stringify(summary))
 }
 
 export async function decodeSharedCalculation(
   token: string,
-): Promise<CalculationSummarySnapshot> {
+): Promise<SavedCalculationSnapshot> {
   const summary: unknown = JSON.parse(decode(token))
   if (!isCalculationSummarySnapshot(summary)) {
     throw new Error('El cálculo compartido está incompleto o dañado.')
@@ -42,7 +42,7 @@ export async function decodeSharedCalculation(
 }
 
 export async function createSharedCalculationUrl(
-  summary: CalculationSummarySnapshot,
+  summary: SavedCalculationSnapshot,
 ): Promise<string> {
   const url = new URL(window.location.origin)
   url.searchParams.set('c', await encodeSharedCalculation(summary))
