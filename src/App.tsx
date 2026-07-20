@@ -293,11 +293,11 @@ function App() {
         {route === "presets" && (
           <>
             <ModuleHeader
-              eyebrow="Biblioteca local"
-              title="Presets de producción"
-              description="Administra configuraciones frecuentes de ciudad, especialidad, foco, bono diario y Premium guardadas en este navegador."
+              eyebrow="Biblioteca de la cuenta"
+              title="Presets e historial"
+              description="Administra configuraciones reutilizables y capturas completas de cálculos. Con una cuenta iniciada, la biblioteca se sincroniza entre dispositivos."
             />
-            <Suspense fallback={<ModuleFallback label="presets" />}>
+            <Suspense fallback={<ModuleFallback label="biblioteca" />}>
               <PresetLibraryPage
                 onOpenCrafting={() => navigateModule("crafting")}
               />

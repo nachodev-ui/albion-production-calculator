@@ -20,7 +20,12 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/features/admin/components/AdminPage.tsx'],
+    files: [
+      'src/features/admin/components/AdminPage.tsx',
+      'src/features/presets/components/CloudPresetSync.tsx',
+      'src/features/presets/components/SavedCalculationHistory.tsx',
+      'src/features/craft-calculator/components/summary/CalculationPrintPage.tsx',
+    ],
     rules: {
       'react-hooks/set-state-in-effect': 'off',
     },

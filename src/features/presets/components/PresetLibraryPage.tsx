@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { CITIES } from '@core/domain/entities/City'
+import {
+  DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
+  DEFAULT_STATION_FEE_CONFIG,
+} from '@core/domain/entities/ProductionEconomy'
+import { useAccountSession } from '@features/account/hooks/useAccountSession'
 import { useCraftPresetStore } from '@features/craft-calculator/store/craftPresetStore'
 import { applyPresetProductionConfig } from '@features/craft-calculator/store/craftPresetStorage'
-import { DEFAULT_CRAFTING_SPECIALIZATION_CONFIG, DEFAULT_STATION_FEE_CONFIG } from '@core/domain/entities/ProductionEconomy'
 import { useCraftTreeStore } from '@features/craft-calculator/store/craftTreeStore'
 import { ArrowRightIcon, PresetIcon } from '../../../app/AppIcons'
+import { SavedCalculationHistory } from './SavedCalculationHistory'
 
 interface PresetLibraryPageProps {
   readonly onOpenCrafting: () => void
@@ -15,19 +20,26 @@ function yesNo(value: boolean): string {
 }
 
 export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
+  const { isAuthenticated, isLoading, login } = useAccountSession()
   const presets = useCraftPresetStore((state) => state.presets)
   const defaultPresetId = useCraftPresetStore((state) => state.defaultPresetId)
   const setDefaultPreset = useCraftPresetStore((state) => state.setDefaultPreset)
   const deletePreset = useCraftPresetStore((state) => state.deletePreset)
   const setActivePreset = useCraftPresetStore((state) => state.setActivePreset)
   const productionConfig = useCraftTreeStore((state) => state.productionConfig)
-  const setProductionConfig = useCraftTreeStore((state) => state.setProductionConfig)
+  const setProductionConfig = useCraftTreeStore(
+    (state) => state.setProductionConfig,
+  )
   const setIsPremium = useCraftTreeStore((state) => state.setIsPremium)
-  const setStationFeeConfig = useCraftTreeStore((state) => state.setStationFeeConfig)
+  const setStationFeeConfig = useCraftTreeStore(
+    (state) => state.setStationFeeConfig,
+  )
   const setCraftingSpecializationConfig = useCraftTreeStore(
     (state) => state.setCraftingSpecializationConfig,
   )
-  const [deleteConfirmationId, setDeleteConfirmationId] = useState<string | null>(null)
+  const [deleteConfirmationId, setDeleteConfirmationId] = useState<
+    string | null
+  >(null)
 
   function openPresetInCrafting(presetId: string) {
     const preset = presets.find((candidate) => candidate.id === presetId)
@@ -37,7 +49,9 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
       applyPresetProductionConfig(productionConfig, preset.productionConfig),
     )
     setIsPremium(preset.isPremium)
-    setStationFeeConfig(preset.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG)
+    setStationFeeConfig(
+      preset.stationFeeConfig ?? DEFAULT_STATION_FEE_CONFIG,
+    )
     setCraftingSpecializationConfig(
       preset.craftingSpecializationConfig ??
         DEFAULT_CRAFTING_SPECIALIZATION_CONFIG,
@@ -46,6 +60,12 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
     onOpenCrafting()
   }
 
+  const storageDescription = isLoading
+    ? 'Comprobando la sesión y la biblioteca…'
+    : isAuthenticated
+      ? 'Sincronizados con tu cuenta para usarlos en otros dispositivos.'
+      : 'Se almacenan únicamente en este navegador hasta que inicies sesión.'
+
   return (
     <div className="mx-auto w-full max-w-7xl px-5 pb-14 pt-2 sm:px-6">
       {presets.length === 0 ? (
@@ -53,43 +73,72 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-accent-border bg-accent-muted text-accent">
             <PresetIcon className="h-7 w-7" />
           </span>
-          <h3 className="mt-5 font-display text-2xl text-text">Aún no tienes presets guardados</h3>
+          <h3 className="mt-5 font-display text-2xl text-text">
+            Aún no tienes presets guardados
+          </h3>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-text-muted">
-            Crea un preset desde la configuración de producción para guardar ciudad, foco, tarifas del puesto, bonos pasivos y estado Premium.
+            Crea un preset desde la configuración de producción para guardar
+            ciudad, foco, tarifas del puesto, bonos pasivos y estado Premium.
           </p>
-          <button
-            type="button"
-            onClick={onOpenCrafting}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-          >
-            Ir a Crafteo
-            <ArrowRightIcon className="h-4 w-4" />
-          </button>
+          <p className="mt-2 text-xs text-text-faint">{storageDescription}</p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenCrafting}
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+            >
+              Ir a Crafteo
+              <ArrowRightIcon className="h-4 w-4" />
+            </button>
+            {!isLoading && !isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => void login()}
+                className="rounded-xl border border-border bg-surface-raised px-4 py-2.5 text-sm font-medium text-text-muted hover:border-border-strong hover:text-text"
+              >
+                Iniciar sesión para sincronizar
+              </button>
+            )}
+          </div>
         </section>
       ) : (
         <>
           <div className="mb-5 flex flex-col gap-3 rounded-xl border border-border bg-surface/72 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-text">
-                {presets.length} preset{presets.length === 1 ? '' : 's'} guardado{presets.length === 1 ? '' : 's'}
+                {presets.length} preset{presets.length === 1 ? '' : 's'} guardado
+                {presets.length === 1 ? '' : 's'}
               </p>
               <p className="mt-0.5 text-xs text-text-faint">
-                Se almacenan únicamente en este navegador.
+                {storageDescription}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onOpenCrafting}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-text-muted hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-            >
-              Crear o editar en Crafteo
-              <ArrowRightIcon className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {!isLoading && !isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => void login()}
+                  className="rounded-lg border border-accent-border bg-accent-muted px-3 py-2 text-xs font-medium text-accent"
+                >
+                  Sincronizar con mi cuenta
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onOpenCrafting}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs font-medium text-text-muted hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+              >
+                Crear o editar en Crafteo
+                <ArrowRightIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {presets.map((preset) => {
-              const city = CITIES.find((candidate) => candidate.id === preset.productionConfig.cityId)
+              const city = CITIES.find(
+                (candidate) => candidate.id === preset.productionConfig.cityId,
+              )
               const isDefault = preset.id === defaultPresetId
               const isConfirmingDelete = deleteConfirmationId === preset.id
 
@@ -107,7 +156,9 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface-raised text-accent">
                     <PresetIcon className="h-5 w-5" />
                   </span>
-                  <h3 className="mt-4 pr-24 text-base font-semibold text-text">{preset.name}</h3>
+                  <h3 className="mt-4 pr-24 text-base font-semibold text-text">
+                    {preset.name}
+                  </h3>
                   <p className="mt-1 text-xs text-text-faint">
                     {city?.name ?? preset.productionConfig.cityId}
                   </p>
@@ -115,11 +166,15 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                   <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-y border-border py-4 text-xs">
                     <div>
                       <dt className="text-text-faint">Especialidad</dt>
-                      <dd className="mt-0.5 text-text">{yesNo(preset.productionConfig.hasSpecialtyBonus)}</dd>
+                      <dd className="mt-0.5 text-text">
+                        {yesNo(preset.productionConfig.hasSpecialtyBonus)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-text-faint">Foco</dt>
-                      <dd className="mt-0.5 text-text">{yesNo(preset.productionConfig.useFocus)}</dd>
+                      <dd className="mt-0.5 text-text">
+                        {yesNo(preset.productionConfig.useFocus)}
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-text-faint">Bono diario</dt>
@@ -143,13 +198,16 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                       <dt className="text-text-faint">Eficiencia de foco</dt>
                       <dd className="mt-0.5 text-text">
                         {new Intl.NumberFormat('es-CL').format(
-                          preset.craftingSpecializationConfig?.focusCostEfficiency ?? 0,
+                          preset.craftingSpecializationConfig
+                            ?.focusCostEfficiency ?? 0,
                         )}
                       </dd>
                     </div>
                     <div>
                       <dt className="text-text-faint">Premium</dt>
-                      <dd className="mt-0.5 text-text">{yesNo(preset.isPremium)}</dd>
+                      <dd className="mt-0.5 text-text">
+                        {yesNo(preset.isPremium)}
+                      </dd>
                     </div>
                   </dl>
 
@@ -163,7 +221,9 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDefaultPreset(isDefault ? null : preset.id)}
+                      onClick={() =>
+                        setDefaultPreset(isDefault ? null : preset.id)
+                      }
                       className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs text-text-muted hover:border-border-strong hover:text-text"
                     >
                       {isDefault ? 'Quitar predeterminado' : 'Predeterminado'}
@@ -184,7 +244,9 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
                           : 'border-border bg-surface-raised text-text-faint hover:border-negative/50 hover:text-negative'
                       }`}
                     >
-                      {isConfirmingDelete ? 'Confirmar eliminación' : 'Eliminar'}
+                      {isConfirmingDelete
+                        ? 'Confirmar eliminación'
+                        : 'Eliminar'}
                     </button>
                   </div>
                 </article>
@@ -193,6 +255,8 @@ export function PresetLibraryPage({ onOpenCrafting }: PresetLibraryPageProps) {
           </div>
         </>
       )}
+
+      <SavedCalculationHistory />
     </div>
   )
 }
