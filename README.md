@@ -2,9 +2,9 @@
 
 # Albion Production Calculator
 
-**Aplicación web de crafteo, refinamiento y análisis económico para Albion Online.**
+**Calculadora web de crafteo, retorno de materiales y análisis económico para Albion Online.**
 
-[Aplicación pública](https://albion-production-calculator.pages.dev) · [Documentación](docs/) · [API de mercado](https://albion-market-api.onrender.com/api/v1)
+[Usar Albion Calculator](https://albioncalculator.app/) · [Explorar guías](https://albioncalculator.app/guias) · [Analizar Black Market](https://albioncalculator.app/black-market) · [Documentación técnica](docs/)
 
 ![React](https://img.shields.io/badge/React-19-20232a?logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-20232a?logo=typescript&logoColor=3178C6)
@@ -15,23 +15,54 @@
 
 ---
 
-Albion Production Calculator reúne cálculo de costes, retorno de recursos, tarifas, fama, precios actuales, historial y liquidez en una interfaz orientada a decisiones de producción. La aplicación pública consume la API central alojada en Render y mantiene una caché persistente para degradación controlada.
+Albion Production Calculator reúne costes de fabricación, retorno de recursos, tarifas, impuestos, fama, precios, historial y liquidez en una interfaz orientada a tomar decisiones antes de comprometer plata o transportar objetos.
 
 > [!NOTE]
-> El usuario final solo necesita abrir la aplicación web. Albion Data Client y el receiver local pertenecen al flujo de recolección de datos, no al uso normal de la calculadora.
+> El usuario final solo necesita abrir la aplicación web. Albion Data Client y el receiver local pertenecen al flujo de recolección de datos y no son necesarios para usar la calculadora.
 
-## Papel dentro de la plataforma
+## Probar el producto
 
-| Área | Responsabilidad |
+| Recurso | Enlace |
 |---|---|
-| Cálculo | Costes, retorno, impuestos, tarifas, foco y rentabilidad |
-| Mercado | Precios actuales, historial, liquidez y ciudades por material |
-| Progresión | Fama de crafteo, especialización, premium y diarios |
-| Experiencia | Búsqueda de objetos, configuración persistente y estados claros |
-| Resiliencia | API central como fuente principal y caché local como fallback |
-| Entrega | Build reproducible y despliegue validado en Cloudflare Pages |
+| Calculadora de producción | [albioncalculator.app](https://albioncalculator.app/) |
+| Black Market de Caerleon | [Comparar oportunidades](https://albioncalculator.app/black-market) |
+| Centro de guías | [Guías de economía de Albion Online](https://albioncalculator.app/guias) |
+| Rentabilidad de crafteo | [Fórmula, beneficio y ROI](https://albioncalculator.app/guias/rentabilidad-crafteo-albion-online) |
+| Retorno de materiales | [RRR, foco y materiales devueltos](https://albioncalculator.app/guias/retorno-materiales-rrr-albion-online) |
+| Black Market rentable | [Comprar o fabricar para Caerleon](https://albioncalculator.app/guias/black-market-caerleon-rentable) |
 
-## Arquitectura del sistema
+Los errores y propuestas pueden registrarse mediante [GitHub Issues](https://github.com/nachodev-ui/albion-production-calculator/issues).
+
+## Capacidades principales
+
+### Producción y rentabilidad
+
+- costes de crafteo y refinamiento;
+- retorno de recursos configurable;
+- foco, Premium, bonos diarios y especialidad de ciudad;
+- tarifas de estación, impuesto de venta y setup fee;
+- materiales retornados y ahorro efectivo;
+- beneficio, margen, ROI y precio objetivo.
+
+### Mercado y liquidez
+
+- precios actuales desde la API central;
+- historial de 7 días y 4 semanas;
+- compra de cada material en una ciudad diferente;
+- ciudad de venta independiente;
+- optimizador con señales de liquidez;
+- análisis de oportunidades del Black Market;
+- detección de datos insuficientes y valores atípicos.
+
+### Fama y progresión
+
+- fama base y bonificaciones de Premium;
+- cálculo por cantidad fabricada;
+- progreso de nivel y fama restante;
+- selección de diarios compatibles;
+- información contextual integrada en la interfaz.
+
+## Arquitectura
 
 ```mermaid
 flowchart LR
@@ -51,52 +82,23 @@ flowchart LR
     Receiver -->|HTTPS + Bearer| API
 ```
 
-## Capacidades principales
+La aplicación funciona con una arquitectura hosted-first:
 
-### Producción y rentabilidad
-
-- costes de crafteo y refinamiento;
-- retorno de recursos configurable;
-- foco, premium, bonos diarios y especialidad de ciudad;
-- tarifas de estación, impuesto de venta y setup fee;
-- materiales retornados y ahorro efectivo;
-- beneficio absoluto, margen y precio objetivo.
-
-### Mercado y liquidez
-
-- precios actuales desde la API central;
-- historial de 7 días y 4 semanas;
-- compra de cada material en una ciudad diferente;
-- ciudad de venta independiente;
-- optimizador de rentabilidad con señales de liquidez;
-- detección de datos insuficientes y valores atípicos.
-
-### Fama y progresión
-
-- fama base y bonificaciones de premium;
-- cálculo por cantidad fabricada;
-- progreso de nivel y fama restante;
-- selección de diarios compatibles;
-- información contextual integrada en la interfaz.
-
-## Estrategia de datos de mercado
-
-```mermaid
-flowchart TD
-    Request[Solicitud de precios o historial]
-    Central[API central HTTPS]
-    Cache[Caché persistente del navegador]
-    Result[Datos disponibles]
-    Empty[Estado sin datos]
-
-    Request --> Central
-    Central -->|respuesta válida| Result
-    Central -->|timeout o indisponibilidad| Cache
-    Cache -->|entrada vigente| Result
-    Cache -->|sin entrada| Empty
+```text
+Usuario
+→ https://albioncalculator.app
+→ API central en Render
+→ Neon PostgreSQL
 ```
 
-En desarrollo puede habilitarse explícitamente un receiver local como fuente de diagnóstico. En producción permanece desactivado para que la aplicación sea completamente hosted-first.
+La captura de datos opera por separado:
+
+```text
+Albion Data Client
+→ albion-market-data-platform
+→ albion-market-api
+→ Neon PostgreSQL
+```
 
 ## Stack tecnológico
 
@@ -109,13 +111,14 @@ En desarrollo puede habilitarse explícitamente un receiver local como fuente de
 | Contratos | OpenAPI, Redocly, openapi-typescript |
 | Documentación | VitePress |
 | Hosting | Cloudflare Pages |
-| Datos | Albion Market API en Render + Neon PostgreSQL |
+| API | Go en Render |
+| Datos | Neon PostgreSQL |
 
 ## Inicio rápido local
 
 ### Requisitos
 
-- Node.js compatible con el lockfile del proyecto;
+- Node.js compatible con el lockfile;
 - pnpm;
 - API central local u hospedada.
 
@@ -127,23 +130,12 @@ Copy-Item .env.example .env.local
 pnpm dev
 ```
 
-La aplicación queda disponible mediante el puerto informado por Vite.
-
-## Configuración
-
-Configuración recomendada para desarrollo contra una API local:
+Configuración recomendada para desarrollo:
 
 ```dotenv
 VITE_CENTRAL_MARKET_API_URL=http://127.0.0.1:8080/api/v1
 VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=false
 VITE_MARKET_REQUEST_TIMEOUT_MS=7000
-```
-
-Para diagnosticar un receiver local:
-
-```dotenv
-VITE_ENABLE_LOCAL_RECEIVER_FALLBACK=true
-VITE_LOCAL_MARKET_API_URL=http://127.0.0.1:8787/api/v1
 ```
 
 Configuración de producción:
@@ -157,45 +149,21 @@ VITE_MARKET_REQUEST_TIMEOUT_MS=7000
 > [!IMPORTANT]
 > Las variables `VITE_*` forman parte del bundle público. Nunca deben contener tokens, contraseñas ni credenciales privadas.
 
-## Modelo funcional
-
-```mermaid
-flowchart LR
-    Item[Objeto y receta]
-    Inputs[Materiales y precios]
-    Production[Ciudad, foco y RRR]
-    Sale[Ciudad y método de venta]
-    History[Historial y liquidez]
-    Engine[Motor de cálculo]
-    Output[Coste, fama y rentabilidad]
-
-    Item --> Engine
-    Inputs --> Engine
-    Production --> Engine
-    Sale --> Engine
-    History --> Engine
-    Engine --> Output
-```
-
-El dominio de cálculo permanece separado de la interfaz y de los clientes HTTP, lo que permite probar reglas económicas sin depender del navegador.
-
 ## Estructura del repositorio
 
 ```text
 .
 ├─ src/
+│  ├─ app/                   routing, navegación y SEO
 │  ├─ core/                  entidades y casos de uso
 │  ├─ data/                  catálogo y repositorios
-│  ├─ features/
-│  │  ├─ craft-calculator/   cálculo y presentación
-│  │  ├─ item-browser/       navegación del catálogo
-│  │  └─ market-data/        precios, historial y fallback
+│  ├─ features/              módulos funcionales
 │  └─ shared/                contratos, componentes y utilidades
 ├─ contracts/                OpenAPI de API central y receiver
 ├─ docs/                     documentación VitePress
-├─ public/                   assets estáticos
-├─ scripts/                  dataset, seguridad, bundle y despliegue
-└─ .github/workflows/        CI y producción
+├─ public/                   assets, sitemap y configuración pública
+├─ scripts/                  dataset, SEO, seguridad y despliegue
+└─ .github/workflows/        CI, producción e IndexNow
 ```
 
 ## Calidad y validación
@@ -210,47 +178,26 @@ pnpm bundle:check
 pnpm docs:build
 ```
 
-La validación automatizada cubre:
+La automatización cubre contratos OpenAPI, seguridad pública, reglas económicas, TypeScript, pruebas, build, presupuesto del bundle, documentos SEO, despliegue en Cloudflare y validación del recorrido Cloudflare → Render → Neon mediante Chromium.
 
-- compatibilidad de contratos OpenAPI;
-- configuración pública segura;
-- reglas de cálculo y regresiones del catálogo;
-- lint y TypeScript;
-- build de producción;
-- presupuesto del bundle;
-- documentación;
-- comprobación funcional del mercado desplegado mediante navegador.
+## Producción y descubrimiento
 
-## Despliegue en producción
-
-La aplicación pública se aloja en Cloudflare Pages:
+La URL pública canónica es:
 
 ```text
-https://albion-production-calculator.pages.dev
+https://albioncalculator.app/
 ```
 
-Primer bootstrap, después de crear una credencial limitada de Cloudflare:
+Los despliegues de producción:
 
-```powershell
-.\scripts\bootstrap-cloudflare-production.ps1
-```
-
-Los despliegues posteriores se ejecutan desde el workflow manual **Deploy production** usando el GitHub Environment `production`:
-
-```text
-CLOUDFLARE_ACCOUNT_ID
-CLOUDFLARE_API_TOKEN
-```
-
-El flujo de producción construye el frontend, publica una revisión y valida que la aplicación consulte correctamente precios reales desde la API central.
+1. construyen y validan el frontend;
+2. publican una revisión exacta en Cloudflare Pages;
+3. verifican los bundles desde el dominio canónico;
+4. comprueban API, Auth0 y readiness de Render;
+5. validan precios reales mediante navegador;
+6. notifican las URLs indexables mediante IndexNow.
 
 ## Documentación
-
-La documentación vigente vive en [`docs/`](docs/) y se desarrolla localmente con:
-
-```bash
-pnpm docs:dev
-```
 
 | Tema | Enlace |
 |---|---|
@@ -272,4 +219,4 @@ pnpm docs:dev
 
 ## Estado del proyecto
 
-La aplicación está desplegada y cerrada para el alcance funcional actual. El trabajo posterior se concentra en mantenimiento, observación de producción, documentación y releases estables.
+La aplicación está operativa en producción. El trabajo continúa en contenido educativo, calidad de datos, experiencia del usuario, observabilidad y releases estables.
