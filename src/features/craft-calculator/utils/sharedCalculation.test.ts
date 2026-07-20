@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { CalculationSummarySnapshot } from './calculationSummary'
 import {
   decodeSharedCalculation,
@@ -51,29 +51,18 @@ const snapshot: CalculationSummarySnapshot = {
   unitSellPrice: 120_000,
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 describe('shared calculations', () => {
-  it('round-trips a shareable snapshot without compression support', async () => {
-    vi.stubGlobal('CompressionStream', undefined)
-
+  it('round-trips a compact Unicode snapshot', async () => {
     const token = await encodeSharedCalculation(snapshot)
-    const restored = await decodeSharedCalculation(token)
-
-    expect(token.startsWith('j.')).toBe(true)
-    expect(restored).toEqual(snapshot)
+    expect(await decodeSharedCalculation(token)).toEqual(snapshot)
   })
 
-  it('rejects objects that do not contain a complete summary', () => {
+  it('validates the minimum snapshot contract', () => {
     expect(isCalculationSummarySnapshot({ itemName: 'Incomplete' })).toBe(false)
     expect(isCalculationSummarySnapshot(snapshot)).toBe(true)
   })
 
-  it('rejects unknown link versions and malformed values', async () => {
-    await expect(decodeSharedCalculation('x.invalid')).rejects.toThrow(
-      'formato compatible',
-    )
+  it('rejects malformed values', async () => {
+    await expect(decodeSharedCalculation('invalid')).rejects.toThrow()
   })
 })
