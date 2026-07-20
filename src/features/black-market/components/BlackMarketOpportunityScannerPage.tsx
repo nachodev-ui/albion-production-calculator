@@ -85,24 +85,22 @@ function Scanner({
         throw new Error("No fue posible obtener una sesión autenticada.");
       }
 
-      const {
-        salesTaxPercent,
-        focusValuePerPoint: _focusValuePerPoint,
-        lowerQualityFallbackPercent: _lowerQualityFallbackPercent,
-        materialTransportCostPerBatch: _materialTransportCostPerBatch,
-        finishedTransportCostPerUnit: _finishedTransportCostPerUnit,
-        escortCostPerBatch: _escortCostPerBatch,
-        deathProbabilityPercent: _deathProbabilityPercent,
-        timeCostPerBatch: _timeCostPerBatch,
-        strategyFilter: _strategyFilter,
-        strategySort: _strategySort,
-        ...requestFilters
-      } = filters;
       const result = await scanBlackMarketOpportunities(
         {
-          ...requestFilters,
-          limit: Math.min(100, requestFilters.limit),
-          salesTaxRate: salesTaxPercent / 100,
+          server: filters.server,
+          purchaseMarketKeys: filters.purchaseMarketKeys,
+          tiers: filters.tiers,
+          enchantments: filters.enchantments,
+          qualities: filters.qualities,
+          categories: filters.categories,
+          minimumProfit: filters.minimumProfit,
+          minimumReturnOnCostPercent: filters.minimumReturnOnCostPercent,
+          maximumCityAgeMinutes: filters.maximumCityAgeMinutes,
+          maximumBlackMarketAgeMinutes: filters.maximumBlackMarketAgeMinutes,
+          transportCostPerUnit: filters.transportCostPerUnit,
+          sort: filters.sort,
+          limit: Math.min(100, filters.limit),
+          salesTaxRate: filters.salesTaxPercent / 100,
           offset: nextOffset,
         },
         token,
