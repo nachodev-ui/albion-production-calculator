@@ -31,3 +31,66 @@ recomendar una ciudad evalúa:
 
 Las consultas históricas del conjunto de candidatos se realizan en uno o pocos
 batches centrales. El receiver solo completa combinaciones ausentes.
+
+## Estrategias masivas del Black Market
+
+La tabla del escáner compara, para cada resultado visible:
+
+- comprar el objeto terminado y transportarlo;
+- fabricar sin foco;
+- fabricar con foco.
+
+Las recetas de la página se recorren primero sin precios para obtener un conjunto
+único de materiales. Ese conjunto se consulta en batch mediante el servicio de
+precios existente y se reutiliza en todos los cálculos, evitando una petición por
+fila. El análisis se limita a 100 oportunidades por página para mantener acotados
+el uso de memoria, la cantidad de combinaciones y el trabajo del navegador.
+
+La recomendación se puede filtrar u ordenar por estrategia, beneficio ajustado,
+ROI ajustado o ventaja frente a comprar terminado.
+
+## Valor económico del foco
+
+El beneficio con foco se presenta de dos formas:
+
+- beneficio contable, que descuenta fabricación, impuesto y logística directa;
+- beneficio ajustado, que también descuenta el costo de oportunidad del foco.
+
+La interfaz muestra foco requerido, beneficio adicional frente a fabricar sin
+foco, plata obtenida por punto de foco y un valor mínimo configurable. Una
+estrategia con foco solo gana la comparación ajustada cuando su mejora compensa
+ese valor configurado.
+
+## Calidad esperada
+
+El escáner estima una distribución para Normal, Buena, Sobresaliente, Excelente
+y Obra maestra. El valor `Increase in Quality` se interpreta como probabilidad de
+tiradas adicionales y se conserva la mejor tirada. El foco modifica el retorno de
+recursos, pero no añade una tirada de calidad en este modelo.
+
+Para una orden de calidad superior se muestran:
+
+- probabilidad de alcanzar la calidad mínima;
+- unidades esperadas que pueden cubrir la orden;
+- unidades esperadas en otras calidades;
+- ingreso de órdenes alternativas observadas;
+- ingreso bruto ponderado.
+
+Cuando una calidad inferior no tiene una orden observada en la página, el usuario
+puede asignar un porcentaje conservador del precio objetivo. El valor
+predeterminado es cero para no inventar ingresos.
+
+## Logística y riesgo
+
+La fabricación separa los siguientes costos:
+
+- materiales hacia la ciudad de producción;
+- producto terminado hacia Caerleon;
+- escolta, consumibles o protección;
+- pérdida esperada por muerte;
+- valor del tiempo invertido.
+
+La pérdida esperada se calcula como inversión directa por probabilidad de pérdida
+del lote. Estos supuestos no alteran los precios almacenados ni la orden del Black
+Market; únicamente producen un beneficio económico ajustado para comparar las
+estrategias con criterios homogéneos.

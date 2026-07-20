@@ -5,7 +5,7 @@ import {
 } from "./blackMarketScannerStorage";
 
 describe("parseBlackMarketScannerFilters", () => {
-  it("restores valid comparative filters", () => {
+  it("restores legacy filters and adds conservative strategy defaults", () => {
     const filters = parseBlackMarketScannerFilters({
       version: 1,
       filters: {
@@ -26,7 +26,7 @@ describe("parseBlackMarketScannerFilters", () => {
       },
     });
 
-    expect(filters).toEqual({
+    expect(filters).toMatchObject({
       server: "europe",
       purchaseMarketKeys: ["martlock", "caerleon"],
       tiers: [7, 8],
@@ -39,14 +39,47 @@ describe("parseBlackMarketScannerFilters", () => {
       maximumBlackMarketAgeMinutes: 15,
       salesTaxPercent: 4,
       transportCostPerUnit: 2500,
-      sort: "roi",
-      limit: 250,
+      strategyFilter: "all",
+      strategySort: "best-profit",
+      limit: 100,
+    });
+  });
+
+  it("restores the complete economic assumptions model", () => {
+    const filters = parseBlackMarketScannerFilters({
+      version: 2,
+      filters: {
+        ...DEFAULT_BLACK_MARKET_SCANNER_FILTERS,
+        focusValuePerPoint: 12.5,
+        lowerQualityFallbackPercent: 55,
+        materialTransportCostPerBatch: 40_000,
+        finishedTransportCostPerUnit: 2_000,
+        escortCostPerBatch: 15_000,
+        deathProbabilityPercent: 7.5,
+        timeCostPerBatch: 25_000,
+        strategyFilter: "craft-with-focus",
+        strategySort: "advantage",
+        limit: 50,
+      },
+    });
+
+    expect(filters).toMatchObject({
+      focusValuePerPoint: 12.5,
+      lowerQualityFallbackPercent: 55,
+      materialTransportCostPerBatch: 40_000,
+      finishedTransportCostPerUnit: 2_000,
+      escortCostPerBatch: 15_000,
+      deathProbabilityPercent: 7.5,
+      timeCostPerBatch: 25_000,
+      strategyFilter: "craft-with-focus",
+      strategySort: "advantage",
+      limit: 50,
     });
   });
 
   it("sanitizes corrupt filters without leaving empty selections", () => {
     const filters = parseBlackMarketScannerFilters({
-      version: 1,
+      version: 2,
       filters: {
         server: "invalid",
         purchaseMarketKeys: ["black_market"],
@@ -60,6 +93,15 @@ describe("parseBlackMarketScannerFilters", () => {
         maximumBlackMarketAgeMinutes: 20000,
         salesTaxPercent: 100,
         transportCostPerUnit: -1,
+        focusValuePerPoint: -1,
+        lowerQualityFallbackPercent: 101,
+        materialTransportCostPerBatch: -1,
+        finishedTransportCostPerUnit: -1,
+        escortCostPerBatch: -1,
+        deathProbabilityPercent: 101,
+        timeCostPerBatch: -1,
+        strategyFilter: "invalid",
+        strategySort: "invalid",
         sort: "random",
         limit: 1000,
       },
@@ -69,7 +111,7 @@ describe("parseBlackMarketScannerFilters", () => {
   });
 
   it("ignores unsupported versions", () => {
-    expect(parseBlackMarketScannerFilters({ version: 2, filters: {} })).toEqual(
+    expect(parseBlackMarketScannerFilters({ version: 3, filters: {} })).toEqual(
       DEFAULT_BLACK_MARKET_SCANNER_FILTERS,
     );
   });

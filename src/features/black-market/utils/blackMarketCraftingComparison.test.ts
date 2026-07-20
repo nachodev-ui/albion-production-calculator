@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateBlackMarketCraftingEconomics,
+  calculateBlackMarketFocusValuation,
   recommendBlackMarketStrategy,
 } from "./blackMarketCraftingComparison";
+import { buildBlackMarketQualityPriceSchedule } from "./blackMarketQuality";
+
+function normalQualitySchedule(price: number) {
+  return buildBlackMarketQualityPriceSchedule({
+    targetQuality: 1,
+    targetUnitPrice: price,
+    availableOrders: [],
+    lowerQualityFallbackPercent: 0,
+  });
+}
 
 describe("calculateBlackMarketCraftingEconomics", () => {
-  it("descuenta RRR, tarifas, impuesto y transporte del lote", () => {
+  it("separates accounting profit from focus, risk and time adjusted profit", () => {
     const result = calculateBlackMarketCraftingEconomics({
       isComplete: true,
       quantity: 10,
@@ -14,22 +25,32 @@ describe("calculateBlackMarketCraftingEconomics", () => {
       stationFees: 50_000,
       effectiveCraftCost: 750_000,
       blackMarketBuyUnitPrice: 100_000,
-      estimatedSalesTaxPerUnit: 4_000,
-      transportCostTotal: 20_000,
+      salesTaxRate: 0.04,
+      targetQuality: 1,
+      qualityIncreasePercent: 0,
+      qualityPriceSchedule: normalQualitySchedule(100_000),
+      materialTransportCostTotal: 10_000,
+      finishedTransportCostTotal: 20_000,
+      escortCostTotal: 5_000,
+      deathProbabilityRate: 0.1,
+      timeCostTotal: 15_000,
+      focusRequired: 8_000,
+      focusValuePerPoint: 5,
       buyFinishedProfitPerUnit: 10_000,
     });
 
     expect(result.grossMaterialCost).toBe(1_000_000);
-    expect(result.estimatedSalesTax).toBe(40_000);
-    expect(result.totalInvestment).toBe(770_000);
-    expect(result.netRevenue).toBe(960_000);
-    expect(result.profit).toBe(190_000);
-    expect(result.profitPerUnit).toBe(19_000);
-    expect(result.advantageOverBuying).toBe(90_000);
-    expect(result.returnOnCostPercent).toBeCloseTo(24.6753, 4);
+    expect(result.expectedGrossRevenue).toBeCloseTo(1_000_000, 6);
+    expect(result.estimatedSalesTax).toBeCloseTo(40_000, 6);
+    expect(result.accountingInvestment).toBe(785_000);
+    expect(result.accountingProfit).toBeCloseTo(175_000, 6);
+    expect(result.focusOpportunityCost).toBe(40_000);
+    expect(result.expectedDeathLoss).toBe(78_500);
+    expect(result.adjustedProfit).toBeCloseTo(41_500, 6);
+    expect(result.advantageOverBuying).toBeCloseTo(-58_500, 6);
   });
 
-  it("mantiene la estrategia incompleta sin convertir precios faltantes en beneficio cero", () => {
+  it("keeps incomplete strategies unknown instead of treating missing prices as zero profit", () => {
     const result = calculateBlackMarketCraftingEconomics({
       isComplete: false,
       quantity: 5,
@@ -38,71 +59,72 @@ describe("calculateBlackMarketCraftingEconomics", () => {
       stationFees: 5_000,
       effectiveCraftCost: 5_000,
       blackMarketBuyUnitPrice: 100_000,
-      estimatedSalesTaxPerUnit: 4_000,
-      transportCostTotal: 10_000,
+      salesTaxRate: 0.04,
+      targetQuality: 1,
+      qualityIncreasePercent: 0,
+      qualityPriceSchedule: normalQualitySchedule(100_000),
+      materialTransportCostTotal: 0,
+      finishedTransportCostTotal: 10_000,
+      escortCostTotal: 0,
+      deathProbabilityRate: 0,
+      timeCostTotal: 0,
+      focusRequired: 0,
+      focusValuePerPoint: 0,
       buyFinishedProfitPerUnit: 8_000,
     });
 
     expect(result.isComplete).toBe(false);
-    expect(result.profit).toBeNull();
-    expect(result.profitPerUnit).toBeNull();
-    expect(result.returnOnCostPercent).toBeNull();
+    expect(result.accountingProfit).toBeNull();
+    expect(result.adjustedProfit).toBeNull();
+    expect(result.adjustedReturnOnCostPercent).toBeNull();
     expect(result.advantageOverBuying).toBeNull();
   });
 });
 
-describe("recommendBlackMarketStrategy", () => {
-  it("compara comprar, fabricar sin foco y fabricar con foco por separado", () => {
-    const withoutFocus = calculateBlackMarketCraftingEconomics({
+describe("focus valuation and recommendation", () => {
+  it("calculates silver per focus and lets opportunity cost change the winner", () => {
+    const base = {
       isComplete: true,
       quantity: 2,
-      netMaterialCost: 130_000,
-      recoveredMaterialValue: 20_000,
-      stationFees: 10_000,
-      effectiveCraftCost: 140_000,
-      blackMarketBuyUnitPrice: 100_000,
-      estimatedSalesTaxPerUnit: 4_000,
-      transportCostTotal: 10_000,
-      buyFinishedProfitPerUnit: 12_000,
-    });
-    const withFocus = calculateBlackMarketCraftingEconomics({
-      isComplete: true,
-      quantity: 2,
-      netMaterialCost: 100_000,
-      recoveredMaterialValue: 50_000,
-      stationFees: 10_000,
-      effectiveCraftCost: 110_000,
-      blackMarketBuyUnitPrice: 100_000,
-      estimatedSalesTaxPerUnit: 4_000,
-      transportCostTotal: 10_000,
-      buyFinishedProfitPerUnit: 12_000,
-    });
-
-    expect(recommendBlackMarketStrategy(12_000, 2, withoutFocus, withFocus)).toMatchObject({
-      kind: "craft-with-focus",
-      label: "Fabricar con foco",
-      profit: 72_000,
-      advantageOverBuying: 48_000,
-    });
-  });
-
-  it("ignora variantes de fabricación incompletas", () => {
-    const incomplete = calculateBlackMarketCraftingEconomics({
-      isComplete: false,
-      quantity: 1,
-      netMaterialCost: 0,
       recoveredMaterialValue: 0,
       stationFees: 0,
-      effectiveCraftCost: 0,
       blackMarketBuyUnitPrice: 100_000,
-      estimatedSalesTaxPerUnit: 4_000,
-      transportCostTotal: 0,
-      buyFinishedProfitPerUnit: 15_000,
+      salesTaxRate: 0,
+      targetQuality: 1,
+      qualityIncreasePercent: 0,
+      qualityPriceSchedule: normalQualitySchedule(100_000),
+      materialTransportCostTotal: 0,
+      finishedTransportCostTotal: 0,
+      escortCostTotal: 0,
+      deathProbabilityRate: 0,
+      timeCostTotal: 0,
+      buyFinishedProfitPerUnit: 20_000,
+    } as const;
+    const withoutFocus = calculateBlackMarketCraftingEconomics({
+      ...base,
+      netMaterialCost: 150_000,
+      effectiveCraftCost: 150_000,
+      focusRequired: 0,
+      focusValuePerPoint: 10,
     });
+    const withFocus = calculateBlackMarketCraftingEconomics({
+      ...base,
+      netMaterialCost: 100_000,
+      effectiveCraftCost: 100_000,
+      focusRequired: 8_000,
+      focusValuePerPoint: 10,
+    });
+    const focus = calculateBlackMarketFocusValuation(withoutFocus, withFocus);
 
-    expect(recommendBlackMarketStrategy(15_000, 1, incomplete, incomplete)).toMatchObject({
-      kind: "buy-finished",
-      profit: 15_000,
+    expect(focus.incrementalAccountingProfit).toBe(50_000);
+    expect(focus.silverPerFocus).toBe(6.25);
+    expect(focus.clearsConfiguredValue).toBe(false);
+    expect(
+      recommendBlackMarketStrategy(20_000, 20, 2, withoutFocus, withFocus),
+    ).toMatchObject({
+      kind: "craft-without-focus",
+      profit: 50_000,
+      advantageOverBuying: 10_000,
     });
   });
 });
