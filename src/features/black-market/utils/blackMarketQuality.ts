@@ -77,7 +77,8 @@ export function calculateBlackMarketQualityDistribution(
     quality: entry.quality,
     probability:
       entry.probability * (1 - fractionalExtraRoll) +
-      extraDistribution[index].probability * fractionalExtraRoll,
+      (extraDistribution[index]?.probability ?? entry.probability) *
+        fractionalExtraRoll,
   }));
 }
 
