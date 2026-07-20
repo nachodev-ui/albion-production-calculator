@@ -12,44 +12,22 @@ import { useCraftPresetStore } from '@features/craft-calculator/store/craftPrese
 import { saveCraftPresetStorage } from '@features/craft-calculator/store/craftPresetStorage'
 import type { CraftPreset } from '@features/craft-calculator/store/craftPresetStorage'
 
-const CLOUD_PRESET_OWNER_KEY = 'albion-craft-calculator:cloud-preset-owner:v1'
-const SYNC_DELAY_MS = 700
+const OWNER_KEY = 'albion-craft-calculator:cloud-preset-owner:v1'
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+function localPreset(row: CloudPreset): CraftPreset {
+  return { ...row.payload, name: row.name }
 }
 
-function readCloudPresetPayload(row: CloudPreset): CraftPreset | null {
-  const payload: unknown = row.payload
-  if (
-    !isRecord(payload) ||
-    typeof payload['id'] !== 'string' ||
-    payload['id'].trim().length === 0 ||
-    !isRecord(payload['productionConfig']) ||
-    typeof payload['isPremium'] !== 'boolean'
-  ) {
-    return null
-  }
-
-  return {
-    ...(payload as unknown as CraftPreset),
-    name: row.name,
-  }
-}
-
-function persistStore(
-  presets: readonly CraftPreset[],
-  defaultPresetId: string | null,
-): void {
+function persist(presets: readonly CraftPreset[], defaultPresetId: string | null) {
   saveCraftPresetStorage({ presets, defaultPresetId })
   useCraftPresetStore.setState((state) => ({
     presets,
     defaultPresetId,
-    activePresetId:
-      state.activePresetId &&
-      presets.some((preset) => preset.id === state.activePresetId)
-        ? state.activePresetId
-        : defaultPresetId,
+    activePresetId: presets.some(
+      (preset) => preset.id === state.activePresetId,
+    )
+      ? state.activePresetId
+      : defaultPresetId,
   }))
 }
 
@@ -61,36 +39,21 @@ function cloudInput(preset: CraftPreset, defaultPresetId: string | null) {
   }
 }
 
-function sameCloudValue(
-  row: CloudPreset,
-  preset: CraftPreset,
-  defaultPresetId: string | null,
-): boolean {
-  return (
-    row.name === preset.name &&
-    row.isDefault === (preset.id === defaultPresetId) &&
-    JSON.stringify(row.payload) === JSON.stringify(preset)
-  )
-}
-
 export function CloudPresetSync() {
   const { isAuthenticated, isLoading, getAccessToken } = useAccountSession()
   const userId = useAccountAccessStore((state) => state.access?.user.id ?? null)
   const presets = useCraftPresetStore((state) => state.presets)
-  const defaultPresetId = useCraftPresetStore(
-    (state) => state.defaultPresetId,
-  )
+  const defaultPresetId = useCraftPresetStore((state) => state.defaultPresetId)
   const [hydratedUserId, setHydratedUserId] = useState<string | null>(null)
-  const initializingRef = useRef(false)
+  const loadingRef = useRef(false)
 
   useEffect(() => {
-    if (isLoading || initializingRef.current) return
+    if (isLoading || loadingRef.current) return
 
     if (!isAuthenticated || !userId) {
-      const cachedOwner = window.localStorage.getItem(CLOUD_PRESET_OWNER_KEY)
-      if (hydratedUserId || cachedOwner) {
-        persistStore([], null)
-        window.localStorage.removeItem(CLOUD_PRESET_OWNER_KEY)
+      if (hydratedUserId || localStorage.getItem(OWNER_KEY)) {
+        persist([], null)
+        localStorage.removeItem(OWNER_KEY)
         setHydratedUserId(null)
       }
       return
@@ -98,111 +61,77 @@ export function CloudPresetSync() {
     if (hydratedUserId === userId) return
 
     const controller = new AbortController()
-    initializingRef.current = true
-
+    loadingRef.current = true
     void getAccessToken()
-      .then(async (accessToken) => {
-        if (!accessToken) return
-        const cloudRows = await fetchCloudPresets(
-          accessToken,
-          controller.signal,
-        )
+      .then(async (token) => {
+        if (!token) return
+        const rows = await fetchCloudPresets(token, controller.signal)
         if (controller.signal.aborted) return
 
-        const cloudPresets = cloudRows
-          .map((row) => ({ row, preset: readCloudPresetPayload(row) }))
-          .filter(
-            (
-              value,
-            ): value is { readonly row: CloudPreset; readonly preset: CraftPreset } =>
-              value.preset !== null,
-          )
-        const localState = useCraftPresetStore.getState()
-        const cachedOwner = window.localStorage.getItem(CLOUD_PRESET_OWNER_KEY)
-        const shouldMergeLocal = cachedOwner === null
+        const local = useCraftPresetStore.getState()
+        const migrateLocal = localStorage.getItem(OWNER_KEY) === null
         const merged = new Map<string, CraftPreset>()
-
-        if (shouldMergeLocal) {
-          for (const preset of localState.presets) merged.set(preset.id, preset)
+        if (migrateLocal) {
+          local.presets.forEach((preset) => merged.set(preset.id, preset))
         }
-        for (const { preset } of cloudPresets) merged.set(preset.id, preset)
+        rows.forEach((row) => {
+          const preset = localPreset(row)
+          merged.set(preset.id, preset)
+        })
 
-        const mergedPresets = Array.from(merged.values())
-        const cloudDefaultId = cloudPresets.find(({ row }) => row.isDefault)
-          ?.preset.id
-        const requestedDefaultId =
-          cloudDefaultId ??
-          (shouldMergeLocal ? localState.defaultPresetId : null)
-        const nextDefaultId = mergedPresets.some(
-          (preset) => preset.id === requestedDefaultId,
+        const nextPresets = [...merged.values()]
+        const requestedDefault =
+          rows.find((row) => row.isDefault)?.payload.id ??
+          (migrateLocal ? local.defaultPresetId : null)
+        const nextDefault = nextPresets.some(
+          (preset) => preset.id === requestedDefault,
         )
-          ? requestedDefaultId
+          ? requestedDefault
           : null
 
-        persistStore(mergedPresets, nextDefaultId)
-        window.localStorage.setItem(CLOUD_PRESET_OWNER_KEY, userId)
+        persist(nextPresets, nextDefault)
+        localStorage.setItem(OWNER_KEY, userId)
         setHydratedUserId(userId)
       })
       .catch((error: unknown) => {
-        if (!controller.signal.aborted) {
-          console.warn('Cloud preset hydration failed', error)
-        }
+        if (!controller.signal.aborted) console.warn('Preset hydration failed', error)
       })
       .finally(() => {
-        initializingRef.current = false
+        loadingRef.current = false
       })
 
     return () => controller.abort()
-  }, [
-    getAccessToken,
-    hydratedUserId,
-    isAuthenticated,
-    isLoading,
-    userId,
-  ])
+  }, [getAccessToken, hydratedUserId, isAuthenticated, isLoading, userId])
 
   useEffect(() => {
     if (!userId || hydratedUserId !== userId || !isAuthenticated) return
 
     const timer = window.setTimeout(() => {
       void getAccessToken()
-        .then(async (accessToken) => {
-          if (!accessToken) return
-          const cloudRows = await fetchCloudPresets(accessToken)
-          const rowsByLocalId = new Map<string, CloudPreset>()
-
-          for (const row of cloudRows) {
-            const payload = readCloudPresetPayload(row)
-            if (payload) rowsByLocalId.set(payload.id, row)
-          }
-
+        .then(async (token) => {
+          if (!token) return
+          const rows = await fetchCloudPresets(token)
+          const remote = new Map(rows.map((row) => [row.payload.id, row]))
           const localIds = new Set(presets.map((preset) => preset.id))
-          for (const preset of presets) {
-            const existing = rowsByLocalId.get(preset.id)
-            if (!existing) {
-              await createCloudPreset(
-                accessToken,
-                cloudInput(preset, defaultPresetId),
-              )
-            } else if (!sameCloudValue(existing, preset, defaultPresetId)) {
-              await updateCloudPreset(
-                accessToken,
-                existing.id,
-                cloudInput(preset, defaultPresetId),
-              )
-            }
-          }
 
-          for (const [localId, row] of rowsByLocalId) {
-            if (!localIds.has(localId)) {
-              await deleteCloudPreset(accessToken, row.id)
+          for (const preset of presets) {
+            const row = remote.get(preset.id)
+            const input = cloudInput(preset, defaultPresetId)
+            if (!row) await createCloudPreset(token, input)
+            else if (
+              row.name !== input.name ||
+              row.isDefault !== input.isDefault ||
+              JSON.stringify(row.payload) !== JSON.stringify(input.payload)
+            ) {
+              await updateCloudPreset(token, row.id, input)
             }
           }
+          for (const [localId, row] of remote) {
+            if (!localIds.has(localId)) await deleteCloudPreset(token, row.id)
+          }
         })
-        .catch((error: unknown) => {
-          console.warn('Cloud preset synchronization failed', error)
-        })
-    }, SYNC_DELAY_MS)
+        .catch((error: unknown) => console.warn('Preset sync failed', error))
+    }, 700)
 
     return () => window.clearTimeout(timer)
   }, [
