@@ -2,6 +2,16 @@ export type AlbionServer = "west" | "east" | "europe";
 export type BlackMarketCategory = "weapon" | "armor" | "offhand" | "accessory";
 export type BlackMarketOpportunitySort = "profit" | "roi" | "freshness";
 export type BlackMarketOpportunityRisk = "low" | "medium" | "high";
+export type BlackMarketStrategyFilter =
+  | "all"
+  | "buy-finished"
+  | "craft-without-focus"
+  | "craft-with-focus";
+export type BlackMarketStrategySort =
+  | "api"
+  | "best-profit"
+  | "best-roi"
+  | "advantage";
 
 export interface BlackMarketAnalysisRequest {
   readonly server: AlbionServer;
@@ -97,7 +107,24 @@ export interface BlackMarketOpportunityFilters {
   readonly maximumCityAgeMinutes: number;
   readonly maximumBlackMarketAgeMinutes: number;
   readonly salesTaxPercent: number;
+  /** Transporte de la estrategia de comprar el objeto terminado. */
   readonly transportCostPerUnit: number;
+  /** Valor económico mínimo exigido por cada punto de foco usado. */
+  readonly focusValuePerPoint: number;
+  /** Recuperación conservadora cuando no hay una orden observada para calidades menores. */
+  readonly lowerQualityFallbackPercent: number;
+  /** Traslado de materiales hacia la ciudad de fabricación, por lote analizado. */
+  readonly materialTransportCostPerBatch: number;
+  /** Traslado del objeto fabricado hacia Caerleon, por unidad. */
+  readonly finishedTransportCostPerUnit: number;
+  /** Escolta, consumibles y protección logística, por lote. */
+  readonly escortCostPerBatch: number;
+  /** Probabilidad estimada de perder el lote completo durante la logística. */
+  readonly deathProbabilityPercent: number;
+  /** Valor del tiempo invertido en la ruta, por lote. */
+  readonly timeCostPerBatch: number;
+  readonly strategyFilter: BlackMarketStrategyFilter;
+  readonly strategySort: BlackMarketStrategySort;
   readonly sort: BlackMarketOpportunitySort;
   readonly limit: number;
 }
