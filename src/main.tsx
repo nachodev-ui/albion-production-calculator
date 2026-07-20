@@ -2,7 +2,6 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { AccountSessionProvider } from "@features/account/context/AccountSessionContext";
 import { CalculationPrintPage } from "@features/craft-calculator/components/summary/CalculationPrintPage";
-import { SharedCalculationPage } from "@features/craft-calculator/components/summary/SharedCalculationPage";
 import { CloudPresetSync } from "@features/presets/components/CloudPresetSync";
 import "./index.css";
 import App from "./App.tsx";
@@ -16,7 +15,7 @@ createRoot(document.getElementById("root")!).render(
     {printToken ? (
       <CalculationPrintPage token={printToken} />
     ) : sharedCalculationToken ? (
-      <SharedCalculationPage token={sharedCalculationToken} />
+      <CalculationPrintPage token={sharedCalculationToken} shared />
     ) : (
       <AccountSessionProvider>
         <CloudPresetSync />
