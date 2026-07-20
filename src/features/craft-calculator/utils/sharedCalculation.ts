@@ -23,9 +23,15 @@ function base64UrlToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0))
 }
 
+function copyToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
+}
+
 async function compress(bytes: Uint8Array): Promise<Uint8Array | null> {
   if (typeof CompressionStream === 'undefined') return null
-  const stream = new Blob([bytes]).stream().pipeThrough(
+  const stream = new Blob([copyToArrayBuffer(bytes)]).stream().pipeThrough(
     new CompressionStream('deflate-raw'),
   )
   return new Uint8Array(await new Response(stream).arrayBuffer())
@@ -35,7 +41,7 @@ async function decompress(bytes: Uint8Array): Promise<Uint8Array> {
   if (typeof DecompressionStream === 'undefined') {
     throw new Error('El navegador no puede descomprimir este cálculo compartido.')
   }
-  const stream = new Blob([bytes]).stream().pipeThrough(
+  const stream = new Blob([copyToArrayBuffer(bytes)]).stream().pipeThrough(
     new DecompressionStream('deflate-raw'),
   )
   return new Uint8Array(await new Response(stream).arrayBuffer())
