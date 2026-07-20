@@ -94,6 +94,7 @@ export function CloudPresetSync() {
       }
       return
     }
+    if (hydratedUserId === userId) return
 
     const controller = new AbortController()
     initializingRef.current = true
