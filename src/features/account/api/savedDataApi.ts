@@ -1,5 +1,5 @@
 import { accountAuthConfig } from '../config/accountAuthConfig'
-import type { CalculationSummarySnapshot } from '@features/craft-calculator/utils/calculationSummary'
+import type { SavedCalculationSnapshot } from '@features/craft-calculator/utils/savedCalculationSnapshot'
 import type { CraftPreset } from '@features/craft-calculator/store/craftPresetStorage'
 
 export interface CloudPreset {
@@ -15,7 +15,7 @@ export interface SavedCalculation {
   readonly id: string
   readonly name: string | null
   readonly kind: string
-  readonly snapshot: CalculationSummarySnapshot
+  readonly snapshot: SavedCalculationSnapshot
   readonly createdAt: string
 }
 
@@ -28,7 +28,7 @@ interface PresetWriteInput {
 interface CalculationWriteInput {
   readonly name?: string
   readonly kind: string
-  readonly snapshot: CalculationSummarySnapshot
+  readonly snapshot: SavedCalculationSnapshot
 }
 
 async function request<T>(

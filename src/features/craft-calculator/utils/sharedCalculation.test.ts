@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import type { CalculationSummarySnapshot } from './calculationSummary'
+import type { SavedCalculationSnapshot } from './savedCalculationSnapshot'
 import {
   decodeSharedCalculation,
   encodeSharedCalculation,
   isCalculationSummarySnapshot,
 } from './sharedCalculation'
 
-const snapshot: CalculationSummarySnapshot = {
+const snapshot: SavedCalculationSnapshot = {
   generatedAt: '2026-07-20T12:00:00.000Z',
   itemName: 'Espada del Anciano',
   tier: 8,
@@ -49,10 +49,21 @@ const snapshot: CalculationSummarySnapshot = {
   ],
   isPremium: true,
   unitSellPrice: 120_000,
+  quality: 4,
+  usedPrices: [
+    {
+      name: 'Lingote de acero',
+      enchantment: 2,
+      quantity: 100,
+      unitPrice: 11_500,
+      totalCost: 1_150_000,
+      source: 'automatic',
+    },
+  ],
 }
 
 describe('shared calculations', () => {
-  it('round-trips a compact Unicode snapshot', async () => {
+  it('round-trips quality and every material price in a Unicode snapshot', async () => {
     const token = await encodeSharedCalculation(snapshot)
     expect(await decodeSharedCalculation(token)).toEqual(snapshot)
   })
