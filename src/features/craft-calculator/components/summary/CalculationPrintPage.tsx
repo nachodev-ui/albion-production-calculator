@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CalculationSummarySnapshot } from '../../utils/calculationSummary'
+import { formatEnchantment } from '@core/domain/entities/Enchantment'
+import { MARKET_QUALITY_LABELS } from '@features/market-data/types/MarketPrice'
 import { createCalculationPrintTitle } from '../../utils/calculationSummary'
 import { loadCalculationPrintSummary } from '../../utils/printSummaryStorage'
+import type { SavedCalculationSnapshot } from '../../utils/savedCalculationSnapshot'
 import { decodeSharedCalculation } from '../../utils/sharedCalculation'
 import { CalculationPrintView } from './CalculationPrintView'
 
@@ -10,17 +12,74 @@ interface CalculationPrintPageProps {
   readonly shared?: boolean
 }
 
+const silverFormatter = new Intl.NumberFormat('es-CL', {
+  maximumFractionDigits: 0,
+})
+const quantityFormatter = new Intl.NumberFormat('es-CL', {
+  maximumFractionDigits: 2,
+})
+
+function SnapshotAudit({ summary }: { readonly summary: SavedCalculationSnapshot }) {
+  const usedPrices = summary.usedPrices ?? []
+  const qualityLabel =
+    summary.quality === undefined
+      ? 'No registrada en esta captura'
+      : MARKET_QUALITY_LABELS[summary.quality]
+
+  return (
+    <section className="print-card print-table-section">
+      <h2>Datos auditables de la captura</h2>
+      <p className="print-muted">Calidad de venta: {qualityLabel}</p>
+
+      {usedPrices.length === 0 ? (
+        <p className="print-muted">
+          Esta captura no incluye el desglose de precios utilizados. Puede tratarse
+          de un cálculo guardado antes de añadir este detalle.
+        </p>
+      ) : (
+        <table className="print-table">
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Cantidad</th>
+              <th>Precio unitario</th>
+              <th>Subtotal</th>
+              <th>Fuente</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usedPrices.map((price, index) => (
+              <tr
+                key={`${price.name}-${price.enchantment}-${price.unitPrice}-${price.source}-${index}`}
+              >
+                <td>
+                  {price.name}
+                  {formatEnchantment(price.enchantment)}
+                </td>
+                <td>{quantityFormatter.format(price.quantity)}</td>
+                <td>{silverFormatter.format(price.unitPrice)} plata</td>
+                <td>{silverFormatter.format(price.totalCost)} plata</td>
+                <td>{price.source === 'manual' ? 'Manual' : 'Mercado'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
+  )
+}
+
 export function CalculationPrintPage({
   token,
   shared = false,
 }: CalculationPrintPageProps) {
   const hasOpenedPrintDialog = useRef(false)
-  const localSummary = useMemo(
+  const localSummary = useMemo<SavedCalculationSnapshot | null>(
     () => (shared ? null : loadCalculationPrintSummary(token)),
     [shared, token],
   )
   const [sharedSummary, setSharedSummary] =
-    useState<CalculationSummarySnapshot | null>(null)
+    useState<SavedCalculationSnapshot | null>(null)
   const [error, setError] = useState<string | null>(null)
   const summary = shared ? sharedSummary : localSummary
 
@@ -104,6 +163,7 @@ export function CalculationPrintPage({
         </div>
       </div>
       <CalculationPrintView summary={summary} />
+      <SnapshotAudit summary={summary} />
     </main>
   )
 }
