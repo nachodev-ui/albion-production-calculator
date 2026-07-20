@@ -87,7 +87,8 @@ export function CloudPresetSync() {
     if (isLoading || initializingRef.current) return
 
     if (!isAuthenticated || !userId) {
-      if (hydratedUserId) {
+      const cachedOwner = window.localStorage.getItem(CLOUD_PRESET_OWNER_KEY)
+      if (hydratedUserId || cachedOwner) {
         persistStore([], null)
         window.localStorage.removeItem(CLOUD_PRESET_OWNER_KEY)
         setHydratedUserId(null)
@@ -118,7 +119,7 @@ export function CloudPresetSync() {
           )
         const localState = useCraftPresetStore.getState()
         const cachedOwner = window.localStorage.getItem(CLOUD_PRESET_OWNER_KEY)
-        const shouldMergeLocal = cachedOwner === null || cachedOwner === userId
+        const shouldMergeLocal = cachedOwner === null
         const merged = new Map<string, CraftPreset>()
 
         if (shouldMergeLocal) {
