@@ -2,6 +2,10 @@ import type { EnchantmentLevel } from "@core/domain/entities/Enchantment";
 import { buildItemIconUrl, type Item } from "@core/domain/entities/Item";
 import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
 import type {
+  BlackMarketMassAnalysisRow,
+  BlackMarketMassCraftingAnalysis,
+} from "../hooks/useBlackMarketMassCraftingAnalysis";
+import type {
   BlackMarketOpportunitiesResponse,
   BlackMarketOpportunity,
   BlackMarketOpportunityFilters,
@@ -21,6 +25,7 @@ interface BlackMarketOpportunityResultsProps {
   readonly response: BlackMarketOpportunitiesResponse;
   readonly repository: ItemRepository;
   readonly filters: BlackMarketOpportunityFilters;
+  readonly strategyAnalysis: BlackMarketMassCraftingAnalysis;
   readonly offset: number;
   readonly loading: boolean;
   readonly onOpen: (opportunity: BlackMarketOpportunity) => void;
@@ -30,11 +35,16 @@ interface BlackMarketOpportunityResultsProps {
 
 function ScannerSummary({
   response,
+  strategyAnalysis,
 }: {
   readonly response: BlackMarketOpportunitiesResponse;
+  readonly strategyAnalysis: BlackMarketMassCraftingAnalysis;
 }) {
+  const craftable = strategyAnalysis.rows.filter(
+    (row) => row.status === "ready",
+  ).length;
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
         <p className="text-[10px] uppercase tracking-[0.14em] text-text-faint">
           Oportunidades
@@ -44,6 +54,28 @@ function ScannerSummary({
         </p>
         <p className="mt-1 text-xs text-text-faint">
           {response.returned} visibles en esta página.
+        </p>
+      </article>
+      <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-text-faint">
+          Estrategias completas
+        </p>
+        <p className="mt-2 text-2xl font-semibold tabular text-positive">
+          {craftable}
+        </p>
+        <p className="mt-1 text-xs text-text-faint">
+          Filas con materiales suficientes para comparar.
+        </p>
+      </article>
+      <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-text-faint">
+          Materiales en batch
+        </p>
+        <p className="mt-2 text-2xl font-semibold tabular text-text">
+          {strategyAnalysis.materialTargetCount}
+        </p>
+        <p className="mt-1 text-xs text-text-faint">
+          Identificadores únicos consultados entre mercados.
         </p>
       </article>
       <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
@@ -59,45 +91,56 @@ function ScannerSummary({
       </article>
       <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
         <p className="text-[10px] uppercase tracking-[0.14em] text-text-faint">
-          Datos de ciudades
-        </p>
-        <p className="mt-2 text-2xl font-semibold tabular text-text">
-          {response.coverage.sourceMarketRows}
-        </p>
-        <p className="mt-1 text-xs text-text-faint">
-          Combinaciones de venta en mercados seleccionados.
-        </p>
-      </article>
-      <article className="rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-border-strong">
-        <p className="text-[10px] uppercase tracking-[0.14em] text-text-faint">
-          Orden
+          Estado fabricación
         </p>
         <p className="mt-2 text-lg font-semibold text-text">
-          {response.sort === "profit"
-            ? "Mayor beneficio"
-            : response.sort === "roi"
-              ? "Mayor ROI"
-              : "Más reciente"}
+          {strategyAnalysis.status === "loading"
+            ? "Consultando materiales"
+            : strategyAnalysis.status === "error"
+              ? "Datos degradados"
+              : "Análisis disponible"}
         </p>
         <p className="mt-1 text-xs text-text-faint">
-          Cálculo realizado en la API central.
+          Cálculo local con el motor de crafteo.
         </p>
       </article>
     </div>
   );
 }
 
+function strategyTone(
+  kind: BlackMarketMassAnalysisRow["recommendation"]["kind"],
+): string {
+  if (kind === "craft-with-focus") {
+    return "border-positive/40 bg-positive-muted text-positive";
+  }
+  if (kind === "craft-without-focus") {
+    return "border-accent-border bg-accent-muted text-accent";
+  }
+  return "border-border bg-surface text-text-muted";
+}
+
+function bestEconomics(row: BlackMarketMassAnalysisRow) {
+  if (row.recommendation.kind === "craft-with-focus") return row.withFocus;
+  if (row.recommendation.kind === "craft-without-focus") return row.withoutFocus;
+  return null;
+}
+
 function OpportunityRow({
-  opportunity,
+  row,
   repository,
+  analysisLoading,
   onOpen,
 }: {
-  readonly opportunity: BlackMarketOpportunity;
+  readonly row: BlackMarketMassAnalysisRow;
   readonly repository: ItemRepository;
+  readonly analysisLoading: boolean;
   readonly onOpen: (opportunity: BlackMarketOpportunity) => void;
 }) {
+  const { opportunity } = row;
   const baseID = baseBlackMarketItemIdentifier(opportunity.itemIdentifier);
   const item = repository.getById(baseID as Item["id"]);
+  const economics = bestEconomics(row);
 
   return (
     <tr className="border-t border-border/70 align-middle transition-colors hover:bg-surface-raised/75">
@@ -121,7 +164,7 @@ function OpportunityRow({
               {item?.name ?? opportunity.itemIdentifier}
             </span>
             <span className="text-[10px] text-text-faint">
-              T{opportunity.tier}.{opportunity.enchantment} · {" "}
+              T{opportunity.tier}.{opportunity.enchantment} ·{" "}
               {blackMarketScannerCategoryName(opportunity.category)}
             </span>
           </span>
@@ -135,7 +178,7 @@ function OpportunityRow({
           {formatBlackMarketSilver(opportunity.purchaseUnitPrice)}
         </p>
         <p className="mt-0.5 text-[10px] text-text-faint">
-          {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} · {" "}
+          {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} ·{" "}
           {formatBlackMarketAge(opportunity.purchaseAgeMinutes)}
         </p>
       </td>
@@ -144,23 +187,85 @@ function OpportunityRow({
           {formatBlackMarketSilver(opportunity.blackMarketBuyUnitPrice)}
         </p>
         <p className="mt-1 text-[10px] text-text-faint">
-          {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} · {" "}
+          {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} ·{" "}
           {formatBlackMarketAge(opportunity.blackMarketAgeMinutes)}
         </p>
-        {opportunity.blackMarketOrderDifference !== null && (
-          <p className="mt-0.5 text-[10px] text-text-faint">
-            Diferencia de órdenes: {" "}
-            {formatBlackMarketSilver(opportunity.blackMarketOrderDifference)}
+      </td>
+      <td className="px-3 py-3 text-xs">
+        <span
+          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${strategyTone(
+            row.recommendation.kind,
+          )}`}
+        >
+          {row.recommendation.label}
+        </span>
+        {row.status === "incomplete" && (
+          <p className="mt-1.5 text-[10px] text-warning">
+            Precios de materiales incompletos
+          </p>
+        )}
+        {row.status === "not-craftable" && (
+          <p className="mt-1.5 text-[10px] text-text-faint">
+            Sin receta compatible
+          </p>
+        )}
+        {analysisLoading && row.status !== "ready" && (
+          <p className="mt-1.5 text-[10px] text-accent">
+            Actualizando materiales…
           </p>
         )}
       </td>
       <td className="px-3 py-3 text-right">
-        <p className="font-semibold tabular text-positive">
-          {formatBlackMarketSilver(opportunity.profit)}
+        <p
+          className={`font-semibold tabular ${
+            row.recommendation.profit >= 0 ? "text-positive" : "text-negative"
+          }`}
+        >
+          {formatBlackMarketSilver(row.recommendation.profit)}
         </p>
         <p className="mt-1 text-[10px] tabular text-text-faint">
-          {formatBlackMarketPercent(opportunity.returnOnCostPercent)} ROI
+          {row.recommendation.returnOnCostPercent === null
+            ? "ROI no disponible"
+            : `${formatBlackMarketPercent(
+                row.recommendation.returnOnCostPercent,
+              )} ROI ajustado`}
         </p>
+        {row.recommendation.kind !== "buy-finished" && (
+          <p className="mt-0.5 text-[10px] tabular text-accent">
+            {row.recommendation.advantageOverBuying >= 0 ? "+" : ""}
+            {formatBlackMarketSilver(
+              row.recommendation.advantageOverBuying,
+            )}{" "}
+            vs comprar
+          </p>
+        )}
+      </td>
+      <td className="px-3 py-3 text-xs">
+        {economics ? (
+          <>
+            <p className="font-medium text-text">
+              {formatBlackMarketPercent(
+                economics.qualitySuccessProbability * 100,
+              )}{" "}
+              calidad objetivo
+            </p>
+            {row.recommendation.kind === "craft-with-focus" &&
+              (row.focusValuation?.silverPerFocus ?? null) !== null && (
+                <p className="mt-1 text-[10px] tabular text-text-faint">
+                  {new Intl.NumberFormat("es-CL", {
+                    maximumFractionDigits: 2,
+                  }).format(row.focusValuation?.silverPerFocus ?? 0)}{" "}
+                  plata/foco
+                </p>
+              )}
+            <p className="mt-0.5 text-[10px] tabular text-text-faint">
+              Pérdida esperada{" "}
+              {formatBlackMarketSilver(economics.expectedDeathLoss)}
+            </p>
+          </>
+        ) : (
+          <p className="text-text-faint">No aplica</p>
+        )}
       </td>
       <td className="px-3 py-3 text-xs">
         <BlackMarketRiskBadge risk={opportunity.risk} />
@@ -184,10 +289,39 @@ function OpportunityRow({
   );
 }
 
+function sortAndFilterRows(
+  rows: readonly BlackMarketMassAnalysisRow[],
+  filters: BlackMarketOpportunityFilters,
+): readonly BlackMarketMassAnalysisRow[] {
+  const filtered = rows.filter(
+    (row) =>
+      filters.strategyFilter === "all" ||
+      row.recommendation.kind === filters.strategyFilter,
+  );
+  if (filters.strategySort === "api") return filtered;
+
+  return [...filtered].sort((left, right) => {
+    if (filters.strategySort === "best-roi") {
+      return (
+        (right.recommendation.returnOnCostPercent ?? -Infinity) -
+        (left.recommendation.returnOnCostPercent ?? -Infinity)
+      );
+    }
+    if (filters.strategySort === "advantage") {
+      return (
+        right.recommendation.advantageOverBuying -
+        left.recommendation.advantageOverBuying
+      );
+    }
+    return right.recommendation.profit - left.recommendation.profit;
+  });
+}
+
 export function BlackMarketOpportunityResults({
   response,
   repository,
   filters,
+  strategyAnalysis,
   offset,
   loading,
   onOpen,
@@ -196,18 +330,28 @@ export function BlackMarketOpportunityResults({
 }: BlackMarketOpportunityResultsProps) {
   const hasPrevious = offset > 0;
   const hasNext = offset + response.returned < response.totalMatching;
+  const visibleRows = sortAndFilterRows(strategyAnalysis.rows, filters);
 
   return (
     <section className="mt-6 space-y-5">
-      <ScannerSummary response={response} />
+      <ScannerSummary
+        response={response}
+        strategyAnalysis={strategyAnalysis}
+      />
 
-      {response.warnings.length > 0 && (
+      {(response.warnings.length > 0 ||
+        strategyAnalysis.warnings.length > 0 ||
+        strategyAnalysis.error) && (
         <div className="rounded-xl border border-warning/40 bg-warning-muted p-4">
           <h3 className="text-sm font-semibold text-warning">
             Estado de los datos
           </h3>
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-text-muted">
-            {response.warnings.map((warning) => (
+            {[
+              ...response.warnings,
+              ...strategyAnalysis.warnings,
+              ...(strategyAnalysis.error ? [strategyAnalysis.error] : []),
+            ].map((warning) => (
               <li key={warning}>• {warning}</li>
             ))}
           </ul>
@@ -217,44 +361,52 @@ export function BlackMarketOpportunityResults({
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex flex-col gap-1 border-b border-border bg-surface-raised px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-text">Resultados</h3>
+            <h3 className="text-sm font-semibold text-text">
+              Resultados con mejor estrategia
+            </h3>
             <p className="mt-0.5 text-[11px] text-text-faint">
-              Haz clic en el objeto o en “Ver detalle” para abrir el desglose sin salir del escáner.
+              Fabricación usa precios batch de materiales, RRR, foco, calidad y
+              costos logísticos configurados. El orden local se aplica a esta
+              página.
             </p>
           </div>
           <span className="text-[10px] uppercase tracking-[0.12em] text-text-faint">
-            Valores por unidad
+            {visibleRows.length} de {response.returned} filas visibles
           </span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[68rem] text-left">
+          <table className="w-full min-w-[92rem] text-left">
             <thead className="bg-surface-raised text-[10px] uppercase tracking-[0.12em] text-text-faint">
               <tr>
                 <th className="px-3 py-3 font-medium">Objeto</th>
                 <th className="px-3 py-3 font-medium">Comprar</th>
                 <th className="px-3 py-3 font-medium">Black Market</th>
+                <th className="px-3 py-3 font-medium">Mejor estrategia</th>
                 <th className="px-3 py-3 text-right font-medium">
-                  Resultado
+                  Beneficio y ROI
                 </th>
-                <th className="px-3 py-3 font-medium">Riesgo</th>
+                <th className="px-3 py-3 font-medium">Calidad y riesgo</th>
+                <th className="px-3 py-3 font-medium">Riesgo de mercado</th>
                 <th className="px-3 py-3 text-right font-medium">Acción</th>
               </tr>
             </thead>
             <tbody>
-              {response.data.map((opportunity) => (
+              {visibleRows.map((row) => (
                 <OpportunityRow
-                  key={opportunity.id}
-                  opportunity={opportunity}
+                  key={row.opportunity.id}
+                  row={row}
                   repository={repository}
+                  analysisLoading={strategyAnalysis.status === "loading"}
                   onOpen={onOpen}
                 />
               ))}
             </tbody>
           </table>
         </div>
-        {response.data.length === 0 && (
+        {visibleRows.length === 0 && (
           <p className="border-t border-border px-5 py-12 text-center text-sm text-text-faint">
-            No hay oportunidades que cumplan beneficio, ROI y frescura seleccionados.
+            No hay oportunidades de esta página cuya mejor estrategia coincida
+            con el filtro seleccionado.
           </p>
         )}
       </div>

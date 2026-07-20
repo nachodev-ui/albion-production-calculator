@@ -47,7 +47,7 @@ export function CraftingSpecializationPanel({
 
         <InfoHint
           label="Passive Bonus del Destiny Board"
-          text="Ingresa el total de Bonus to Focus Cost Efficiency mostrado para el objeto. Cada 10.000 puntos reducen a la mitad el costo de foco. Si el HO está especializado, su bono se combina automáticamente. Increase in Quality se guarda como referencia, pero todavía no modifica el precio esperado."
+          text="Ingresa el total de Bonus to Focus Cost Efficiency mostrado para el objeto. Cada 10.000 puntos reducen a la mitad el costo de foco. Si el HO está especializado, su bono se combina automáticamente. Increase in Quality se utiliza en el Black Market para estimar la distribución de calidad y el ingreso esperado."
           align="left"
         />
       </div>
@@ -167,8 +167,9 @@ export function CraftingSpecializationPanel({
         )}
 
       <p className="mt-3 text-[11px] leading-relaxed text-text-faint">
-        El bono de calidad se muestra y se guarda en presets, pero aún no se
-        usa para estimar probabilidades ni precio de venta por calidad.
+        El bono de calidad se guarda en presets y alimenta la estimación
+        probabilística del Black Market. En la calculadora general no cambia el
+        costo de fabricación ni garantiza una calidad concreta.
       </p>
     </div>
   )

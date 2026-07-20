@@ -47,12 +47,21 @@ import { collectMarketPriceTargets } from "@features/market-data/utils/collectMa
 import { InfoHint } from "@shared/components/InfoHint";
 import { BlackMarketCraftingEconomicsCards } from "./BlackMarketCraftingEconomicsCards";
 import { BlackMarketCraftingMaterialsCard } from "./BlackMarketCraftingMaterialsCard";
-import type { AlbionServer, BlackMarketOpportunity } from "../types";
+import type {
+  AlbionServer,
+  BlackMarketOpportunity,
+  BlackMarketOpportunityFilters,
+} from "../types";
 import {
   calculateBlackMarketCraftingEconomics,
+  calculateBlackMarketFocusValuation,
   recommendBlackMarketStrategy,
   type BlackMarketCraftingEconomics,
 } from "../utils/blackMarketCraftingComparison";
+import {
+  buildBlackMarketQualityPriceSchedule,
+  type BlackMarketQualityPricePoint,
+} from "../utils/blackMarketQuality";
 import { preloadBlackMarketCraftingWorkspace } from "../utils/preloadBlackMarketCraftingWorkspace";
 import {
   BLACK_MARKET_QUALITY_LABELS,
@@ -65,22 +74,23 @@ interface BlackMarketStrategyComparisonProps {
   readonly enchantment: EnchantmentLevel;
   readonly server: AlbionServer;
   readonly opportunity: BlackMarketOpportunity;
+  readonly qualityOpportunities: readonly BlackMarketOpportunity[];
+  readonly filters: BlackMarketOpportunityFilters;
   readonly repository: ItemRepository;
   readonly buyContent: ReactNode;
   readonly onOpenCrafting: (item: Item) => void;
 }
 
 type StrategyTab = "buy" | "craft";
-type TransportMode = "per-unit" | "batch";
 
 const EMPTY_PRICES: ReadonlyMap<string, number> = new Map();
 const ROOT_EXPANDED: ReadonlySet<string> = new Set(["root"]);
-const MARKET_SERVER_BY_BLACK_MARKET: Record<AlbionServer, MarketAlbionServer> =
-  {
-    west: "americas",
-    east: "asia",
-    europe: "europe",
-  };
+const MARKET_SERVER_BY_BLACK_MARKET: Record<AlbionServer, MarketAlbionServer> = {
+  west: "americas",
+  east: "asia",
+  europe: "europe",
+};
+
 function formatSignedSilver(value: number): string {
   return `${value > 0 ? "+" : ""}${formatBlackMarketSilver(value)}`;
 }
@@ -91,6 +101,18 @@ function formatRate(value: number | null): string {
     style: "percent",
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatDecimal(value: number | null, maximumFractionDigits = 2): string {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("es-CL", {
+    maximumFractionDigits,
+  }).format(value);
+}
+
+function nonNegative(rawValue: string): number {
+  const value = Number(rawValue.replace(",", "."));
+  return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 function effectiveSpecialization(
@@ -137,24 +159,19 @@ function Metric({
   );
 }
 
-function buildEconomics(
-  calculation: CraftCalculation | null,
+function qualityOrders(
   opportunity: BlackMarketOpportunity,
-  quantity: number,
-  transportCostTotal: number,
-): BlackMarketCraftingEconomics {
-  return calculateBlackMarketCraftingEconomics({
-    isComplete: calculation?.isComplete ?? false,
-    quantity,
-    netMaterialCost: calculation?.totalMaterialCost ?? 0,
-    recoveredMaterialValue: calculation?.totalSilverSavedByReturnRate ?? 0,
-    stationFees: calculation?.totalStationFees ?? 0,
-    effectiveCraftCost: calculation?.grandTotal ?? 0,
-    blackMarketBuyUnitPrice: opportunity.blackMarketBuyUnitPrice,
-    estimatedSalesTaxPerUnit: opportunity.estimatedSalesTax,
-    transportCostTotal,
-    buyFinishedProfitPerUnit: opportunity.profit,
-  });
+  candidates: readonly BlackMarketOpportunity[],
+): readonly BlackMarketQualityPricePoint[] {
+  return candidates
+    .filter((candidate) => candidate.itemIdentifier === opportunity.itemIdentifier)
+    .map((candidate) => ({
+      minimumQuality: Math.min(
+        5,
+        Math.max(1, candidate.blackMarketQuality),
+      ) as 1 | 2 | 3 | 4 | 5,
+      unitPrice: candidate.blackMarketBuyUnitPrice,
+    }));
 }
 
 export function BlackMarketStrategyComparison({
@@ -162,6 +179,8 @@ export function BlackMarketStrategyComparison({
   enchantment,
   server,
   opportunity,
+  qualityOpportunities,
+  filters,
   repository,
   buyContent,
   onOpenCrafting,
@@ -173,10 +192,25 @@ export function BlackMarketStrategyComparison({
   );
   const [activeTab, setActiveTab] = useState<StrategyTab>("buy");
   const [quantity, setQuantity] = useState(1);
-  const [transportMode, setTransportMode] = useState<TransportMode>("per-unit");
-  const [transportValue, setTransportValue] = useState(
-    opportunity.transportCostPerUnit,
+  const [focusValuePerPoint, setFocusValuePerPoint] = useState(
+    filters.focusValuePerPoint,
   );
+  const [lowerQualityFallbackPercent, setLowerQualityFallbackPercent] = useState(
+    filters.lowerQualityFallbackPercent,
+  );
+  const [materialTransportCostTotal, setMaterialTransportCostTotal] = useState(
+    filters.materialTransportCostPerBatch,
+  );
+  const [finishedTransportCostPerUnit, setFinishedTransportCostPerUnit] = useState(
+    filters.finishedTransportCostPerUnit,
+  );
+  const [escortCostTotal, setEscortCostTotal] = useState(
+    filters.escortCostPerBatch,
+  );
+  const [deathProbabilityPercent, setDeathProbabilityPercent] = useState(
+    filters.deathProbabilityPercent,
+  );
+  const [timeCostTotal, setTimeCostTotal] = useState(filters.timeCostPerBatch);
   const [productionConfig, setProductionConfig] =
     useState<NodeReturnRateConfig>(() =>
       item
@@ -195,9 +229,7 @@ export function BlackMarketStrategyComparison({
       initialStore.craftingSpecializationConfig,
     );
   const [isPremium, setIsPremium] = useState(initialStore.isPremium);
-  const [itemValueOverride, setItemValueOverride] = useState<number | null>(
-    null,
-  );
+  const [itemValueOverride, setItemValueOverride] = useState<number | null>(null);
   const [stationUsageFeeOverride, setStationUsageFeeOverride] =
     useState<StationUsageFeeOverride | null>(null);
   const [recipeOptionIndex, setRecipeOptionIndex] = useState(0);
@@ -324,19 +356,61 @@ export function BlackMarketStrategyComparison({
     repository,
   ]);
 
-  const transportCostTotal =
-    transportMode === "per-unit" ? transportValue * quantity : transportValue;
+  const qualityPriceSchedule = useMemo(
+    () =>
+      buildBlackMarketQualityPriceSchedule({
+        targetQuality: opportunity.blackMarketQuality,
+        targetUnitPrice: opportunity.blackMarketBuyUnitPrice,
+        availableOrders: qualityOrders(opportunity, qualityOpportunities),
+        lowerQualityFallbackPercent,
+      }),
+    [
+      lowerQualityFallbackPercent,
+      opportunity,
+      qualityOpportunities,
+    ],
+  );
+  const finishedTransportCostTotal =
+    finishedTransportCostPerUnit * quantity;
+
+  function buildEconomics(
+    calculation: CraftCalculation | null,
+    useFocus: boolean,
+  ): BlackMarketCraftingEconomics {
+    return calculateBlackMarketCraftingEconomics({
+      isComplete: calculation?.isComplete ?? false,
+      quantity,
+      netMaterialCost: calculation?.totalMaterialCost ?? 0,
+      recoveredMaterialValue: calculation?.totalSilverSavedByReturnRate ?? 0,
+      stationFees: calculation?.totalStationFees ?? 0,
+      effectiveCraftCost: calculation?.grandTotal ?? 0,
+      blackMarketBuyUnitPrice: opportunity.blackMarketBuyUnitPrice,
+      salesTaxRate: filters.salesTaxPercent / 100,
+      targetQuality: opportunity.blackMarketQuality,
+      qualityIncreasePercent: specializationConfig.qualityIncrease,
+      qualityPriceSchedule,
+      materialTransportCostTotal,
+      finishedTransportCostTotal,
+      escortCostTotal,
+      deathProbabilityRate: deathProbabilityPercent / 100,
+      timeCostTotal,
+      focusRequired:
+        useFocus && calculation
+          ? calculation.focusCostBreakdown.totalFocusRequired
+          : 0,
+      focusValuePerPoint,
+      buyFinishedProfitPerUnit: opportunity.profit,
+    });
+  }
+
   const withoutFocusEconomics = buildEconomics(
     withoutFocusCalculation,
-    opportunity,
-    quantity,
-    transportCostTotal,
+    false,
   );
-  const withFocusEconomics = buildEconomics(
-    withFocusCalculation,
-    opportunity,
-    quantity,
-    transportCostTotal,
+  const withFocusEconomics = buildEconomics(withFocusCalculation, true);
+  const focusValuation = calculateBlackMarketFocusValuation(
+    withoutFocusEconomics,
+    withFocusEconomics,
   );
   const selectedCalculation = productionConfig.useFocus
     ? withFocusCalculation
@@ -346,6 +420,7 @@ export function BlackMarketStrategyComparison({
     : withoutFocusEconomics;
   const strategyRecommendation = recommendBlackMarketStrategy(
     opportunity.profit,
+    opportunity.returnOnCostPercent,
     quantity,
     withoutFocusEconomics,
     withFocusEconomics,
@@ -359,12 +434,6 @@ export function BlackMarketStrategyComparison({
     if (!Number.isFinite(next)) return;
     setQuantity(Math.max(1, Math.floor(next)));
     setStationUsageFeeOverride(null);
-  }
-
-  function updateTransport(rawValue: string) {
-    const next = Number(rawValue);
-    if (!Number.isFinite(next)) return;
-    setTransportValue(Math.max(0, next));
   }
 
   function openInCraftingCalculator() {
@@ -398,15 +467,21 @@ export function BlackMarketStrategyComparison({
             </h3>
             <p className="mt-1 text-xs text-text-muted">
               {strategyRecommendation.kind === "buy-finished"
-                ? "La compra terminada supera las variantes de fabricación con datos completos."
-                : `Ventaja frente a comprar terminado: ${formatSignedSilver(
+                ? "La compra terminada supera las variantes de fabricación después de valorar foco, calidad y riesgo."
+                : `Ventaja ajustada frente a comprar terminado: ${formatSignedSilver(
                     strategyRecommendation.advantageOverBuying / quantity,
                   )} plata por unidad.`}
             </p>
           </div>
           <div className="sm:text-right">
-            <p className="text-xs text-text-faint">Beneficio del lote</p>
-            <p className="text-xl font-semibold tabular text-positive">
+            <p className="text-xs text-text-faint">Beneficio ajustado del lote</p>
+            <p
+              className={`text-xl font-semibold tabular ${
+                strategyRecommendation.profit >= 0
+                  ? "text-positive"
+                  : "text-negative"
+              }`}
+            >
               {formatSignedSilver(strategyRecommendation.profit)} plata
             </p>
           </div>
@@ -455,50 +530,70 @@ export function BlackMarketStrategyComparison({
         </section>
       ) : (
         <div className="space-y-5">
-          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <Metric
-              label="Fabricar sin foco"
+              label="Sin foco ajustado"
               value={
-                withoutFocusEconomics.profitPerUnit === null
+                withoutFocusEconomics.adjustedProfitPerUnit === null
                   ? "Datos incompletos"
-                  : `${formatSignedSilver(withoutFocusEconomics.profitPerUnit)} plata/u`
+                  : `${formatSignedSilver(
+                      withoutFocusEconomics.adjustedProfitPerUnit,
+                    )} plata/u`
               }
               tone={
-                withoutFocusEconomics.profitPerUnit === null
+                withoutFocusEconomics.adjustedProfitPerUnit === null
                   ? "warning"
                   : "default"
               }
             />
             <Metric
-              label="Fabricar con foco"
+              label="Con foco ajustado"
               value={
-                withFocusEconomics.profitPerUnit === null
+                withFocusEconomics.adjustedProfitPerUnit === null
                   ? "Datos incompletos"
-                  : `${formatSignedSilver(withFocusEconomics.profitPerUnit)} plata/u`
+                  : `${formatSignedSilver(
+                      withFocusEconomics.adjustedProfitPerUnit,
+                    )} plata/u`
               }
               tone={
-                withFocusEconomics.profitPerUnit === null
+                withFocusEconomics.adjustedProfitPerUnit === null
                   ? "warning"
                   : "positive"
               }
             />
             <Metric
-              label="RRR seleccionado"
-              value={formatRate(
-                selectedCalculation.root.returnRate?.returnRate ?? null,
-              )}
+              label="Plata por foco"
+              value={
+                focusValuation.silverPerFocus === null
+                  ? "No disponible"
+                  : formatDecimal(focusValuation.silverPerFocus)
+              }
+              tone={
+                focusValuation.clearsConfiguredValue === false
+                  ? "warning"
+                  : "positive"
+              }
             />
             <Metric
-              label="ROI seleccionado"
+              label="Prob. calidad objetivo"
+              value={formatRate(selectedEconomics.qualitySuccessProbability)}
+              tone={
+                selectedEconomics.qualitySuccessProbability < 0.5
+                  ? "warning"
+                  : "default"
+              }
+            />
+            <Metric
+              label="ROI ajustado"
               value={
-                selectedEconomics.returnOnCostPercent === null
+                selectedEconomics.adjustedReturnOnCostPercent === null
                   ? "Incompleto"
                   : formatBlackMarketPercent(
-                      selectedEconomics.returnOnCostPercent,
+                      selectedEconomics.adjustedReturnOnCostPercent,
                     )
               }
               tone={
-                selectedEconomics.returnOnCostPercent === null
+                selectedEconomics.adjustedReturnOnCostPercent === null
                   ? "warning"
                   : "positive"
               }
@@ -521,7 +616,19 @@ export function BlackMarketStrategyComparison({
           </section>
 
           <section className="rounded-xl border border-border bg-surface-raised/55 p-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-text">
+                Supuestos económicos del lote
+              </h3>
+              <InfoHint
+                label="Beneficio ajustado"
+                text="El beneficio contable descuenta fabricación y logística directa. El beneficio ajustado descuenta además costo de oportunidad del foco, pérdida esperada por muerte y valor del tiempo."
+                align="left"
+                openOnHover
+                width={330}
+              />
+            </div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <label>
                 <span className="text-xs font-medium text-text-muted">
                   Cantidad a fabricar
@@ -535,39 +642,123 @@ export function BlackMarketStrategyComparison({
                   className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
                 />
               </label>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-text-muted">
-                    Transporte a Caerleon
-                  </span>
-                  <InfoHint
-                    label="Transporte de fabricación"
-                    text="El costo puede expresarse por unidad o como total del lote. La estrategia de compra conserva el transporte del escáner."
-                    align="left"
-                    openOnHover
-                  />
-                </div>
-                <div className="mt-1.5 grid grid-cols-[9rem_minmax(0,1fr)] gap-2">
-                  <select
-                    value={transportMode}
-                    onChange={(event) =>
-                      setTransportMode(event.target.value as TransportMode)
-                    }
-                    className="rounded-lg border border-border bg-surface px-2 py-2 text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-                  >
-                    <option value="per-unit">Por unidad</option>
-                    <option value="batch">Por lote</option>
-                  </select>
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={transportValue}
-                    onChange={(event) => updateTransport(event.target.value)}
-                    className="rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-                  />
-                </div>
-              </div>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Valor mínimo del foco
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={focusValuePerPoint}
+                  onChange={(event) =>
+                    setFocusValuePerPoint(nonNegative(event.target.value))
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Recuperación calidad inferior (%)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={lowerQualityFallbackPercent}
+                  onChange={(event) =>
+                    setLowerQualityFallbackPercent(
+                      Math.min(100, nonNegative(event.target.value)),
+                    )
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Materiales → fabricación
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={materialTransportCostTotal}
+                  onChange={(event) =>
+                    setMaterialTransportCostTotal(
+                      Math.floor(nonNegative(event.target.value)),
+                    )
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Fabricación → Caerleon por unidad
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={finishedTransportCostPerUnit}
+                  onChange={(event) =>
+                    setFinishedTransportCostPerUnit(
+                      Math.floor(nonNegative(event.target.value)),
+                    )
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Escolta y protección
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={escortCostTotal}
+                  onChange={(event) =>
+                    setEscortCostTotal(
+                      Math.floor(nonNegative(event.target.value)),
+                    )
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Probabilidad de muerte (%)
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  value={deathProbabilityPercent}
+                  onChange={(event) =>
+                    setDeathProbabilityPercent(
+                      Math.min(100, nonNegative(event.target.value)),
+                    )
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
+              <label>
+                <span className="text-xs font-medium text-text-muted">
+                  Costo del tiempo
+                </span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={timeCostTotal}
+                  onChange={(event) =>
+                    setTimeCostTotal(Math.floor(nonNegative(event.target.value)))
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-right text-sm text-text outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                />
+              </label>
             </div>
           </section>
 
@@ -626,6 +817,7 @@ export function BlackMarketStrategyComparison({
 
           <BlackMarketCraftingEconomicsCards
             economics={selectedEconomics}
+            focusValuation={focusValuation}
             opportunity={opportunity}
             quantity={quantity}
           />
@@ -640,8 +832,14 @@ export function BlackMarketStrategyComparison({
             <p>
               La orden exige calidad{" "}
               {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]}. La
-              calidad final del crafteo no está garantizada; confirma que el
-              lote producido puede cubrirla.
+              estimación pondera la probabilidad de alcanzar esa calidad y usa
+              órdenes inferiores observadas en esta página; si faltan, aplica el
+              porcentaje conservador configurado.
+            </p>
+            <p>
+              “Increase in Quality” se interpreta como porcentaje de tiradas
+              adicionales y solo cuenta la mejor. El foco se valora por su costo
+              de oportunidad, pero no añade una tirada de calidad.
             </p>
             <p>
               Artefactos y componentes especiales se valoran como costo, pero el
