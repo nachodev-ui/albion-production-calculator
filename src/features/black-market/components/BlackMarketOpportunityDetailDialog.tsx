@@ -3,7 +3,11 @@ import type { EnchantmentLevel } from "@core/domain/entities/Enchantment";
 import { buildItemIconUrl, type Item } from "@core/domain/entities/Item";
 import type { ItemRepository } from "@core/domain/repositories/ItemRepository";
 import { InfoHint } from "@shared/components/InfoHint";
-import type { AlbionServer, BlackMarketOpportunity } from "../types";
+import type {
+  AlbionServer,
+  BlackMarketOpportunity,
+  BlackMarketOpportunityFilters,
+} from "../types";
 import {
   BLACK_MARKET_QUALITY_LABELS,
   baseBlackMarketItemIdentifier,
@@ -18,6 +22,8 @@ import { BlackMarketStrategyComparison } from "./BlackMarketStrategyComparison";
 
 interface BlackMarketOpportunityDetailDialogProps {
   readonly opportunity: BlackMarketOpportunity;
+  readonly qualityOpportunities: readonly BlackMarketOpportunity[];
+  readonly filters: BlackMarketOpportunityFilters;
   readonly server: AlbionServer;
   readonly repository: ItemRepository;
   readonly onClose: () => void;
@@ -83,6 +89,8 @@ function BreakdownRow({
 
 export function BlackMarketOpportunityDetailDialog({
   opportunity,
+  qualityOpportunities,
+  filters,
   server,
   repository,
   onClose,
@@ -248,10 +256,10 @@ export function BlackMarketOpportunityDetailDialog({
                 Competencia desde Caerleon
               </p>
               <p className="mt-1">
-                Precio observado: {" "}
+                Precio observado:{" "}
                 {formatBlackMarketSilver(
                   opportunity.caerleonCompetition.purchaseUnitPrice,
-                )} · antigüedad {" "}
+                )} · antigüedad{" "}
                 {formatBlackMarketAge(
                   opportunity.caerleonCompetition.ageMinutes,
                 )}.
@@ -310,8 +318,8 @@ export function BlackMarketOpportunityDetailDialog({
               {item?.name ?? opportunity.itemIdentifier}
             </h2>
             <p className="mt-1 text-xs text-text-faint">
-              T{opportunity.tier}.{opportunity.enchantment} · {" "}
-              {blackMarketScannerCategoryName(opportunity.category)} · {" "}
+              T{opportunity.tier}.{opportunity.enchantment} ·{" "}
+              {blackMarketScannerCategoryName(opportunity.category)} ·{" "}
               {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]}
             </p>
             <p className="mt-2 text-sm text-text-muted">
@@ -333,6 +341,8 @@ export function BlackMarketOpportunityDetailDialog({
           enchantment={opportunity.enchantment as EnchantmentLevel}
           server={server}
           opportunity={opportunity}
+          qualityOpportunities={qualityOpportunities}
+          filters={filters}
           repository={repository}
           buyContent={buyContent}
           onOpenCrafting={onOpenCrafting}
