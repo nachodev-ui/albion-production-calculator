@@ -13,6 +13,8 @@ import type {
   CraftingSpecializationConfig,
   StationFeeConfig,
 } from '@core/domain/entities/ProductionEconomy'
+import { createSavedCalculation } from '@features/account/api/savedDataApi'
+import { useAccountSession } from '@features/account/hooks/useAccountSession'
 import { InfoHint } from '@shared/components/InfoHint'
 import {
   buildCalculationSummary,
@@ -20,6 +22,7 @@ import {
   createCalculationSummarySnapshot,
 } from '../utils/calculationSummary'
 import type { CalculationSummaryInput } from '../utils/calculationSummary'
+import { createSharedCalculationUrl } from '../utils/sharedCalculation'
 import { saveCalculationPrintSummary } from '../utils/printSummaryStorage'
 
 interface CalculationSummaryActionsProps {
@@ -35,7 +38,15 @@ interface CalculationSummaryActionsProps {
   readonly repository: ItemRepository
 }
 
-type FeedbackState = 'idle' | 'copied' | 'downloaded' | 'print-opened' | 'error'
+type FeedbackState =
+  | 'idle'
+  | 'copied'
+  | 'downloaded'
+  | 'print-opened'
+  | 'saved'
+  | 'link-copied'
+  | 'auth-required'
+  | 'error'
 
 async function copyText(text: string): Promise<void> {
   if (navigator.clipboard && window.isSecureContext) {
@@ -73,6 +84,7 @@ export function CalculationSummaryActions({
   unitSellPrice,
   repository,
 }: CalculationSummaryActionsProps) {
+  const { isAuthenticated, getAccessToken, login } = useAccountSession()
   const [feedback, setFeedback] = useState<FeedbackState>('idle')
   const feedbackTimer = useRef<number | null>(null)
 
@@ -229,6 +241,43 @@ export function CalculationSummaryActions({
     }
   }
 
+  async function handleSave() {
+    if (!isAuthenticated) {
+      showFeedback('auth-required')
+      await login()
+      return
+    }
+
+    try {
+      const accessToken = await getAccessToken()
+      if (!accessToken) {
+        showFeedback('auth-required')
+        return
+      }
+      const level = `T${item.tier}${enchantment > 0 ? `.${enchantment}` : ''}`
+      await createSavedCalculation(accessToken, {
+        name: `${item.name} ${level}`,
+        kind: 'craft',
+        snapshot: createCalculationSummarySnapshot(createSummaryInput()),
+      })
+      showFeedback('saved')
+    } catch {
+      showFeedback('error')
+    }
+  }
+
+  async function handleShareLink() {
+    try {
+      const url = await createSharedCalculationUrl(
+        createCalculationSummarySnapshot(createSummaryInput()),
+      )
+      await copyText(url)
+      showFeedback('link-copied')
+    } catch {
+      showFeedback('error')
+    }
+  }
+
   const feedbackText =
     feedback === 'copied'
       ? 'Resumen copiado.'
@@ -236,11 +285,17 @@ export function CalculationSummaryActions({
         ? 'Archivo descargado.'
         : feedback === 'print-opened'
           ? 'Vista para PDF abierta.'
-          : feedback === 'error'
-            ? 'No se pudo completar la acción.'
-            : calculation.isComplete
-              ? 'Listo para compartir.'
-              : 'Se exportará marcado como cálculo incompleto.'
+          : feedback === 'saved'
+            ? 'Cálculo guardado en tu cuenta.'
+            : feedback === 'link-copied'
+              ? 'Enlace compartible copiado.'
+              : feedback === 'auth-required'
+                ? 'Inicia sesión para guardar en la nube.'
+                : feedback === 'error'
+                  ? 'No se pudo completar la acción.'
+                  : calculation.isComplete
+                    ? 'Listo para guardar o compartir.'
+                    : 'La captura se marcará como cálculo incompleto.'
 
   return (
     <section className="mt-4 rounded-xl border border-border bg-surface-raised p-4">
@@ -248,25 +303,25 @@ export function CalculationSummaryActions({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <h3 className="text-sm font-semibold text-text">
-              Compartir resumen
+              Guardar y compartir
             </h3>
 
             <InfoHint
-              label="Compartir resumen"
-              text="Copia, descarga o imprime un resumen con el objeto, la configuración de producción, los costos, los materiales recuperados, las comisiones y el resultado económico."
+              label="Guardar y compartir cálculo"
+              text="Guarda una captura completa en tu cuenta o crea un enlace que conserva el objeto, los precios utilizados, la configuración, el RRR y el resultado económico."
               align="left"
             />
           </div>
 
           <p className="mt-1 text-xs leading-relaxed text-text-faint">
-            Para crear un PDF, elige “Guardar como PDF” en el diálogo de
-            impresión.
+            El enlace contiene una captura comprimida; no publica tu cuenta ni tus
+            presets privados.
           </p>
 
           <p
             aria-live="polite"
             className={`mt-1 text-xs ${
-              feedback === 'error'
+              feedback === 'error' || feedback === 'auth-required'
                 ? 'text-negative'
                 : feedback !== 'idle'
                   ? 'text-positive'
@@ -278,6 +333,22 @@ export function CalculationSummaryActions({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void handleSave()}
+            className="rounded-lg border border-accent-border bg-accent-muted px-3.5 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+          >
+            {feedback === 'saved' ? 'Guardado' : 'Guardar cálculo'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleShareLink()}
+            className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+          >
+            {feedback === 'link-copied' ? 'Enlace copiado' : 'Copiar enlace'}
+          </button>
+
           <button
             type="button"
             onClick={handleCopy}
@@ -297,7 +368,7 @@ export function CalculationSummaryActions({
           <button
             type="button"
             onClick={handlePrint}
-            className="rounded-lg border border-accent-border bg-accent-muted px-3.5 py-2 text-xs font-medium text-accent transition-colors hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+            className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
             Exportar PDF
           </button>
