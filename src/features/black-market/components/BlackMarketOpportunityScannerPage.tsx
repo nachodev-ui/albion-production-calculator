@@ -6,6 +6,7 @@ import { FeatureGate } from "../../account/components/FeatureGate";
 import { useAccountSession } from "../../account/hooks/useAccountSession";
 import { ENTITLEMENT_KEYS } from "../../account/types";
 import { scanBlackMarketOpportunities } from "../api/blackMarketOpportunitiesApi";
+import { useBlackMarketMassCraftingAnalysis } from "../hooks/useBlackMarketMassCraftingAnalysis";
 import {
   loadBlackMarketScannerFilters,
   saveBlackMarketScannerFilters,
@@ -18,6 +19,7 @@ import type {
 import { BlackMarketOpportunityDetailDialog } from "./BlackMarketOpportunityDetailDialog";
 import { BlackMarketOpportunityResults } from "./BlackMarketOpportunityResults";
 import { BlackMarketScannerControls } from "./BlackMarketScannerControls";
+import { BlackMarketStrategyAssumptions } from "./BlackMarketStrategyAssumptions";
 
 interface BlackMarketOpportunityScannerPageProps {
   readonly repository: ItemRepository;
@@ -46,12 +48,21 @@ function Scanner({
   >("idle");
   const [error, setError] = useState<string | null>(null);
   const activeRequest = useRef<AbortController | null>(null);
+  const strategyAnalysis = useBlackMarketMassCraftingAnalysis({
+    response,
+    repository,
+    filters,
+  });
 
   useEffect(() => saveBlackMarketScannerFilters(filters), [filters]);
   useEffect(() => () => activeRequest.current?.abort(), []);
 
   function updateFilters(patch: Partial<BlackMarketOpportunityFilters>) {
-    setFilters((current) => ({ ...current, ...patch }));
+    const normalizedPatch =
+      patch.limit === undefined
+        ? patch
+        : { ...patch, limit: Math.min(100, Math.max(25, patch.limit)) };
+    setFilters((current) => ({ ...current, ...normalizedPatch }));
     setOffset(0);
   }
 
@@ -74,10 +85,23 @@ function Scanner({
         throw new Error("No fue posible obtener una sesión autenticada.");
       }
 
-      const { salesTaxPercent, ...requestFilters } = filters;
+      const {
+        salesTaxPercent,
+        focusValuePerPoint: _focusValuePerPoint,
+        lowerQualityFallbackPercent: _lowerQualityFallbackPercent,
+        materialTransportCostPerBatch: _materialTransportCostPerBatch,
+        finishedTransportCostPerUnit: _finishedTransportCostPerUnit,
+        escortCostPerBatch: _escortCostPerBatch,
+        deathProbabilityPercent: _deathProbabilityPercent,
+        timeCostPerBatch: _timeCostPerBatch,
+        strategyFilter: _strategyFilter,
+        strategySort: _strategySort,
+        ...requestFilters
+      } = filters;
       const result = await scanBlackMarketOpportunities(
         {
           ...requestFilters,
+          limit: Math.min(100, requestFilters.limit),
           salesTaxRate: salesTaxPercent / 100,
           offset: nextOffset,
         },
@@ -114,11 +138,16 @@ function Scanner({
               Oportunidades ciudad → Black Market
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted">
-              Cruza automáticamente precios de venta de las ciudades con órdenes de compra del Black Market, descuenta impuesto y transporte y prioriza oportunidades frescas. El resultado es una captura, no una garantía de ejecución.
+              Cruza precios de ciudades con órdenes del Black Market y, para la
+              página visible, consulta materiales en batch para comparar comprar,
+              fabricar sin foco y fabricar con foco. El resultado es una captura,
+              no una garantía de ejecución.
             </p>
           </div>
           <div className="rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-xs leading-relaxed text-text-muted lg:max-w-sm">
-            Verifica dentro del juego antes de comprar. Una orden puede completarse entre la captura y tu llegada a Caerleon.
+            Verifica dentro del juego antes de comprar o fabricar. Las órdenes,
+            los materiales y la competencia pueden cambiar mientras preparas el
+            lote.
           </div>
         </div>
 
@@ -127,6 +156,10 @@ function Scanner({
           onSubmit={(event) => void scan(0, event)}
         >
           <BlackMarketScannerControls
+            filters={filters}
+            onChange={updateFilters}
+          />
+          <BlackMarketStrategyAssumptions
             filters={filters}
             onChange={updateFilters}
           />
@@ -140,7 +173,8 @@ function Scanner({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-text-faint">
               {filters.purchaseMarketKeys.length} mercados · {filters.tiers.length}{" "}
-              tiers · {filters.categories.length} categorías activas
+              tiers · {filters.categories.length} categorías · máximo {filters.limit}{" "}
+              estrategias por página
             </p>
             <button
               type="submit"
@@ -166,19 +200,20 @@ function Scanner({
           response={response}
           repository={repository}
           filters={filters}
+          strategyAnalysis={strategyAnalysis}
           offset={offset}
           loading={status === "loading"}
           onOpen={setSelectedOpportunity}
-          onPrevious={() =>
-            void scan(Math.max(0, offset - filters.limit))
-          }
-          onNext={() => void scan(offset + filters.limit)}
+          onPrevious={() => void scan(Math.max(0, offset - response.limit))}
+          onNext={() => void scan(offset + response.limit)}
         />
       )}
 
       {selectedOpportunity && (
         <BlackMarketOpportunityDetailDialog
           opportunity={selectedOpportunity}
+          qualityOpportunities={response?.data ?? []}
+          filters={filters}
           server={response?.server ?? filters.server}
           repository={repository}
           onClose={() => setSelectedOpportunity(null)}
@@ -201,7 +236,7 @@ export function BlackMarketOpportunityScannerPage({
     <FeatureGate
       entitlementKey={ENTITLEMENT_KEYS.blackMarketAnalytics}
       title="Escáner comparativo del Black Market"
-      description="La comparación masiva entre ciudades y órdenes de compra del Black Market es exclusiva para cuentas Pro y se autoriza nuevamente en la API central."
+      description="La comparación masiva entre ciudades, fabricación y órdenes de compra del Black Market es exclusiva para cuentas Pro y se autoriza nuevamente en la API central."
       onViewPlans={() => onNavigate("plans")}
     >
       <Scanner repository={repository} onOpenCrafting={onOpenCrafting} />
