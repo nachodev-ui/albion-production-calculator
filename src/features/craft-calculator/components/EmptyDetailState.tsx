@@ -76,20 +76,15 @@ function resolvePreferredItem(
   repository: ItemRepository,
   identifiers: readonly string[],
   category: ItemCategory,
-  excludedIds: ReadonlySet<string> = new Set(),
 ): Item | null {
   for (const identifier of identifiers) {
     const item = repository.getById(asBaseItemId(identifier))
-    if (item && !excludedIds.has(item.id)) return item
+    if (item) return item
   }
   return (
     repository
       .getAll(category)
-      .find((item) => item.tier === 4 && item.recipe && !excludedIds.has(item.id)) ??
-    repository
-      .getAll(category)
-      .find((item) => item.recipe && !excludedIds.has(item.id)) ??
-    null
+      .find((item) => item.tier === 4 && item.recipe !== null) ?? null
   )
 }
 
@@ -136,7 +131,6 @@ function PinButton({
       type="button"
       aria-pressed={isPinned}
       aria-label={isPinned ? `Quitar ${item.name} de fijados` : `Fijar ${item.name}`}
-      title={isPinned ? 'Quitar de fijados' : 'Fijar objeto'}
       onClick={(event) => {
         event.stopPropagation()
         onToggle(item)
@@ -261,22 +255,18 @@ export function EmptyDetailState({
 }: EmptyDetailStateProps) {
   const [guidedState, setGuidedState] = useState(loadGuidedStartState)
 
-  const examples = useMemo(() => {
-    const bag = resolvePreferredItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory')
-    const excluded = new Set(bag ? [bag.id] : [])
-    const weapon = resolvePreferredItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon', excluded)
-    if (weapon) excluded.add(weapon.id)
-    return {
-      bag,
-      weapon,
+  const examples = useMemo(
+    () => ({
+      bag: resolvePreferredItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory'),
+      weapon: resolvePreferredItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon'),
       blackMarket: resolvePreferredItem(
         repository,
         ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'],
         'armor',
-        excluded,
       ),
-    }
-  }, [repository])
+    }),
+    [repository],
+  )
 
   const exampleDefinitions = useMemo(() => {
     const definitions: Array<ExampleDefinition | null> = [
@@ -407,17 +397,14 @@ export function EmptyDetailState({
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Configuraciones recomendadas</p>
           <h2 className="mt-1 font-display text-2xl text-text">Puntos de partida seguros</h2>
-          <div className="mt-5 space-y-3">
+          <ul className="mt-5 space-y-3">
             {exampleDefinitions.map((example) => (
-              <div key={example.title} className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised p-3">
-                <ItemIcon itemId={example.item.id} enchantment={0} name={example.item.name} size={38} />
-                <span>
-                  <span className="block text-sm font-semibold text-text">{example.title}</span>
-                  <span className="mt-0.5 block text-xs leading-relaxed text-text-faint">{example.detail}</span>
-                </span>
-              </div>
+              <li key={example.title} className="rounded-xl border border-border bg-surface-raised p-3">
+                <span className="text-sm font-semibold text-text">{example.title}</span>
+                <p className="mt-0.5 text-xs leading-relaxed text-text-faint">{example.detail}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       </div>
 
@@ -426,7 +413,7 @@ export function EmptyDetailState({
         <h2 className="mt-1 font-display text-2xl text-text">Lee resultados sin saber economía de juegos</h2>
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {BASIC_CONCEPTS.map(([term, explanation]) => (
-            <article key={term} className="rounded-xl border border-border bg-bg/30 p-4" title={explanation}>
+            <article key={term} className="rounded-xl border border-border bg-bg/30 p-4">
               <h3 className="text-sm font-semibold text-text">{term}</h3>
               <p className="mt-2 text-xs leading-relaxed text-text-faint">{explanation}</p>
             </article>
