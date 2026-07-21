@@ -758,6 +758,7 @@ export function ItemRecipeCard({
             automaticPriceLabel={market.salePriceLabel}
             automaticPriceUpdatedAt={market.automaticSalePriceDetail.updatedAt}
             automaticPriceSource={market.automaticSalePriceDetail.source}
+            automaticPriceSnapshot={market.automaticSalePriceDetail.snapshot}
             marketStatus={market.status}
             refreshResult={market.saleRefreshResult}
             marketConfig={market.config}
