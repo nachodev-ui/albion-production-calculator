@@ -29,6 +29,7 @@ interface TooltipPosition {
 const DEFAULT_TOOLTIP_WIDTH = 256
 const VIEWPORT_MARGIN = 12
 const TOOLTIP_GAP = 8
+const HOVER_CLOSE_DELAY_MS = 140
 
 const DEFAULT_TRIGGER_CLASS_NAME =
   'flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-semibold leading-none text-text-faint transition-colors hover:border-border-strong hover:bg-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border'
@@ -52,7 +53,25 @@ export function InfoHint({
 
   const buttonRef = useRef<HTMLButtonElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const hoverCloseTimerRef = useRef<number | null>(null)
   const tooltipId = useId()
+
+  const cancelHoverClose = useCallback(() => {
+    if (hoverCloseTimerRef.current !== null) {
+      window.clearTimeout(hoverCloseTimerRef.current)
+      hoverCloseTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleHoverClose = useCallback(() => {
+    if (!openOnHover) return
+
+    cancelHoverClose()
+    hoverCloseTimerRef.current = window.setTimeout(() => {
+      setIsOpen(false)
+      hoverCloseTimerRef.current = null
+    }, HOVER_CLOSE_DELAY_MS)
+  }, [cancelHoverClose, openOnHover])
 
   const updatePosition = useCallback(() => {
     const button = buttonRef.current
@@ -74,11 +93,9 @@ export function InfoHint({
       case 'left':
         left = buttonRect.left
         break
-
       case 'right':
         left = buttonRect.right - resolvedWidth
         break
-
       default:
         left =
           buttonRect.left + buttonRect.width / 2 - resolvedWidth / 2
@@ -121,6 +138,10 @@ export function InfoHint({
   }, [content, isOpen, text, updatePosition])
 
   useEffect(() => {
+    return () => cancelHoverClose()
+  }, [cancelHoverClose])
+
+  useEffect(() => {
     if (!isOpen) return
 
     function handleOutsideClick(event: PointerEvent) {
@@ -133,11 +154,13 @@ export function InfoHint({
         return
       }
 
+      cancelHoverClose()
       setIsOpen(false)
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
+        cancelHoverClose()
         setIsOpen(false)
         buttonRef.current?.focus()
       }
@@ -154,7 +177,7 @@ export function InfoHint({
       document.removeEventListener('pointerdown', handleOutsideClick)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, updatePosition])
+  }, [cancelHoverClose, isOpen, updatePosition])
 
   return (
     <>
@@ -164,13 +187,16 @@ export function InfoHint({
         aria-label={`Información sobre ${label}`}
         aria-expanded={isOpen}
         aria-describedby={isOpen ? tooltipId : undefined}
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          cancelHoverClose()
+          setIsOpen((current) => !current)
+        }}
         onMouseEnter={() => {
-          if (openOnHover) setIsOpen(true)
+          if (!openOnHover) return
+          cancelHoverClose()
+          setIsOpen(true)
         }}
-        onMouseLeave={() => {
-          if (openOnHover) setIsOpen(false)
-        }}
+        onMouseLeave={scheduleHoverClose}
         className={triggerClassName ?? DEFAULT_TRIGGER_CLASS_NAME}
       >
         {trigger ?? 'i'}
@@ -183,6 +209,8 @@ export function InfoHint({
             ref={tooltipRef}
             id={tooltipId}
             role="tooltip"
+            onMouseEnter={cancelHoverClose}
+            onMouseLeave={scheduleHoverClose}
             style={{
               position: 'fixed',
               top: position.top,
