@@ -1,0 +1,53 @@
+name: Preserve Black Market response compatibility
+
+on:
+  push:
+    branches:
+      - feat/black-market-data-trust
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/black-market-data-trust
+          fetch-depth: 0
+      - name: Default missing trust counters during rolling deployments
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/features/black-market/api/blackMarketOpportunitiesApi.ts')
+          source = path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  '''    purchaseHistoryObservations7d: requiredNumber(\n      value["purchaseHistoryObservations7d"],\n      "opportunity.purchaseHistoryObservations7d",\n    ),\n    purchaseHistoryVolume7d: requiredNumber(\n      value["purchaseHistoryVolume7d"],\n      "opportunity.purchaseHistoryVolume7d",\n    ),\n''',
+                  '''    purchaseHistoryObservations7d:\n      nullableNumber(\n        value["purchaseHistoryObservations7d"],\n        "opportunity.purchaseHistoryObservations7d",\n      ) ?? 0,\n    purchaseHistoryVolume7d:\n      nullableNumber(\n        value["purchaseHistoryVolume7d"],\n        "opportunity.purchaseHistoryVolume7d",\n      ) ?? 0,\n''',
+              ),
+              (
+                  '''    blackMarketHistoryObservations7d: requiredNumber(\n      value["blackMarketHistoryObservations7d"],\n      "opportunity.blackMarketHistoryObservations7d",\n    ),\n    blackMarketHistoryVolume7d: requiredNumber(\n      value["blackMarketHistoryVolume7d"],\n      "opportunity.blackMarketHistoryVolume7d",\n    ),\n''',
+                  '''    blackMarketHistoryObservations7d:\n      nullableNumber(\n        value["blackMarketHistoryObservations7d"],\n        "opportunity.blackMarketHistoryObservations7d",\n      ) ?? 0,\n    blackMarketHistoryVolume7d:\n      nullableNumber(\n        value["blackMarketHistoryVolume7d"],\n        "opportunity.blackMarketHistoryVolume7d",\n      ) ?? 0,\n''',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f'Compatibility replacement not found: {old!r}')
+              source = source.replace(old, new, 1)
+          path.write_text(source, encoding='utf-8')
+          PY
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/fix-black-market-trust-compatibility.yml
+      - name: Commit compatibility fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: accept legacy Black Market trust payloads'
+          git push origin HEAD:feat/black-market-data-trust
