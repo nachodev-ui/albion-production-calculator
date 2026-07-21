@@ -1,0 +1,70 @@
+name: Connect sale price trust evidence
+
+on:
+  push:
+    branches:
+      - fix/data-trust-sale-price
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/data-trust-sale-price
+          fetch-depth: 0
+      - name: Pass the finished product snapshot to the confidence component
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          profit_path = Path('src/features/craft-calculator/components/ProfitSummaryCard.tsx')
+          profit = profit_path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  """  MarketDataSource,\n  MarketDefinition,\n""",
+                  """  MarketDataSource,\n  MarketDefinition,\n  MarketPriceSnapshot,\n""",
+              ),
+              (
+                  """  readonly automaticPriceSource: MarketDataSource | null\n  readonly marketStatus: MarketRequestStatus\n""",
+                  """  readonly automaticPriceSource: MarketDataSource | null\n  readonly automaticPriceSnapshot: MarketPriceSnapshot | null\n  readonly marketStatus: MarketRequestStatus\n""",
+              ),
+              (
+                  """  automaticPriceUpdatedAt,\n  automaticPriceSource,\n  marketStatus,\n""",
+                  """  automaticPriceUpdatedAt,\n  automaticPriceSource,\n  automaticPriceSnapshot,\n  marketStatus,\n""",
+              ),
+              (
+                  """                    isActive={\n                      automaticUnitSellPrice !== null && !isManualSellPrice\n                    }\n""",
+                  """                    isActive={\n                      automaticUnitSellPrice !== null && !isManualSellPrice\n                    }\n                    priceValue={automaticUnitSellPrice}\n                    snapshot={\n                      automaticUnitSellPrice !== null\n                        ? automaticPriceSnapshot\n                        : null\n                    }\n""",
+              ),
+          ]
+          for old, new in replacements:
+              if old not in profit:
+                  raise SystemExit(f'ProfitSummaryCard replacement not found: {old!r}')
+              profit = profit.replace(old, new, 1)
+          profit_path.write_text(profit, encoding='utf-8')
+
+          item_path = Path('src/features/craft-calculator/components/recipe/ItemRecipeCard.tsx')
+          item = item_path.read_text(encoding='utf-8')
+          old = """            automaticPriceSource={market.automaticSalePriceDetail.source}\n            marketStatus={market.status}\n"""
+          new = """            automaticPriceSource={market.automaticSalePriceDetail.source}\n            automaticPriceSnapshot={market.automaticSalePriceDetail.snapshot}\n            marketStatus={market.status}\n"""
+          if old not in item:
+              raise SystemExit('ItemRecipeCard sale snapshot insertion point not found')
+          item_path.write_text(item.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Remove the temporary workflow
+        run: rm -f .github/workflows/patch-data-trust-sale-price.yml
+      - name: Commit the completed fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: show trust evidence for finished product price'
+          git push origin HEAD:fix/data-trust-sale-price
