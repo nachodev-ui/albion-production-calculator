@@ -21,8 +21,16 @@ function hasWebpHeader(bytes: Uint8Array): boolean {
   )
 }
 
+function copyToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength)
+  copy.set(bytes)
+  return copy.buffer
+}
+
 function decodeStoredGuide(bytes: Uint8Array): Blob {
-  if (hasWebpHeader(bytes)) return new Blob([bytes], { type: 'image/webp' })
+  if (hasWebpHeader(bytes)) {
+    return new Blob([copyToArrayBuffer(bytes)], { type: 'image/webp' })
+  }
 
   const encoded = new TextDecoder().decode(bytes).replace(/\s+/g, '')
   const binary = window.atob(encoded)
@@ -32,7 +40,7 @@ function decodeStoredGuide(bytes: Uint8Array): Blob {
     throw new Error('El recurso no contiene una animación WebP válida.')
   }
 
-  return new Blob([decoded], { type: 'image/webp' })
+  return new Blob([copyToArrayBuffer(decoded)], { type: 'image/webp' })
 }
 
 function AnimatedDestinyBoardGuide() {
