@@ -75,9 +75,8 @@ export function deserializeGuidedStartState(value: unknown): GuidedStartState {
 }
 
 export function loadGuidedStartState(): GuidedStartState {
-  if (typeof window === 'undefined') return EMPTY_STATE
   try {
-    const raw = window.localStorage.getItem(GUIDED_START_STORAGE_KEY)
+    const raw = localStorage.getItem(GUIDED_START_STORAGE_KEY)
     return raw ? deserializeGuidedStartState(JSON.parse(raw) as unknown) : EMPTY_STATE
   } catch {
     return EMPTY_STATE
