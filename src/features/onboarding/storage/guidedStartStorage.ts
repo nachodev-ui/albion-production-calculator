@@ -1,18 +1,9 @@
 import type { BaseItemId, ItemCategory } from '@core/domain/entities/Item'
 
-const GUIDED_START_STORAGE_KEY = 'apc:g1'
-const LIMITS = { recent: 6, pinned: 8, searches: 5 } as const
-const CATEGORIES: readonly ItemCategory[] = [
-  'weapon',
-  'armor',
-  'offhand',
-  'accessory',
-  'resource',
-  'refined_resource',
-  'food',
-  'potion',
-  'other',
-]
+const GUIDED_START_STORAGE_KEY = 'g1'
+const LIMITS = [6, 8, 5] as const
+const CATEGORY_PATTERN =
+  /^(weapon|armor|offhand|accessory|resource|refined_resource|food|potion|other)$/
 
 export interface RecentCatalogSearch {
   readonly query: string
@@ -32,7 +23,7 @@ const EMPTY_STATE: GuidedStartState = {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
+  return typeof value === 'object' && value !== null
 }
 
 function itemIds(value: unknown, limit: number): BaseItemId[] {
@@ -57,10 +48,10 @@ function searches(value: unknown): RecentCatalogSearch[] {
     const query = typeof entry['query'] === 'string' ? entry['query'].trim() : ''
     const category = entry['category'] as ItemCategory
     const key = `${category}:${query.toLowerCase()}`
-    if (query.length < 2 || !CATEGORIES.includes(category) || seen.has(key)) continue
+    if (query.length < 2 || !CATEGORY_PATTERN.test(category) || seen.has(key)) continue
     seen.add(key)
     result.push({ query, category })
-    if (result.length === LIMITS.searches) break
+    if (result.length === LIMITS[2]) break
   }
   return result
 }
@@ -68,8 +59,8 @@ function searches(value: unknown): RecentCatalogSearch[] {
 export function deserializeGuidedStartState(value: unknown): GuidedStartState {
   if (!isRecord(value)) return EMPTY_STATE
   return {
-    recentItemIds: itemIds(value['recentItemIds'], LIMITS.recent),
-    pinnedItemIds: itemIds(value['pinnedItemIds'], LIMITS.pinned),
+    recentItemIds: itemIds(value['recentItemIds'], LIMITS[0]),
+    pinnedItemIds: itemIds(value['pinnedItemIds'], LIMITS[1]),
     recentSearches: searches(value['recentSearches']),
   }
 }
@@ -101,7 +92,7 @@ export function recordRecentItem(itemId: BaseItemId): GuidedStartState {
     recentItemIds: [
       itemId,
       ...current.recentItemIds.filter((candidate) => candidate !== itemId),
-    ].slice(0, LIMITS.recent),
+    ].slice(0, LIMITS[0]),
   }))
 }
 
@@ -110,7 +101,7 @@ export function togglePinnedItem(itemId: BaseItemId): GuidedStartState {
     ...current,
     pinnedItemIds: current.pinnedItemIds.includes(itemId)
       ? current.pinnedItemIds.filter((candidate) => candidate !== itemId)
-      : [itemId, ...current.pinnedItemIds].slice(0, LIMITS.pinned),
+      : [itemId, ...current.pinnedItemIds].slice(0, LIMITS[1]),
   }))
 }
 
@@ -129,6 +120,6 @@ export function recordRecentSearch(
           candidate.category !== search.category ||
           candidate.query.toLowerCase() !== normalized,
       ),
-    ].slice(0, LIMITS.searches),
+    ].slice(0, LIMITS[2]),
   }))
 }
