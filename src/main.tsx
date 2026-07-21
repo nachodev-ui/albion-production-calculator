@@ -4,6 +4,7 @@ import { AccountSessionProvider } from "@features/account/context/AccountSession
 import { CalculationPrintPage } from "@features/craft-calculator/components/summary/CalculationPrintPage";
 import { CloudPresetSync } from "@features/presets/components/CloudPresetSync";
 import "./index.css";
+import "./mobile.css";
 import App from "./App.tsx";
 
 const searchParams = new URLSearchParams(window.location.search);

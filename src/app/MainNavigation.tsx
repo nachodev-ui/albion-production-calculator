@@ -82,8 +82,15 @@ export function MainNavigation({
   }
 
   return (
-    <nav aria-label="Navegación principal" className="min-w-0">
-      <div className="flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-bg/45 p-1">
+    <nav
+      data-main-navigation
+      aria-label="Navegación principal"
+      className="min-w-0"
+    >
+      <div
+        data-main-navigation-track
+        className="flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-bg/45 p-1"
+      >
         {NAV_ITEMS.map((item) => {
           const isActive =
             item.id === "guides"
