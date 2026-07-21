@@ -47,7 +47,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-quantity',
       title: 'Prueba cómo cambia un lote',
-      text: 'Escribe 5. La receta, los materiales y los costos se multiplicarán automáticamente.',
+      text: 'Escribe 5 o usa el botón asistido. La receta, los materiales y los costos se multiplicarán automáticamente.',
       event: 'input',
       expected: '5',
       focus: true,
@@ -55,7 +55,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-sale-city',
       title: 'Elige dónde venderás',
-      text: 'Cambia la ciudad. El precio de venta y el resultado económico se actualizarán con ese mercado.',
+      text: 'Cambia la ciudad o deja que el tutorial seleccione otra. El precio de venta y el resultado económico se actualizarán con ese mercado.',
       event: 'change',
     },
     {
@@ -78,7 +78,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-quantity',
       title: 'Define el tamaño del lote',
-      text: 'Escribe 10 para comparar el ahorro total y el ahorro por cada arma.',
+      text: 'Escribe 10 o usa el botón asistido para comparar el ahorro total y el ahorro por cada arma.',
       event: 'input',
       expected: '10',
       focus: true,
@@ -86,7 +86,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-focus',
       title: 'Activa el foco',
-      text: 'Presiona el control resaltado. El foco aumenta el retorno, pero consume puntos del personaje.',
+      text: 'Presiona el control resaltado o actívalo desde el panel. El foco aumenta el retorno, pero consume puntos del personaje.',
       event: 'change',
       expected: true,
     },
@@ -110,13 +110,13 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'black-market-search',
       title: 'Busca oportunidades reales',
-      text: 'Presiona Buscar oportunidades. La API comparará ciudades, órdenes, impuesto, transporte y fabricación. Si debes iniciar sesión, el tutorial se reanudará al volver.',
+      text: 'Presiona Buscar oportunidades o usa el botón del tutorial. La API comparará ciudades, órdenes, impuesto, transporte y fabricación. Si debes iniciar sesión, el recorrido se reanudará al volver.',
       event: 'click',
     },
     {
       target: 'black-market-result',
       title: 'Abre el primer resultado',
-      text: 'La fila resume beneficio, ROI, riesgo y mejor estrategia. Presiona Ver detalle.',
+      text: 'La fila resume beneficio, ROI, riesgo y mejor estrategia. Presiona Ver detalle o ábrelo desde este panel.',
       event: 'click',
     },
     {
@@ -226,7 +226,7 @@ function close() {
 function chrome() {
   if (!shade) {
     shade = document.createElement('div')
-    shade.className = 'fixed inset-0 z-[60] bg-bg/65 backdrop-blur-[1px]'
+    shade.className = 'fixed inset-0 z-[60] bg-bg/50 backdrop-blur-[1px]'
     shade.style.pointerEvents = 'none'
     document.body.append(shade)
   }
@@ -252,12 +252,19 @@ function go(next: number) {
   render()
 }
 
+function nestedInput(element: HTMLElement): HTMLInputElement | null {
+  return element instanceof HTMLInputElement
+    ? element
+    : element.querySelector<HTMLInputElement>('input')
+}
+
 function valid(step: Step, element: HTMLElement): boolean {
   if (step.expected === undefined) return true
-  if (!(element instanceof HTMLInputElement)) return false
+  const input = nestedInput(element)
+  if (!input) return false
   return typeof step.expected === 'boolean'
-    ? element.checked === step.expected
-    : element.value === step.expected
+    ? input.checked === step.expected
+    : input.value === step.expected
 }
 
 function waitForBlackMarketRows(stepNumber: number) {
@@ -268,6 +275,85 @@ function waitForBlackMarketRows(stepNumber: number) {
     go(stepNumber + 1)
   })
   observer.observe(document.body, { childList: true, subtree: true })
+}
+
+function setInputValue(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    'value',
+  )?.set
+  setter?.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  input.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function setSelectValue(select: HTMLSelectElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(
+    HTMLSelectElement.prototype,
+    'value',
+  )?.set
+  setter?.call(select, value)
+  select.dispatchEvent(new Event('change', { bubbles: true }))
+}
+
+function actionLabel(step: Step): string {
+  if (step.target === 'craft-quantity') {
+    return `Usar ${String(step.expected)} y continuar`
+  }
+  if (step.target === 'craft-focus') return 'Activar foco y continuar'
+  if (step.target === 'craft-sale-city') return 'Cambiar ciudad y continuar'
+  if (step.target === 'black-market-search') return 'Buscar oportunidades'
+  if (step.target === 'black-market-result') return 'Abrir detalle'
+  return 'Realizar acción'
+}
+
+function performStepAction(step: Step, element: HTMLElement) {
+  if (!session) return
+  const stepNumber = session.step
+
+  if (step.target === 'black-market-search') {
+    element.click()
+    waitForBlackMarketRows(stepNumber)
+    return
+  }
+  if (step.target === 'black-market-result') {
+    element.click()
+    window.setTimeout(() => {
+      if (session?.step === stepNumber) go(stepNumber + 1)
+    }, 180)
+    return
+  }
+
+  const input = nestedInput(element)
+  if (typeof step.expected === 'boolean' && input) {
+    if (input.checked === step.expected) go(stepNumber + 1)
+    else input.click()
+    return
+  }
+  if (typeof step.expected === 'string' && input) {
+    setInputValue(input, step.expected)
+    window.setTimeout(() => {
+      if (session?.step === stepNumber && valid(step, input)) {
+        go(stepNumber + 1)
+      }
+    }, 180)
+    return
+  }
+
+  const select =
+    element instanceof HTMLSelectElement
+      ? element
+      : element.querySelector<HTMLSelectElement>('select')
+  if (select) {
+    const alternative = [...select.options].find(
+      (option) => !option.disabled && option.value !== select.value,
+    )
+    if (alternative) setSelectValue(select, alternative.value)
+    else go(stepNumber + 1)
+    return
+  }
+
+  element.click()
 }
 
 function highlight(step: Step, element: HTMLElement) {
@@ -288,10 +374,11 @@ function highlight(step: Step, element: HTMLElement) {
   element.style.boxShadow = '0 0 0 9px rgb(216 180 91 / 0.22)'
   element.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
-  if (step.focus && element instanceof HTMLInputElement) {
+  const input = nestedInput(element)
+  if (step.focus && input) {
     window.setTimeout(() => {
-      element.focus()
-      element.select()
+      input.focus()
+      input.select()
     }, 350)
   }
   if (step.event) {
@@ -302,14 +389,16 @@ function highlight(step: Step, element: HTMLElement) {
         waitForBlackMarketRows(stepNumber)
         return
       }
-      window.setTimeout(() => go(stepNumber + 1), 120)
+      window.setTimeout(() => {
+        if (session?.step === stepNumber) go(stepNumber + 1)
+      }, 120)
     }
     element.addEventListener(step.event, handler)
     removeEvent = () => element.removeEventListener(step.event!, handler)
   }
 }
 
-function draw(step: Step, found: boolean) {
+function draw(step: Step, found: boolean, element: HTMLElement | null) {
   if (!panel || !session) return
   const steps = TUTORIALS[session.id]
   panel.innerHTML = `
@@ -338,13 +427,17 @@ function draw(step: Step, found: boolean) {
   )
 
   const next = get('next') as HTMLButtonElement
-  next.disabled = Boolean(step.event) || !found
+  next.disabled = !found || !element
   next.textContent = step.event
-    ? 'Haz la acción resaltada'
+    ? actionLabel(step)
     : session.step === steps.length - 1
       ? 'Terminar tutorial'
       : 'Siguiente'
-  next.addEventListener('click', () => go(session!.step + 1))
+  next.addEventListener('click', () => {
+    if (!element) return
+    if (step.event) performStepAction(step, element)
+    else go(session!.step + 1)
+  })
 
   if (step.event) {
     const skip = get('skip')
@@ -359,7 +452,7 @@ function render() {
   const step = TUTORIALS[session.id][session.step]
   if (!step) return close()
   const element = findTarget(step.target)
-  draw(step, Boolean(element))
+  draw(step, Boolean(element), element)
   if (element) highlight(step, element)
   else clearHighlight()
 
@@ -368,7 +461,7 @@ function render() {
     const target = findTarget(step.target)
     if (!target) return
     observer?.disconnect()
-    draw(step, true)
+    draw(step, true, target)
     highlight(step, target)
   })
   observer.observe(document.body, { childList: true, subtree: true })
