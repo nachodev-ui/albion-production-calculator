@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import type { Item } from '@core/domain/entities/Item'
+import { useEffect, useMemo, type KeyboardEvent } from 'react'
+import type { Item, ItemCategory } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import {
   buildCategoryCraftingCatalog,
@@ -13,10 +13,18 @@ import { CraftingBranchBrowser } from './CraftingBranchBrowser'
 import { FamilySearchResults } from './FamilySearchResults'
 import { ItemSearchResults } from './ItemSearchResults'
 
+export interface ItemBrowserSearchRequest {
+  readonly requestId: number
+  readonly query: string
+  readonly category: ItemCategory
+}
+
 interface ItemBrowserPanelProps {
   readonly repository: ItemRepository
   readonly selectedId: string | null
+  readonly searchRequest?: ItemBrowserSearchRequest | null
   readonly onSelect: (item: Item) => void
+  readonly onRecordSearch?: (query: string, category: ItemCategory) => void
 }
 
 /**
@@ -26,16 +34,33 @@ interface ItemBrowserPanelProps {
  * Al escribir, la jerarquía se reemplaza temporalmente por resultados
  * agrupados; recursos y consumibles conservan su listado directo.
  */
-export function ItemBrowserPanel({ repository, selectedId, onSelect }: ItemBrowserPanelProps) {
-  const { query, setQuery, category, setCategory, results } = useItemSearch(repository)
+export function ItemBrowserPanel({
+  repository,
+  selectedId,
+  searchRequest,
+  onSelect,
+  onRecordSearch,
+}: ItemBrowserPanelProps) {
+  const { query, setQuery, category, setCategory, results } =
+    useItemSearch(repository)
+
+  useEffect(() => {
+    if (!searchRequest) return
+    setCategory(searchRequest.category)
+    setQuery(searchRequest.query)
+  }, [searchRequest, setCategory, setQuery])
 
   function handleCategoryChange(nextCategory: typeof category) {
     setCategory(nextCategory)
     setQuery('')
   }
+
   const normalizedQuery = query.trim()
-  const activeCategory = CATEGORY_OPTIONS.find((option) => option.value === category)
-  const hasBranchBrowser = isBranchCategory(category) && activeCategory?.browserMode === 'branches'
+  const activeCategory = CATEGORY_OPTIONS.find(
+    (option) => option.value === category,
+  )
+  const hasBranchBrowser =
+    isBranchCategory(category) && activeCategory?.browserMode === 'branches'
   const isBranchMode = hasBranchBrowser && normalizedQuery.length === 0
   const isGroupedSearchMode = hasBranchBrowser && normalizedQuery.length > 0
 
@@ -85,6 +110,22 @@ export function ItemBrowserPanel({ repository, selectedId, onSelect }: ItemBrows
     ? `${branchCatalog.branches.length} ramas · ${branchCatalog.itemCount} ítems`
     : `${results.length} ítem${results.length === 1 ? '' : 's'}`
 
+  function recordSearch() {
+    if (normalizedQuery.length < 2) return
+    onRecordSearch?.(normalizedQuery, category)
+  }
+
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    recordSearch()
+  }
+
+  function handleSelect(item: Item) {
+    recordSearch()
+    onSelect(item)
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div className="hidden border-b border-border px-4 py-4 lg:block">
@@ -120,6 +161,8 @@ export function ItemBrowserPanel({ repository, selectedId, onSelect }: ItemBrows
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              onBlur={recordSearch}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Buscar ítem…"
               className="w-full rounded-lg border border-border bg-surface-raised py-2.5 pl-9 pr-3 text-sm text-text outline-none transition-shadow placeholder:text-text-faint focus-visible:border-accent-border focus-visible:ring-2 focus-visible:ring-accent-border"
             />
@@ -136,7 +179,9 @@ export function ItemBrowserPanel({ repository, selectedId, onSelect }: ItemBrows
           <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-text-faint">
             {headerLabel}
           </p>
-          <p className="text-right text-xs tabular text-text-muted">{headerValue}</p>
+          <p className="text-right text-xs tabular text-text-muted">
+            {headerValue}
+          </p>
         </div>
       </div>
 
@@ -146,17 +191,21 @@ export function ItemBrowserPanel({ repository, selectedId, onSelect }: ItemBrows
             key={branchCatalog.category}
             catalog={branchCatalog}
             selectedId={selectedId}
-            onSelect={onSelect}
+            onSelect={handleSelect}
           />
         ) : isGroupedSearchMode ? (
           <FamilySearchResults
             families={searchFamilies}
             ungroupedItems={ungroupedSearchItems}
             selectedId={selectedId}
-            onSelect={onSelect}
+            onSelect={handleSelect}
           />
         ) : (
-          <ItemSearchResults items={results} selectedId={selectedId} onSelect={onSelect} />
+          <ItemSearchResults
+            items={results}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+          />
         )}
       </div>
     </div>
