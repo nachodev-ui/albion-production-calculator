@@ -1,3 +1,4 @@
+import { DataConfidenceHint } from '@features/data-trust/components/DataConfidenceHint'
 import type {
   MarketDataSource,
   MarketPriceFreshness,
@@ -51,15 +52,18 @@ const CONFIDENCE_PRESENTATION: Record<
 > = {
   high: {
     label: 'Confianza alta',
-    className: 'border-positive/50 bg-positive-muted text-positive',
+    className:
+      'border-positive/50 bg-positive-muted px-1.5 py-0.5 text-[10px] text-positive',
   },
   medium: {
     label: 'Confianza media',
-    className: 'border-accent-border bg-accent-muted text-accent',
+    className:
+      'border-accent-border bg-accent-muted px-1.5 py-0.5 text-[10px] text-accent',
   },
   low: {
     label: 'Confianza baja',
-    className: 'border-negative/40 bg-negative-muted text-negative',
+    className:
+      'border-negative/40 bg-negative-muted px-1.5 py-0.5 text-[10px] text-negative',
   },
 }
 
@@ -110,12 +114,12 @@ export function MarketPriceFreshnessStatus({
           >
             {presentation.label}
           </span>
-          {confidencePresentation && (
-            <span
-              className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${confidencePresentation.className}`}
-            >
-              {confidencePresentation.label}
-            </span>
+          {confidence && confidencePresentation && (
+            <DataConfidenceHint
+              level={confidence.level}
+              label={confidencePresentation.label}
+              className={confidencePresentation.className}
+            />
           )}
           <span
             className="truncate rounded border border-border bg-surface-raised px-1.5 py-0.5 text-[10px] text-text-muted"
@@ -147,17 +151,18 @@ export function MarketPriceFreshnessStatus({
       {confidence && (
         <div className={`${compact ? 'mt-1' : 'mt-2'} text-[10px] text-text-muted`}>
           <p className="leading-relaxed">
-            {formatInteger(confidence.observations7d)} observaciones · volumen{' '}
-            {formatInteger(confidence.volume7d)}
+            {formatInteger(confidence.observations7d)} precios guardados ·{' '}
+            {formatInteger(confidence.volume7d)} unidades registradas
             {confidence.deviationFromMedianPercent !== null && (
               <>
-                {' '}· {formatSignedPercent(confidence.deviationFromMedianPercent)} frente a la
-                mediana de 7 días
+                {' '}· {formatSignedPercent(confidence.deviationFromMedianPercent)} frente al
+                precio habitual de 7 días
               </>
             )}
             {confidence.spreadPercent !== null && (
               <>
-                {' '}· spread {formatSignedPercent(confidence.spreadPercent)}
+                {' '}· diferencia compra/venta{' '}
+                {formatSignedPercent(confidence.spreadPercent)}
               </>
             )}
           </p>
@@ -173,8 +178,8 @@ export function MarketPriceFreshnessStatus({
 
       {!compact && isStaleAndActive && (
         <p className="mt-2 text-[11px] leading-relaxed text-negative">
-          Este precio automático está desactualizado y puede distorsionar el
-          cálculo. Actualízalo o utiliza un valor manual.
+          Este precio automático está desactualizado y puede cambiar el resultado.
+          Actualízalo o utiliza un valor manual.
         </p>
       )}
     </div>
