@@ -5,7 +5,7 @@ interface DestinyBoardSpecializationHintProps {
   readonly align?: 'left' | 'center' | 'right'
 }
 
-const GUIDE_URL = '/assets/ui/destiny-board-specialization-guide.webp?v=2'
+const GUIDE_URL = '/assets/ui/destiny-board-specialization-guide.webp?v=3'
 
 function hasWebpHeader(bytes: Uint8Array): boolean {
   return (
@@ -98,8 +98,9 @@ function AnimatedDestinyBoardGuide() {
     <img
       src={source}
       alt="Guía animada con capturas reales del Destiny Board: acceso con B, nodo general, especialización individual y progreso del nivel"
-      width={900}
-      height={520}
+      width={480}
+      height={620}
+      onError={() => setFailed(true)}
       className="block h-auto w-full rounded-md border border-border"
     />
   )
