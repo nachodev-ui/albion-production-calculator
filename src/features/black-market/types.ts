@@ -168,10 +168,17 @@ export interface BlackMarketOpportunity {
   readonly purchaseUnitPrice: number;
   readonly purchasePriceDate: string;
   readonly purchaseAgeMinutes: number;
+  readonly purchaseBuyUnitPrice: number | null;
+  readonly purchaseHistoryObservations7d: number;
+  readonly purchaseHistoryVolume7d: number;
+  readonly purchaseMedianPrice7d: number | null;
   readonly blackMarketQuality: number;
   readonly blackMarketBuyUnitPrice: number;
   readonly blackMarketBuyPriceDate: string;
   readonly blackMarketAgeMinutes: number;
+  readonly blackMarketHistoryObservations7d: number;
+  readonly blackMarketHistoryVolume7d: number;
+  readonly blackMarketMedianPrice7d: number | null;
   readonly blackMarketSellUnitPrice: number | null;
   readonly blackMarketSellPriceDate: string | null;
   readonly blackMarketOrderDifference: number | null;
