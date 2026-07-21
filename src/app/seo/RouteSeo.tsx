@@ -12,6 +12,13 @@ type SeoEntry = readonly [
   imageAlt?: string,
 ];
 
+const DATA_STATUS_SEO: SeoEntry = [
+  "/estado-datos",
+  "Estado de los Datos de Albion Online | Albion Calculator",
+  "Consulta la última recepción de precios, cobertura por servidor y mercado, porcentaje de objetos recientes y criterios de confianza de Albion Calculator.",
+  true,
+];
+
 const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
   crafting: [
     "/",
@@ -117,8 +124,12 @@ function meta(
 
 export function RouteSeo({ route }: { readonly route: AppRoute }) {
   useEffect(() => {
-    const [path, title, description, index, imagePath, imageAlt] =
-      ROUTE_SEO[route];
+    const isDataStatus =
+      route === "guides" &&
+      window.location.pathname.replace(/\/+$/, "") === "/estado-datos";
+    const [path, title, description, index, imagePath, imageAlt] = isDataStatus
+      ? DATA_STATUS_SEO
+      : ROUTE_SEO[route];
     const canonical = `${ORIGIN}${path === "/" ? "/" : path}`;
     let link = document.head.querySelector<HTMLLinkElement>(
       'link[rel="canonical"]',

@@ -59,7 +59,7 @@
       "priority": 0.8,
       "schemaType": "CollectionPage",
       "schemaName": "Guías de economía de Albion Online",
-      "dateModified": "2026-07-19",
+      "dateModified": "2026-07-21",
       "breadcrumbs": [
         {
           "name": "Calculadora",
@@ -68,6 +68,27 @@
         {
           "name": "Guías",
           "path": "/guias"
+        }
+      ]
+    },
+    "data-status": {
+      "path": "/estado-datos",
+      "title": "Estado de los Datos de Albion Online | Albion Calculator",
+      "description": "Consulta la última recepción de precios, cobertura por servidor y mercado, porcentaje de objetos recientes y criterios de confianza de Albion Calculator.",
+      "index": true,
+      "changefreq": "daily",
+      "priority": 0.7,
+      "schemaType": "WebPage",
+      "schemaName": "Centro de confianza de los datos de Albion Calculator",
+      "dateModified": "2026-07-21",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Estado de los datos",
+          "path": "/estado-datos"
         }
       ]
     },

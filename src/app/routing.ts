@@ -30,6 +30,7 @@ export function routeFromPathname(pathname: string): AppRoute {
     case "/presets":
       return "presets";
     case "/guias":
+    case "/estado-datos":
       return "guides";
     case "/plans":
       return "plans";
