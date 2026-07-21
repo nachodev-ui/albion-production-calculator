@@ -1,17 +1,11 @@
-import { useMemo, useState, type ComponentType, type SVGProps } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
-  ArrowRightIcon,
   BlackMarketIcon,
   ChartIcon,
   HammerIcon,
   RefiningIcon,
 } from '../../../app/AppIcons'
-import {
-  asBaseItemId,
-  type BaseItemId,
-  type Item,
-  type ItemCategory,
-} from '@core/domain/entities/Item'
+import { asBaseItemId, type Item } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import {
@@ -21,8 +15,6 @@ import {
 } from '@features/onboarding/storage/guidedStartStorage'
 
 export type GuidedCraftingExample = 'basic' | 'return'
-
-type IconComponent = ComponentType<SVGProps<SVGSVGElement>>
 
 interface EmptyDetailStateProps {
   readonly repository: ItemRepository
@@ -38,43 +30,23 @@ interface EmptyDetailStateProps {
   readonly onOpenRecentSearch: (search: RecentCatalogSearch) => void
 }
 
-interface ExampleDefinition {
+interface Example {
   readonly item: Item
   readonly title: string
   readonly detail: string
   readonly run: () => void
 }
 
-const CATEGORY_LABELS: Readonly<Record<ItemCategory, string>> = {
-  weapon: 'Armas',
-  armor: 'Armaduras',
-  offhand: 'Offhands',
-  accessory: 'Accesorios',
-  resource: 'Recursos',
-  refined_resource: 'Refinados',
-  food: 'Comida',
-  potion: 'Pociones',
-  other: 'Otros',
-}
-
-const BASIC_CONCEPTS = [
+const CONCEPTS = [
   ['ROI', 'Porcentaje ganado o perdido respecto de la plata invertida.'],
-  ['Retorno de crafteo', 'Materiales devueltos al fabricar; reducen el costo real.'],
+  ['Retorno de crafteo', 'Materiales que vuelven al fabricar y reducen el costo real.'],
   ['Tax del Black Market', 'Impuesto restado de la orden antes de calcular la ganancia.'],
 ] as const
 
-function isItem(value: Item | null): value is Item {
-  return value !== null
-}
-
-function isExample(value: ExampleDefinition | null): value is ExampleDefinition {
-  return value !== null
-}
-
-function resolvePreferredItem(
+function findItem(
   repository: ItemRepository,
   identifiers: readonly string[],
-  category: ItemCategory,
+  category: Item['category'],
 ): Item | null {
   for (const identifier of identifiers) {
     const item = repository.getById(asBaseItemId(identifier))
@@ -83,120 +55,97 @@ function resolvePreferredItem(
   return repository.getAll(category).find((item) => item.tier === 4 && item.recipe) ?? null
 }
 
-function IntentCard({
+function isItem(item: Item | null): item is Item {
+  return item !== null
+}
+
+function ActionCard({
+  icon,
   title,
-  description,
-  icon: Icon,
+  text,
   onClick,
 }: {
+  readonly icon: ReactNode
   readonly title: string
-  readonly description: string
-  readonly icon: IconComponent
+  readonly text: string
   readonly onClick: () => void
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex min-h-40 flex-col rounded-2xl border border-border bg-surface p-5 text-left transition-all hover:-translate-y-0.5 hover:border-accent-border hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+      className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
     >
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-bg/45 text-accent group-hover:border-accent-border group-hover:bg-accent-muted">
-        <Icon className="h-5 w-5" />
-      </span>
-      <span className="mt-4 text-base font-semibold text-text">{title}</span>
-      <span className="mt-1 flex-1 text-xs leading-relaxed text-text-faint">{description}</span>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
-        Abrir <ArrowRightIcon className="h-3.5 w-3.5" />
-      </span>
+      <span className="text-accent">{icon}</span>
+      <strong className="mt-3 block text-sm text-text">{title}</strong>
+      <span className="mt-1 block text-xs leading-relaxed text-text-faint">{text}</span>
     </button>
   )
 }
 
-function PinButton({
+function StarButton({
   item,
-  isPinned,
+  active,
   onToggle,
 }: {
   readonly item: Item
-  readonly isPinned: boolean
+  readonly active: boolean
   readonly onToggle: (item: Item) => void
 }) {
   return (
     <button
       type="button"
-      aria-pressed={isPinned}
-      aria-label={isPinned ? `Quitar ${item.name} de fijados` : `Fijar ${item.name}`}
+      aria-label={active ? `Quitar ${item.name} de fijados` : `Fijar ${item.name}`}
+      aria-pressed={active}
       onClick={(event) => {
         event.stopPropagation()
         onToggle(item)
       }}
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-bg/35 text-sm text-text-faint hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+      className="shrink-0 rounded-lg border border-border px-2 py-1 text-text-faint hover:text-accent"
     >
-      {isPinned ? '★' : '☆'}
+      {active ? '★' : '☆'}
     </button>
   )
 }
 
-function ItemShortcut({
-  item,
-  isPinned,
-  onOpen,
-  onTogglePinned,
-}: {
-  readonly item: Item
-  readonly isPinned: boolean
-  readonly onOpen: (item: Item) => void
-  readonly onTogglePinned: (item: Item) => void
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-raised p-2">
-      <button
-        type="button"
-        onClick={() => onOpen(item)}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 text-left hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-      >
-        <ItemIcon itemId={item.id} enchantment={0} name={item.name} size={42} />
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-medium text-text">{item.name}</span>
-          <span className="text-[10px] text-text-faint">T{item.tier} · {CATEGORY_LABELS[item.category]}</span>
-        </span>
-      </button>
-      <PinButton item={item} isPinned={isPinned} onToggle={onTogglePinned} />
-    </div>
-  )
-}
-
-function SavedItemsPanel({
+function ItemList({
   title,
-  emptyText,
   items,
+  empty,
   pinnedIds,
   onOpen,
-  onTogglePinned,
+  onToggle,
 }: {
   readonly title: string
-  readonly emptyText: string
   readonly items: readonly Item[]
-  readonly pinnedIds: ReadonlySet<BaseItemId>
+  readonly empty: string
+  readonly pinnedIds: ReadonlySet<string>
   readonly onOpen: (item: Item) => void
-  readonly onTogglePinned: (item: Item) => void
+  readonly onToggle: (item: Item) => void
 }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold text-text">{title}</h2>
-      <div className="mt-4 space-y-2">
-        {items.length ? (
-          items.map((item) => (
-            <ItemShortcut
-              key={item.id}
-              item={item}
-              isPinned={pinnedIds.has(item.id)}
-              onOpen={onOpen}
-              onTogglePinned={onTogglePinned}
-            />
-          ))
+      <h3 className="text-sm font-semibold text-text">{title}</h3>
+      <div className="mt-3 space-y-2">
+        {items.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border p-3 text-xs text-text-faint">{empty}</p>
         ) : (
-          <p className="rounded-xl border border-dashed border-border p-4 text-xs leading-relaxed text-text-faint">{emptyText}</p>
+          items.map((item) => (
+            <div key={item.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface-raised p-2">
+              <button
+                type="button"
+                onClick={() => onOpen(item)}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left"
+              >
+                <ItemIcon itemId={item.id} enchantment={0} name={item.name} size={38} />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm text-text">{item.name}</span>
+                  <span className="text-[10px] text-text-faint">Tier {item.tier}</span>
+                </span>
+              </button>
+              <StarButton item={item} active={pinnedIds.has(item.id)} onToggle={onToggle} />
+            </div>
+          ))
         )}
       </div>
     </div>
@@ -205,28 +154,27 @@ function SavedItemsPanel({
 
 function ExampleCard({
   example,
-  isPinned,
-  onTogglePinned,
+  pinned,
+  onToggle,
 }: {
-  readonly example: ExampleDefinition
-  readonly isPinned: boolean
-  readonly onTogglePinned: (item: Item) => void
+  readonly example: Example
+  readonly pinned: boolean
+  readonly onToggle: (item: Item) => void
 }) {
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5">
+    <article className="flex flex-col rounded-xl border border-border bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
-        <ItemIcon itemId={example.item.id} enchantment={0} name={example.item.name} size={64} className="rounded-xl" />
-        <PinButton item={example.item} isPinned={isPinned} onToggle={onTogglePinned} />
+        <ItemIcon itemId={example.item.id} enchantment={0} name={example.item.name} size={58} />
+        <StarButton item={example.item} active={pinned} onToggle={onToggle} />
       </div>
-      <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Ejemplo interactivo</p>
-      <h3 className="mt-1 font-display text-xl text-text">{example.title}</h3>
-      <p className="mt-2 flex-1 text-xs leading-relaxed text-text-faint">{example.detail}</p>
+      <h3 className="mt-3 font-display text-lg text-text">{example.title}</h3>
+      <p className="mt-1 flex-1 text-xs text-text-faint">{example.detail}</p>
       <button
         type="button"
         onClick={example.run}
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+        className="mt-4 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-bg"
       >
-        Ejecutar ejemplo <ArrowRightIcon className="h-4 w-4" />
+        Ejecutar ejemplo
       </button>
     </article>
   )
@@ -246,133 +194,124 @@ export function EmptyDetailState({
   onOpenRecentSearch,
 }: EmptyDetailStateProps) {
   const [guidedState, setGuidedState] = useState(loadGuidedStartState)
-
-  const examples = useMemo(
-    () => ({
-      bag: resolvePreferredItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory'),
-      weapon: resolvePreferredItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon'),
-      blackMarket: resolvePreferredItem(repository, ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'], 'armor'),
-    }),
-    [repository],
+  const bag = findItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory')
+  const weapon = findItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon')
+  const marketItem = findItem(
+    repository,
+    ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'],
+    'armor',
   )
+  const examples: Example[] = []
 
-  const exampleDefinitions = useMemo(() => {
-    const definitions: Array<ExampleDefinition | null> = [
-      examples.bag && {
-        item: examples.bag,
-        title: 'Calcular una bolsa',
-        detail: 'T4 · 1 unidad · sin foco.',
-        run: () => onRunCraftingExample(examples.bag as Item, 'basic'),
-      },
-      examples.weapon && {
-        item: examples.weapon,
-        title: 'Fabricar un arma con retorno',
-        detail: 'T4 · 10 unidades · foco activo.',
-        run: () => onRunCraftingExample(examples.weapon as Item, 'return'),
-      },
-      examples.blackMarket && {
-        item: examples.blackMarket,
-        title: 'Comparar un objeto con Caerleon',
-        detail: 'T4 · normal · tax 4% · transporte cero.',
-        run: () => onRunBlackMarketExample(examples.blackMarket as Item),
-      },
-    ]
-    return definitions.filter(isExample)
-  }, [examples, onRunBlackMarketExample, onRunCraftingExample])
+  if (bag) {
+    examples.push({
+      item: bag,
+      title: 'Calcular una bolsa',
+      detail: 'T4 · 1 unidad · sin foco.',
+      run: () => onRunCraftingExample(bag, 'basic'),
+    })
+  }
+  if (weapon) {
+    examples.push({
+      item: weapon,
+      title: 'Fabricar un arma con retorno',
+      detail: 'T4 · 10 unidades · foco activo.',
+      run: () => onRunCraftingExample(weapon, 'return'),
+    })
+  }
+  if (marketItem) {
+    examples.push({
+      item: marketItem,
+      title: 'Comparar un objeto con Caerleon',
+      detail: 'T4 · normal · tax 4% · transporte cero.',
+      run: () => onRunBlackMarketExample(marketItem),
+    })
+  }
 
-  const recentItems = guidedState.recentItemIds.map((id) => repository.getById(id)).filter(isItem)
-  const pinnedItems = guidedState.pinnedItemIds.map((id) => repository.getById(id)).filter(isItem)
-  const pinnedIds = new Set(guidedState.pinnedItemIds)
-  const intentions = [
-    ['Fabricar un objeto', 'Calcula costos y ganancia.', HammerIcon, onBrowseCatalog],
-    ['Refinar recursos', 'Convierte recursos en refinados.', RefiningIcon, onOpenRefining],
-    ['Vender al Black Market', 'Compara un objeto con Caerleon.', BlackMarketIcon, onOpenBlackMarket],
-    ['Comparar ciudades', 'Ordena oportunidades y ROI.', ChartIcon, onCompareCities],
-  ] as const
+  const recentItems = guidedState.recentItemIds
+    .map((id) => repository.getById(id))
+    .filter(isItem)
+  const pinnedItems = guidedState.pinnedItemIds
+    .map((id) => repository.getById(id))
+    .filter(isItem)
+  const pinnedIds = new Set<string>(guidedState.pinnedItemIds)
 
   function togglePinned(item: Item) {
     setGuidedState(togglePinnedItem(item.id))
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-5 pb-14 pt-1 sm:px-6">
-      <section className="relative overflow-hidden rounded-2xl border border-border bg-surface p-6 shadow-[0_28px_90px_rgba(0,0,0,0.18)] sm:p-8">
-        <div aria-hidden="true" className="absolute -right-24 -top-28 h-80 w-80 rounded-full bg-accent/[0.08] blur-3xl" />
-        <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
-          <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Inicio guiado</p>
-            <h2 className="mt-2 text-balance font-display text-3xl leading-tight text-text sm:text-4xl">¿Qué quieres hacer?</h2>
-            <p className="mt-4 text-sm leading-relaxed text-text-muted sm:text-base">
-              Elige una intención o ejecuta un ejemplo precargado.
-            </p>
+    <div className="mx-auto w-full max-w-7xl space-y-5 px-5 pb-14 sm:px-6">
+      <section className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Inicio guiado</p>
+            <h2 className="mt-2 font-display text-3xl text-text">¿Qué quieres hacer?</h2>
+            <p className="mt-2 text-sm text-text-muted">Elige una intención o abre un ejemplo precargado.</p>
           </div>
           {lastCalculationItem && (
             <button
               type="button"
               onClick={onRestoreLastCalculation}
-              className="inline-flex shrink-0 items-center justify-center gap-3 rounded-xl border border-accent-border bg-accent-muted px-4 py-3 text-left text-sm font-semibold text-accent hover:bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+              className="flex items-center gap-2 rounded-xl border border-accent-border bg-accent-muted px-4 py-3 text-left"
             >
-              <ItemIcon itemId={lastCalculationItem.id} enchantment={0} name={lastCalculationItem.name} size={38} />
+              <ItemIcon itemId={lastCalculationItem.id} enchantment={0} name={lastCalculationItem.name} size={36} />
               <span>
-                <span className="block text-[10px] uppercase tracking-[0.12em] text-text-faint">Restaurar cálculo</span>
-                <span className="block max-w-52 truncate text-text">{lastCalculationItem.name}</span>
+                <span className="block text-[10px] uppercase text-text-faint">Restaurar cálculo</span>
+                <span className="block max-w-48 truncate text-sm font-semibold text-text">{lastCalculationItem.name}</span>
               </span>
             </button>
           )}
         </div>
-        <div className="relative mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {intentions.map(([title, description, icon, onClick]) => (
-            <IntentCard key={title} title={title} description={description} icon={icon} onClick={onClick} />
-          ))}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ActionCard icon={<HammerIcon className="h-5 w-5" />} title="Fabricar un objeto" text="Calcula costos y ganancia." onClick={onBrowseCatalog} />
+          <ActionCard icon={<RefiningIcon className="h-5 w-5" />} title="Refinar recursos" text="Convierte recursos en refinados." onClick={onOpenRefining} />
+          <ActionCard icon={<BlackMarketIcon className="h-5 w-5" />} title="Vender al Black Market" text="Compara un objeto con Caerleon." onClick={onOpenBlackMarket} />
+          <ActionCard icon={<ChartIcon className="h-5 w-5" />} title="Comparar ciudades" text="Ordena oportunidades y ROI." onClick={onCompareCities} />
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Ejemplos interactivos</p>
+      <section className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Ejemplos interactivos</p>
         <h2 className="mt-1 font-display text-2xl text-text">Prueba un cálculo</h2>
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          {exampleDefinitions.map((example) => (
-            <ExampleCard key={example.title} example={example} isPinned={pinnedIds.has(example.item.id)} onTogglePinned={togglePinned} />
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          {examples.map((example) => (
+            <ExampleCard
+              key={example.title}
+              example={example}
+              pinned={pinnedIds.has(example.item.id)}
+              onToggle={togglePinned}
+            />
           ))}
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(22rem,0.8fr)]">
+      <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <SavedItemsPanel
-              title="Últimos objetos"
-              emptyText="Abre un ejemplo o el catálogo."
-              items={recentItems}
-              pinnedIds={pinnedIds}
-              onOpen={onOpenItem}
-              onTogglePinned={togglePinned}
-            />
-            <SavedItemsPanel
-              title="Objetos fijados"
-              emptyText="Fija un ejemplo u objeto reciente."
-              items={pinnedItems}
-              pinnedIds={pinnedIds}
-              onOpen={onOpenItem}
-              onTogglePinned={togglePinned}
-            />
+          <div className="grid gap-5 md:grid-cols-2">
+            <ItemList title="Últimos objetos" items={recentItems} empty="Abre un ejemplo o el catálogo." pinnedIds={pinnedIds} onOpen={onOpenItem} onToggle={togglePinned} />
+            <ItemList title="Objetos fijados" items={pinnedItems} empty="Fija un ejemplo u objeto reciente." pinnedIds={pinnedIds} onOpen={onOpenItem} onToggle={togglePinned} />
           </div>
-          <div className="mt-6 border-t border-border pt-5">
-            <div className="flex items-end justify-between gap-3">
-              <h2 className="text-sm font-semibold text-text">Búsquedas recientes</h2>
-              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent hover:underline">Nueva</button>
+          <div className="mt-5 border-t border-border pt-4">
+            <div className="flex justify-between gap-3">
+              <h3 className="text-sm font-semibold text-text">Búsquedas recientes</h3>
+              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent">Nueva</button>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {guidedState.recentSearches.length ? guidedState.recentSearches.map((search) => (
-                <button
-                  key={`${search.category}:${search.query.toLowerCase()}`}
-                  type="button"
-                  onClick={() => onOpenRecentSearch(search)}
-                  className="rounded-full border border-border bg-surface-raised px-3 py-2 text-xs text-text-muted hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-                >
-                  {search.query} · {CATEGORY_LABELS[search.category]}
-                </button>
-              )) : <span className="text-xs text-text-faint">Aún no hay búsquedas.</span>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {guidedState.recentSearches.length === 0 ? (
+                <span className="text-xs text-text-faint">Aún no hay búsquedas.</span>
+              ) : (
+                guidedState.recentSearches.map((search) => (
+                  <button
+                    key={`${search.category}:${search.query.toLowerCase()}`}
+                    type="button"
+                    onClick={() => onOpenRecentSearch(search)}
+                    className="rounded-full border border-border px-3 py-1.5 text-xs text-text-muted"
+                  >
+                    {search.query}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         </section>
@@ -387,12 +326,11 @@ export function EmptyDetailState({
         </section>
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Conceptos básicos</p>
-        <h2 className="mt-1 font-display text-2xl text-text">Entiende los resultados</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {BASIC_CONCEPTS.map(([term, explanation]) => (
-            <article key={term} className="rounded-xl border border-border bg-bg/30 p-4">
+      <section className="rounded-2xl border border-border bg-surface-raised p-5 sm:p-6">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Conceptos básicos</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {CONCEPTS.map(([term, explanation]) => (
+            <article key={term} className="rounded-xl border border-border bg-surface p-4">
               <h3 className="text-sm font-semibold text-text">{term}</h3>
               <p className="mt-2 text-xs leading-relaxed text-text-faint">{explanation}</p>
             </article>
