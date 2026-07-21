@@ -1,0 +1,98 @@
+name: Simplify data status wording
+
+on:
+  push:
+    branches:
+      - fix/plain-language-data-confidence
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/plain-language-data-confidence
+          fetch-depth: 0
+      - name: Replace technical wording with player-friendly explanations
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/features/data-trust/components/DataStatusPage.tsx')
+          source = path.read_text(encoding='utf-8')
+          replacements = [
+            ('<th className="pb-3 pr-4">Cobertura</th>', '<th className="pb-3 pr-4">Servidor o mercado</th>'),
+            ('<th className="pb-3 pr-4 text-right">Recientes</th>', '<th className="pb-3 pr-4 text-right">Con precio reciente</th>'),
+            ('<th className="pb-3 pr-4 text-right">Total</th>', '<th className="pb-3 pr-4 text-right">Precios guardados</th>'),
+            ('<th className="pb-3 pr-4 text-right">Porcentaje</th>', '<th className="pb-3 pr-4 text-right">% reciente</th>'),
+            ('Centro de confianza', 'Calidad de los precios'),
+            ('Estado y cobertura de los datos', 'Qué tan confiables son los precios'),
+            ('''Consulta cuándo llegaron los últimos precios, qué mercados poseen
+                cobertura reciente y qué evidencia utiliza la calculadora antes de
+                clasificar un precio con confianza alta, media o baja.''', '''Revisa cuándo se actualizaron los precios, cuántos datos hay disponibles
+                y si conviene usarlos como referencia antes de fabricar, comprar o vender.'''),
+            ('Estado de la API', 'Servicio de precios'),
+            ('Base de datos: {status.database.status}', 'Guardado de precios: {status.database.status === \'ok\' ? \'funcionando\' : \'con problemas\'}'),
+            ('Último historial', 'Últimos precios guardados'),
+            ('Objetos recientes', 'Precios recientes'),
+            ('''{formatInteger(trust.recent_objects)} de{' '}
+                    {formatInteger(trust.total_objects)} combinaciones objeto/calidad''', '''{formatInteger(trust.recent_objects)} de{' '}
+                    {formatInteger(trust.total_objects)} precios de objetos y calidades'''),
+            ('''La API está operativa, pero la proyección de cobertura no pudo
+                  calcularse en esta consulta.''', '''El servicio funciona, pero no pudimos calcular cuántos precios están
+                  actualizados en este momento.'''),
+            ('<CoverageTable title="Cobertura por servidor" rows={trust.servers} />', '<CoverageTable title="Precios recientes por servidor" rows={trust.servers} />'),
+            ('<CoverageTable title="Cobertura por mercado" rows={trust.markets} />', '<CoverageTable title="Precios recientes por mercado" rows={trust.markets} />'),
+            ('''              <ol className="mt-4 space-y-3 text-sm leading-6 text-text-muted">
+                <li><strong className="text-text">1.</strong> El Albion Data Client observa órdenes públicas mientras colaboradores recorren mercados.</li>
+                <li><strong className="text-text">2.</strong> El receiver local normaliza y reintenta los lotes sin bloquear al usuario.</li>
+                <li><strong className="text-text">3.</strong> La API central autentica la ingesta, evita duplicados y conserva precios actuales e historial en PostgreSQL.</li>
+                <li><strong className="text-text">4.</strong> La web consulta la API central y utiliza receiver o caché solo cuando corresponde al modo configurado.</li>
+              </ol>''', '''              <ol className="mt-4 space-y-3 text-sm leading-6 text-text-muted">
+                <li><strong className="text-text">1.</strong> Jugadores que tienen abierto Albion Data Client visitan los mercados del juego.</li>
+                <li><strong className="text-text">2.</strong> La herramienta lee las órdenes públicas y las envía automáticamente. Si falla la conexión, vuelve a intentarlo.</li>
+                <li><strong className="text-text">3.</strong> Guardamos el precio más reciente y los precios anteriores, evitando contar dos veces la misma información.</li>
+                <li><strong className="text-text">4.</strong> La calculadora usa el dato más nuevo disponible y siempre muestra hace cuánto fue actualizado.</li>
+              </ol>'''),
+            ('''              <div className="mt-4 space-y-3 text-sm leading-6 text-text-muted">
+                <p><strong className="text-positive">Alta:</strong> dato de hasta 30 minutos, al menos 7 observaciones, volumen de 100 o más y desviación máxima de 15% frente a la mediana de 7 días.</p>
+                <p><strong className="text-accent">Media:</strong> dato de hasta 6 horas, al menos 3 observaciones, volumen de 20 o más y desviación máxima de 35%.</p>
+                <p><strong className="text-negative">Baja:</strong> precio antiguo, cobertura insuficiente, volumen bajo o una orden fuertemente atípica.</p>
+              </div>''', '''              <div className="mt-4 space-y-3 text-sm leading-6 text-text-muted">
+                <p><strong className="text-positive">Alta:</strong> el precio es reciente, hay varios precios guardados y se parece a lo que normalmente se ha visto.</p>
+                <p><strong className="text-accent">Media:</strong> el precio todavía puede servir, pero es algo antiguo o hay menos actividad registrada.</p>
+                <p><strong className="text-negative">Baja:</strong> hay muy pocos datos, el precio es antiguo o está muy alejado de lo habitual. Conviene actualizarlo o usar un precio manual.</p>
+              </div>'''),
+            ('''              Dos usuarios pueden consultar ciudades, calidades, métodos de compra o
+              venta y momentos diferentes. También puede cambiar la fuente efectiva
+              entre API central, receiver local y caché. La edad exacta, la mediana,
+              el volumen, el spread y la cobertura permiten identificar cuál de esas
+              diferencias explica el resultado antes de tomar una decisión.''', '''              Los precios cambian durante el día y no todas las ciudades o calidades se
+              actualizan al mismo tiempo. Dos personas también pueden usar distintas
+              ciudades, calidades o formas de comprar y vender. Por eso mostramos hace
+              cuánto se actualizó cada precio, cuántos precios se han guardado, cuántas
+              unidades se registraron y si el valor está lejos de lo habitual.'''),
+          ]
+
+          for old, new in replacements:
+            if old not in source:
+              raise SystemExit(f'Replacement not found: {old[:100]!r}')
+            source = source.replace(old, new, 1)
+
+          path.write_text(source, encoding='utf-8')
+          PY
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/patch-plain-language-data-status.yml
+      - name: Commit wording changes
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'fix: explain data confidence in player-friendly language'
+          git push origin HEAD:fix/plain-language-data-confidence
