@@ -69,33 +69,33 @@ export function buildMarketDataConfidence({
   const reasons: string[] = []
 
   if (!snapshot || priceValue === null || freshness === 'missing') {
-    reasons.push('No existe cobertura suficiente para este precio.')
+    reasons.push('Todavía no hay suficiente información sobre este precio.')
   }
   if (freshness === 'acceptable') {
-    reasons.push('El precio tiene más de 30 minutos de antigüedad.')
+    reasons.push('El precio se actualizó hace más de 30 minutos.')
   } else if (freshness === 'stale') {
-    reasons.push('El precio tiene más de 6 horas de antigüedad.')
+    reasons.push('El precio se actualizó hace más de 6 horas.')
   }
   if (observations7d < 3) {
-    reasons.push('Hay menos de 3 observaciones históricas en 7 días.')
+    reasons.push('Hay menos de 3 precios guardados en los últimos 7 días.')
   } else if (observations7d < 7) {
-    reasons.push('La muestra histórica todavía es limitada.')
+    reasons.push('Hay pocos precios guardados para compararlo.')
   }
   if (volume7d < 20) {
-    reasons.push('El volumen histórico registrado es bajo.')
+    reasons.push('Se registraron muy pocas unidades durante los últimos 7 días.')
   } else if (volume7d < 100) {
-    reasons.push('El volumen histórico es moderado.')
+    reasons.push('La actividad registrada es moderada.')
   }
   if (
     deviationFromMedianPercent !== null &&
     Math.abs(deviationFromMedianPercent) > 35
   ) {
-    reasons.push('La orden actual se aleja más de 35% de la mediana de 7 días.')
+    reasons.push('El precio está a más de 35% de lo habitual en los últimos 7 días.')
   } else if (
     deviationFromMedianPercent !== null &&
     Math.abs(deviationFromMedianPercent) > 15
   ) {
-    reasons.push('La orden actual se aleja más de 15% de la mediana de 7 días.')
+    reasons.push('El precio está a más de 15% de lo habitual en los últimos 7 días.')
   }
 
   const hasHighEvidence =
