@@ -1,0 +1,44 @@
+name: Diagnose data trust lint
+
+on:
+  push:
+    branches:
+      - feat/data-trust-center
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/data-trust-center
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Capture lint diagnostics
+        shell: bash
+        run: |
+          set +e
+          pnpm lint > data-trust-lint-output.txt 2>&1
+          status=$?
+          cat data-trust-lint-output.txt
+          echo "lint_exit_code=$status" >> data-trust-lint-output.txt
+          exit 0
+      - name: Commit diagnostics
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data-trust-lint-output.txt
+          git commit -m 'chore: capture data trust lint diagnostics'
+          git push origin HEAD:feat/data-trust-center
