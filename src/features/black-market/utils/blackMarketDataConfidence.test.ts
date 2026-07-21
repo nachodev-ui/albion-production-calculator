@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildBlackMarketDataConfidence } from "./blackMarketDataConfidence";
 
 describe("buildBlackMarketDataConfidence", () => {
-  it("classifies recent, liquid and representative evidence as high", () => {
+  it("classifies recent, active and representative data as high", () => {
     const result = buildBlackMarketDataConfidence({
       ageMinutes: 12,
       unitPrice: 105_000,
@@ -19,7 +19,7 @@ describe("buildBlackMarketDataConfidence", () => {
     expect(result.reasons).toEqual([]);
   });
 
-  it("classifies moderate evidence as medium", () => {
+  it("classifies a moderate amount of data as medium", () => {
     const result = buildBlackMarketDataConfidence({
       ageMinutes: 90,
       unitPrice: 120_000,
@@ -32,11 +32,11 @@ describe("buildBlackMarketDataConfidence", () => {
 
     expect(result.level).toBe("medium");
     expect(result.reasons).toContain(
-      "La muestra histórica todavía es limitada.",
+      "Hay pocos precios guardados para compararlo.",
     );
   });
 
-  it("classifies stale, illiquid and atypical evidence as low", () => {
+  it("classifies stale, inactive and unusual data as low", () => {
     const result = buildBlackMarketDataConfidence({
       ageMinutes: 500,
       unitPrice: 200_000,
@@ -49,14 +49,14 @@ describe("buildBlackMarketDataConfidence", () => {
 
     expect(result.level).toBe("low");
     expect(result.reasons).toContain(
-      "El precio tiene más de 6 horas de antigüedad.",
+      "El precio se actualizó hace más de 6 horas.",
     );
     expect(result.reasons).toContain(
-      "La orden actual se aleja más de 35% de la mediana de 7 días.",
+      "El precio está a más de 35% de lo habitual en los últimos 7 días.",
     );
   });
 
-  it("treats missing historical evidence as low confidence during rolling deployments", () => {
+  it("treats missing saved prices as low confidence during rolling deployments", () => {
     const result = buildBlackMarketDataConfidence({
       ageMinutes: 5,
       unitPrice: 100_000,
@@ -69,10 +69,10 @@ describe("buildBlackMarketDataConfidence", () => {
 
     expect(result.level).toBe("low");
     expect(result.reasons).toContain(
-      "Hay menos de 3 observaciones históricas en 7 días.",
+      "Hay menos de 3 precios guardados en los últimos 7 días.",
     );
     expect(result.reasons).toContain(
-      "El volumen histórico registrado es bajo.",
+      "Se registraron muy pocas unidades durante los últimos 7 días.",
     );
   });
 });
