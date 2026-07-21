@@ -11,6 +11,8 @@ describe("routeFromPathname", () => {
     ["/presets", "presets"],
     ["/guias", "guides"],
     ["/guias/", "guides"],
+    ["/estado-datos", "guides"],
+    ["/estado-datos/", "guides"],
     ["/plans", "plans"],
     ["/account", "account"],
     ["/account/", "account"],
