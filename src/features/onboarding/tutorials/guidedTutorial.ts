@@ -66,7 +66,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-roi',
       title: 'Termina leyendo la rentabilidad',
-      text: 'El ROI compara el resultado con la plata invertida. Revisa también precio, volumen y frescura antes de decidir.',
+      text: 'El ROI compara el resultado con la plata invertida. Si faltan precios verás el cálculo pendiente; revisa también volumen y frescura antes de decidir.',
     },
   ],
   return: [
@@ -110,7 +110,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'black-market-search',
       title: 'Busca oportunidades reales',
-      text: 'Presiona Buscar oportunidades. La API comparará ciudades, órdenes, impuesto, transporte y fabricación.',
+      text: 'Presiona Buscar oportunidades. La API comparará ciudades, órdenes, impuesto, transporte y fabricación. Si debes iniciar sesión, el tutorial se reanudará al volver.',
       event: 'click',
     },
     {
@@ -160,8 +160,7 @@ function findTarget(id: TargetId): HTMLElement | null {
     return exact('h3', 'Costo de producción')?.closest('section') ?? null
   }
   if (id === 'craft-roi') {
-    return exact('span', 'Rentabilidad económica total')?.parentElement
-      ?.parentElement ?? null
+    return exact('h3', 'Resumen de ganancia')?.closest('section') ?? null
   }
   if (id === 'black-market-intro') {
     return exact('h2', 'Oportunidades ciudad → Black Market')?.closest(
@@ -261,6 +260,16 @@ function valid(step: Step, element: HTMLElement): boolean {
     : element.value === step.expected
 }
 
+function waitForBlackMarketRows(stepNumber: number) {
+  observer?.disconnect()
+  observer = new MutationObserver(() => {
+    if (session?.step !== stepNumber || !findTarget('black-market-result')) return
+    observer?.disconnect()
+    go(stepNumber + 1)
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+}
+
 function highlight(step: Step, element: HTMLElement) {
   if (highlighted === element) return
   clearHighlight()
@@ -286,8 +295,14 @@ function highlight(step: Step, element: HTMLElement) {
     }, 350)
   }
   if (step.event) {
+    const stepNumber = session!.step
     const handler = () => {
-      if (valid(step, element)) window.setTimeout(() => go(session!.step + 1), 120)
+      if (!valid(step, element)) return
+      if (step.target === 'black-market-search') {
+        waitForBlackMarketRows(stepNumber)
+        return
+      }
+      window.setTimeout(() => go(stepNumber + 1), 120)
     }
     element.addEventListener(step.event, handler)
     removeEvent = () => element.removeEventListener(step.event!, handler)
