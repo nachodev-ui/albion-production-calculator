@@ -1,12 +1,6 @@
-import {
-  asBaseItemId,
-  type BaseItemId,
-  type ItemCategory,
-} from '@core/domain/entities/Item'
+import type { BaseItemId, ItemCategory } from '@core/domain/entities/Item'
 
-export const GUIDED_START_STORAGE_KEY =
-  'albion-production-calculator:guided-start:v1'
-
+const GUIDED_START_STORAGE_KEY = 'apc:guide:v1'
 const LIMITS = { recent: 6, pinned: 8, searches: 5 } as const
 const CATEGORIES: readonly ItemCategory[] = [
   'weapon',
@@ -50,9 +44,7 @@ function itemIds(value: unknown, limit: number): BaseItemId[] {
         .map((entry) => entry.trim())
         .filter(Boolean),
     ),
-  )
-    .slice(0, limit)
-    .map(asBaseItemId)
+  ).slice(0, limit) as BaseItemId[]
 }
 
 function searches(value: unknown): RecentCatalogSearch[] {
