@@ -155,14 +155,16 @@ function parseOpportunity(value: unknown): BlackMarketOpportunity {
       value["purchaseBuyUnitPrice"],
       "opportunity.purchaseBuyUnitPrice",
     ),
-    purchaseHistoryObservations7d: requiredNumber(
-      value["purchaseHistoryObservations7d"],
-      "opportunity.purchaseHistoryObservations7d",
-    ),
-    purchaseHistoryVolume7d: requiredNumber(
-      value["purchaseHistoryVolume7d"],
-      "opportunity.purchaseHistoryVolume7d",
-    ),
+    purchaseHistoryObservations7d:
+      nullableNumber(
+        value["purchaseHistoryObservations7d"],
+        "opportunity.purchaseHistoryObservations7d",
+      ) ?? 0,
+    purchaseHistoryVolume7d:
+      nullableNumber(
+        value["purchaseHistoryVolume7d"],
+        "opportunity.purchaseHistoryVolume7d",
+      ) ?? 0,
     purchaseMedianPrice7d: nullableNumber(
       value["purchaseMedianPrice7d"],
       "opportunity.purchaseMedianPrice7d",
@@ -183,14 +185,16 @@ function parseOpportunity(value: unknown): BlackMarketOpportunity {
       value["blackMarketAgeMinutes"],
       "opportunity.blackMarketAgeMinutes",
     ),
-    blackMarketHistoryObservations7d: requiredNumber(
-      value["blackMarketHistoryObservations7d"],
-      "opportunity.blackMarketHistoryObservations7d",
-    ),
-    blackMarketHistoryVolume7d: requiredNumber(
-      value["blackMarketHistoryVolume7d"],
-      "opportunity.blackMarketHistoryVolume7d",
-    ),
+    blackMarketHistoryObservations7d:
+      nullableNumber(
+        value["blackMarketHistoryObservations7d"],
+        "opportunity.blackMarketHistoryObservations7d",
+      ) ?? 0,
+    blackMarketHistoryVolume7d:
+      nullableNumber(
+        value["blackMarketHistoryVolume7d"],
+        "opportunity.blackMarketHistoryVolume7d",
+      ) ?? 0,
     blackMarketMedianPrice7d: nullableNumber(
       value["blackMarketMedianPrice7d"],
       "opportunity.blackMarketMedianPrice7d",
