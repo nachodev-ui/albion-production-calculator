@@ -1,112 +1,7 @@
-import { useEffect, useState } from 'react'
 import { InfoHint } from '@shared/components/InfoHint'
 
 interface DestinyBoardSpecializationHintProps {
   readonly align?: 'left' | 'center' | 'right'
-}
-
-const GUIDE_URL = '/assets/ui/destiny-board-specialization-guide.webp?v=4'
-
-function hasWebpHeader(bytes: Uint8Array): boolean {
-  return (
-    bytes.length >= 12 &&
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46 &&
-    bytes[8] === 0x57 &&
-    bytes[9] === 0x45 &&
-    bytes[10] === 0x42 &&
-    bytes[11] === 0x50
-  )
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  const chunks: string[] = []
-  const chunkSize = 0x8000
-
-  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
-    chunks.push(
-      String.fromCharCode(...bytes.subarray(offset, offset + chunkSize)),
-    )
-  }
-
-  return window.btoa(chunks.join(''))
-}
-
-function buildGuideSource(bytes: Uint8Array): string {
-  let encoded: string
-
-  if (hasWebpHeader(bytes)) {
-    encoded = bytesToBase64(bytes)
-  } else {
-    encoded = new TextDecoder().decode(bytes).replace(/\s+/g, '')
-    const binary = window.atob(encoded)
-    const decoded = Uint8Array.from(binary, (character) => character.charCodeAt(0))
-
-    if (!hasWebpHeader(decoded)) {
-      throw new Error('El recurso no contiene una animación WebP válida.')
-    }
-  }
-
-  return `data:image/webp;base64,${encoded}`
-}
-
-function AnimatedDestinyBoardGuide() {
-  const [source, setSource] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadGuide() {
-      try {
-        const response = await fetch(GUIDE_URL, {
-          signal: controller.signal,
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          throw new Error(`No se pudo descargar la guía (${response.status}).`)
-        }
-
-        const bytes = new Uint8Array(await response.arrayBuffer())
-        setSource(buildGuideSource(bytes))
-      } catch {
-        if (!controller.signal.aborted) setFailed(true)
-      }
-    }
-
-    void loadGuide()
-    return () => controller.abort()
-  }, [])
-
-  if (failed) {
-    return (
-      <div className="flex min-h-48 items-center justify-center rounded-md border border-warning/35 bg-warning-muted px-4 text-center text-xs leading-relaxed text-warning">
-        No se pudo cargar la guía animada. Cierra esta ayuda y vuelve a abrirla.
-      </div>
-    )
-  }
-
-  if (!source) {
-    return (
-      <div className="flex min-h-48 items-center justify-center rounded-md border border-border bg-surface px-4 text-xs text-text-faint">
-        Cargando guía animada…
-      </div>
-    )
-  }
-
-  return (
-    <img
-      src={source}
-      alt="Guía animada con capturas reales del Destiny Board: acceso con B, nodo general, especialización individual y progreso del nivel"
-      width={480}
-      height={620}
-      onError={() => setFailed(true)}
-      className="block h-auto w-full rounded-md border border-border"
-    />
-  )
 }
 
 export function DestinyBoardSpecializationHint({
@@ -140,7 +35,15 @@ export function DestinyBoardSpecializationHint({
           </div>
 
           <div className="bg-surface-raised p-3">
-            <AnimatedDestinyBoardGuide />
+            <div className="mx-auto w-full max-w-[330px] overflow-hidden rounded-md border border-border bg-black/20">
+              <img
+                src="/assets/ui/destiny-board-specialization-guide.gif"
+                alt="Guía animada con capturas reales del Destiny Board: acceso con B, nodo general, especialización individual y progreso del nivel"
+                width={260}
+                height={234}
+                className="block h-auto w-full"
+              />
+            </div>
 
             <ol className="mt-3 grid gap-2 text-[11px] leading-relaxed text-text-muted sm:grid-cols-2">
               <li className="rounded-md border border-border bg-surface px-2.5 py-2">
