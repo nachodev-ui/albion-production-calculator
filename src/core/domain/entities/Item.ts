@@ -70,7 +70,8 @@ export function buildItemIconUrl(
   size = 217,
 ): string {
   const identifier = enchantment > 0 ? `${baseId}@${enchantment}` : baseId
-  return `https://render.albiononline.com/v1/item/${identifier}.png?size=${size}`
+  const normalizedSize = Math.min(217, Math.max(1, Math.round(size)))
+  return `https://render.albiononline.com/v1/item/${identifier}.png?quality=1&size=${normalizedSize}&locale=en`
 }
 
 /**

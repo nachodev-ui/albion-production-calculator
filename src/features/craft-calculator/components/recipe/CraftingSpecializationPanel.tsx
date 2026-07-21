@@ -3,6 +3,7 @@ import type {
   FocusCostBreakdown,
 } from '@core/domain/entities/ProductionEconomy'
 import { InfoHint } from '@shared/components/InfoHint'
+import { DestinyBoardSpecializationHint } from './DestinyBoardSpecializationHint'
 
 interface CraftingSpecializationPanelProps {
   readonly config: CraftingSpecializationConfig
@@ -39,8 +40,11 @@ export function CraftingSpecializationPanel({
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-border bg-surface-raised p-3">
-      <div className="flex items-center gap-1.5">
+    <div
+      data-tutorial="craft-specialization"
+      className="mt-4 rounded-lg border border-border bg-surface-raised p-3"
+    >
+      <div className="flex flex-wrap items-center gap-1.5">
         <h4 className="text-sm font-medium text-text">
           Especialización y foco
         </h4>
@@ -50,6 +54,8 @@ export function CraftingSpecializationPanel({
           text="Ingresa el total de Bonus to Focus Cost Efficiency mostrado para el objeto. Cada 10.000 puntos reducen a la mitad el costo de foco. Si el HO está especializado, su bono se combina automáticamente. Increase in Quality se utiliza en el Black Market para estimar la distribución de calidad y el ingreso esperado."
           align="left"
         />
+
+        <DestinyBoardSpecializationHint />
       </div>
 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
@@ -58,6 +64,8 @@ export function CraftingSpecializationPanel({
             Focus Cost Efficiency
           </span>
           <input
+            data-tutorial="focus-cost-efficiency"
+            aria-label="Focus Cost Efficiency total"
             type="number"
             min="0"
             step="1"
@@ -74,6 +82,8 @@ export function CraftingSpecializationPanel({
         <label>
           <span className="text-xs text-text-faint">Foco disponible</span>
           <input
+            data-tutorial="available-focus"
+            aria-label="Foco disponible"
             type="number"
             min="0"
             step="1"
@@ -90,6 +100,8 @@ export function CraftingSpecializationPanel({
             Increase in Quality
           </span>
           <input
+            data-tutorial="quality-increase"
+            aria-label="Increase in Quality total"
             type="number"
             min="0"
             step="0.01"
@@ -167,9 +179,11 @@ export function CraftingSpecializationPanel({
         )}
 
       <p className="mt-3 text-[11px] leading-relaxed text-text-faint">
-        El bono de calidad se guarda en presets y alimenta la estimación
-        probabilística del Black Market. En la calculadora general no cambia el
-        costo de fabricación ni garantiza una calidad concreta.
+        Suma el bono del nodo general de la familia y el del objeto específico;
+        no introduzcas el nivel de cada nodo. El bono de calidad se guarda en
+        presets y alimenta la estimación probabilística del Black Market. En la
+        calculadora general no cambia el costo de fabricación ni garantiza una
+        calidad concreta.
       </p>
     </div>
   )
