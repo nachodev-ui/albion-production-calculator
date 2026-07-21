@@ -1,6 +1,6 @@
 import type { BaseItemId, ItemCategory } from '@core/domain/entities/Item'
 
-const GUIDED_START_STORAGE_KEY = 'g1'
+const GUIDED_START_STORAGE_KEY = 'g'
 const LIMITS = [6, 8, 5] as const
 const CATEGORY_PATTERN =
   /^(weapon|armor|offhand|accessory|resource|refined_resource|food|potion|other)$/
@@ -48,7 +48,7 @@ function searches(value: unknown): RecentCatalogSearch[] {
     const query = typeof entry['query'] === 'string' ? entry['query'].trim() : ''
     const category = entry['category'] as ItemCategory
     const key = `${category}:${query.toLowerCase()}`
-    if (query.length < 2 || !CATEGORY_PATTERN.test(category) || seen.has(key)) continue
+    if (!query[1] || !CATEGORY_PATTERN.test(category) || seen.has(key)) continue
     seen.add(key)
     result.push({ query, category })
     if (result.length === LIMITS[2]) break
@@ -109,7 +109,7 @@ export function recordRecentSearch(
   search: RecentCatalogSearch,
 ): GuidedStartState {
   const query = search.query.trim()
-  if (query.length < 2) return loadGuidedStartState()
+  if (!query[1]) return loadGuidedStartState()
   const normalized = query.toLowerCase()
   return update((current) => ({
     ...current,
