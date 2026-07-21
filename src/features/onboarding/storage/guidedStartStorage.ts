@@ -1,6 +1,6 @@
 import type { BaseItemId, ItemCategory } from '@core/domain/entities/Item'
 
-const GUIDED_START_STORAGE_KEY = 'apc:guide:v1'
+const GUIDED_START_STORAGE_KEY = 'apc:g1'
 const LIMITS = { recent: 6, pinned: 8, searches: 5 } as const
 const CATEGORIES: readonly ItemCategory[] = [
   'weapon',
@@ -66,7 +66,7 @@ function searches(value: unknown): RecentCatalogSearch[] {
 }
 
 export function deserializeGuidedStartState(value: unknown): GuidedStartState {
-  if (!isRecord(value) || value['version'] !== 1) return EMPTY_STATE
+  if (!isRecord(value)) return EMPTY_STATE
   return {
     recentItemIds: itemIds(value['recentItemIds'], LIMITS.recent),
     pinnedItemIds: itemIds(value['pinnedItemIds'], LIMITS.pinned),
@@ -84,22 +84,16 @@ export function loadGuidedStartState(): GuidedStartState {
   }
 }
 
-function save(state: GuidedStartState): GuidedStartState {
+function update(
+  change: (current: GuidedStartState) => GuidedStartState,
+): GuidedStartState {
+  const state = change(loadGuidedStartState())
   try {
-    localStorage.setItem(
-      GUIDED_START_STORAGE_KEY,
-      JSON.stringify({ version: 1, ...state }),
-    )
+    localStorage.setItem(GUIDED_START_STORAGE_KEY, JSON.stringify(state))
   } catch {
     // Storage may be unavailable in private or server-side environments.
   }
   return state
-}
-
-function update(
-  change: (current: GuidedStartState) => GuidedStartState,
-): GuidedStartState {
-  return save(change(loadGuidedStartState()))
 }
 
 export function recordRecentItem(itemId: BaseItemId): GuidedStartState {
