@@ -10,6 +10,7 @@ import type {
   MarketConfig,
   MarketDataSource,
   MarketDefinition,
+  MarketPriceSnapshot,
   MarketQuality,
   MarketRequestStatus,
   SaleStrategy,
@@ -34,6 +35,7 @@ interface ProfitSummaryCardProps {
   readonly automaticPriceLabel: string
   readonly automaticPriceUpdatedAt: string | null
   readonly automaticPriceSource: MarketDataSource | null
+  readonly automaticPriceSnapshot: MarketPriceSnapshot | null
   readonly marketStatus: MarketRequestStatus
   readonly refreshResult: MarketRefreshItemReport | null
   readonly marketConfig: MarketConfig
@@ -70,6 +72,7 @@ export function ProfitSummaryCard({
   automaticPriceLabel,
   automaticPriceUpdatedAt,
   automaticPriceSource,
+  automaticPriceSnapshot,
   marketStatus,
   refreshResult,
   marketConfig,
@@ -448,6 +451,12 @@ export function ProfitSummaryCard({
                     }
                     isActive={
                       automaticUnitSellPrice !== null && !isManualSellPrice
+                    }
+                    priceValue={automaticUnitSellPrice}
+                    snapshot={
+                      automaticUnitSellPrice !== null
+                        ? automaticPriceSnapshot
+                        : null
                     }
                   />
                 </div>
