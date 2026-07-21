@@ -21,7 +21,7 @@ function snapshot(
 }
 
 describe('buildMarketDataConfidence', () => {
-  it('clasifica evidencia reciente, líquida y cercana a la mediana como alta', () => {
+  it('clasifica datos recientes, activos y cercanos al precio habitual como altos', () => {
     const result = buildMarketDataConfidence({
       priceValue: 1_100,
       updatedAt: '2026-07-21T12:00:00Z',
@@ -38,7 +38,7 @@ describe('buildMarketDataConfidence', () => {
     expect(result.spreadPercent).toBeCloseTo(9.52, 1)
   })
 
-  it('clasifica una muestra moderada como confianza media', () => {
+  it('clasifica una cantidad moderada de datos como confianza media', () => {
     const result = buildMarketDataConfidence({
       priceValue: 1_250,
       updatedAt: '2026-07-21T10:30:00Z',
@@ -51,10 +51,10 @@ describe('buildMarketDataConfidence', () => {
     })
 
     expect(result.level).toBe('medium')
-    expect(result.reasons).toContain('La muestra histórica todavía es limitada.')
+    expect(result.reasons).toContain('Hay pocos precios guardados para compararlo.')
   })
 
-  it('clasifica una orden antigua, ilíquida y atípica como baja', () => {
+  it('clasifica un precio antiguo, con poca actividad y muy distinto como bajo', () => {
     const result = buildMarketDataConfidence({
       priceValue: 2_000,
       updatedAt: '2026-07-20T22:00:00Z',
@@ -67,9 +67,9 @@ describe('buildMarketDataConfidence', () => {
     })
 
     expect(result.level).toBe('low')
-    expect(result.reasons).toContain('El precio tiene más de 6 horas de antigüedad.')
+    expect(result.reasons).toContain('El precio se actualizó hace más de 6 horas.')
     expect(result.reasons).toContain(
-      'La orden actual se aleja más de 35% de la mediana de 7 días.',
+      'El precio está a más de 35% de lo habitual en los últimos 7 días.',
     )
   })
 })
