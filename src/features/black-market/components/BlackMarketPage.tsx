@@ -1,4 +1,3 @@
-import type { Item } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import type { AppRoute } from '../../../app/types'
 import { BlackMarketOpportunityScannerPage } from './BlackMarketOpportunityScannerPage'
@@ -16,7 +15,7 @@ export function BlackMarketPage({
     <BlackMarketOpportunityScannerPage
       repository={repository}
       onNavigate={onNavigate}
-      onOpenCrafting={(_item: Item) => onNavigate('crafting')}
+      onOpenCrafting={() => onNavigate('crafting')}
     />
   )
 }
