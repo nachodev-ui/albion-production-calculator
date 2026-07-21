@@ -5,7 +5,7 @@ interface DestinyBoardSpecializationHintProps {
   readonly align?: 'left' | 'center' | 'right'
 }
 
-const GUIDE_URL = '/assets/ui/destiny-board-specialization-guide.webp?v=3'
+const GUIDE_URL = '/assets/ui/destiny-board-specialization-guide.webp?v=4'
 
 function hasWebpHeader(bytes: Uint8Array): boolean {
   return (
@@ -21,26 +21,35 @@ function hasWebpHeader(bytes: Uint8Array): boolean {
   )
 }
 
-function copyToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const copy = new Uint8Array(bytes.byteLength)
-  copy.set(bytes)
-  return copy.buffer
+function bytesToBase64(bytes: Uint8Array): string {
+  const chunks: string[] = []
+  const chunkSize = 0x8000
+
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    chunks.push(
+      String.fromCharCode(...bytes.subarray(offset, offset + chunkSize)),
+    )
+  }
+
+  return window.btoa(chunks.join(''))
 }
 
-function decodeStoredGuide(bytes: Uint8Array): Blob {
+function buildGuideSource(bytes: Uint8Array): string {
+  let encoded: string
+
   if (hasWebpHeader(bytes)) {
-    return new Blob([copyToArrayBuffer(bytes)], { type: 'image/webp' })
+    encoded = bytesToBase64(bytes)
+  } else {
+    encoded = new TextDecoder().decode(bytes).replace(/\s+/g, '')
+    const binary = window.atob(encoded)
+    const decoded = Uint8Array.from(binary, (character) => character.charCodeAt(0))
+
+    if (!hasWebpHeader(decoded)) {
+      throw new Error('El recurso no contiene una animación WebP válida.')
+    }
   }
 
-  const encoded = new TextDecoder().decode(bytes).replace(/\s+/g, '')
-  const binary = window.atob(encoded)
-  const decoded = Uint8Array.from(binary, (character) => character.charCodeAt(0))
-
-  if (!hasWebpHeader(decoded)) {
-    throw new Error('El recurso no contiene una animación WebP válida.')
-  }
-
-  return new Blob([copyToArrayBuffer(decoded)], { type: 'image/webp' })
+  return `data:image/webp;base64,${encoded}`
 }
 
 function AnimatedDestinyBoardGuide() {
@@ -49,7 +58,6 @@ function AnimatedDestinyBoardGuide() {
 
   useEffect(() => {
     const controller = new AbortController()
-    let objectUrl: string | null = null
 
     async function loadGuide() {
       try {
@@ -63,19 +71,14 @@ function AnimatedDestinyBoardGuide() {
         }
 
         const bytes = new Uint8Array(await response.arrayBuffer())
-        objectUrl = URL.createObjectURL(decodeStoredGuide(bytes))
-        setSource(objectUrl)
+        setSource(buildGuideSource(bytes))
       } catch {
         if (!controller.signal.aborted) setFailed(true)
       }
     }
 
     void loadGuide()
-
-    return () => {
-      controller.abort()
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
-    }
+    return () => controller.abort()
   }, [])
 
   if (failed) {
