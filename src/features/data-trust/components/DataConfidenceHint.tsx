@@ -27,14 +27,17 @@ export function DataConfidenceHint({
       align="left"
       width={304}
       trigger={
-        <span className="inline-flex items-center gap-1">
-          {label}
-          <span aria-hidden="true" className="text-[9px] opacity-75">
+        <span className="inline-flex items-center gap-1.5">
+          <span>{label}</span>
+          <span
+            aria-hidden="true"
+            className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border border-border bg-surface-raised text-[9px] font-bold leading-none text-text-faint transition-colors group-hover:border-border-strong group-hover:bg-surface group-hover:text-text"
+          >
             ?
           </span>
         </span>
       }
-      triggerClassName={`shrink-0 cursor-help rounded border font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${className}`}
+      triggerClassName={`group shrink-0 cursor-help rounded border font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${className}`}
       content={
         <div>
           <p className="font-semibold text-text">¿Qué significa {label.toLowerCase()}?</p>
