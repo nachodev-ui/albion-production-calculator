@@ -9,6 +9,7 @@ import {
 } from '../../../app/AppIcons'
 import {
   asBaseItemId,
+  type BaseItemId,
   type Item,
   type ItemCategory,
 } from '@core/domain/entities/Item'
@@ -90,6 +91,12 @@ const BASIC_CONCEPTS = [
 ] as const
 
 function isItem(value: Item | null): value is Item {
+  return value !== null
+}
+
+function isExampleDefinition(
+  value: ExampleDefinition | null,
+): value is ExampleDefinition {
   return value !== null
 }
 
@@ -327,42 +334,41 @@ export function EmptyDetailState({
     return { bag, weapon, blackMarket }
   }, [repository])
 
-  const exampleDefinitions = useMemo(
-    () =>
-      [
-        examples.bag && {
-          item: examples.bag,
-          eyebrow: 'Ejemplo 1 · Crafteo básico',
-          title: 'Calcular una bolsa',
-          description: 'Bolsa T4, una unidad y sin foco para reconocer materiales y costos.',
-          action: 'Ejecutar ejemplo',
-          icon: HammerIcon,
-          recommendation: 'T4 · 1 unidad · sin foco. Ideal para aprender cada costo.',
-          run: () => onRunCraftingExample(examples.bag as Item, 'basic'),
-        },
-        examples.weapon && {
-          item: examples.weapon,
-          eyebrow: 'Ejemplo 2 · Retorno',
-          title: 'Fabricar un arma con retorno',
-          description: 'Diez armas T4 con foco para ver materiales recuperados y ahorro.',
-          action: 'Calcular con retorno',
-          icon: ReturnIcon,
-          recommendation: 'T4 · 10 unidades · foco activo para comparar ahorro.',
-          run: () => onRunCraftingExample(examples.weapon as Item, 'return'),
-        },
-        examples.blackMarket && {
-          item: examples.blackMarket,
-          eyebrow: 'Ejemplo 3 · Black Market',
-          title: 'Comparar un objeto con Caerleon',
-          description: 'Objeto T4, calidad normal, una unidad y tax de 4%.',
-          action: 'Abrir comparación',
-          icon: BlackMarketIcon,
-          recommendation: 'Calidad normal · 1 unidad · tax 4% · transporte en cero.',
-          run: () => onRunBlackMarketExample(examples.blackMarket as Item),
-        },
-      ].filter((example): example is ExampleDefinition => example !== null),
-    [examples, onRunBlackMarketExample, onRunCraftingExample],
-  )
+  const exampleDefinitions = useMemo(() => {
+    const definitions: Array<ExampleDefinition | null> = [
+      examples.bag && {
+        item: examples.bag,
+        eyebrow: 'Ejemplo 1 · Crafteo básico',
+        title: 'Calcular una bolsa',
+        description: 'Bolsa T4, una unidad y sin foco para reconocer materiales y costos.',
+        action: 'Ejecutar ejemplo',
+        icon: HammerIcon,
+        recommendation: 'T4 · 1 unidad · sin foco. Ideal para aprender cada costo.',
+        run: () => onRunCraftingExample(examples.bag as Item, 'basic'),
+      },
+      examples.weapon && {
+        item: examples.weapon,
+        eyebrow: 'Ejemplo 2 · Retorno',
+        title: 'Fabricar un arma con retorno',
+        description: 'Diez armas T4 con foco para ver materiales recuperados y ahorro.',
+        action: 'Calcular con retorno',
+        icon: ReturnIcon,
+        recommendation: 'T4 · 10 unidades · foco activo para comparar ahorro.',
+        run: () => onRunCraftingExample(examples.weapon as Item, 'return'),
+      },
+      examples.blackMarket && {
+        item: examples.blackMarket,
+        eyebrow: 'Ejemplo 3 · Black Market',
+        title: 'Comparar un objeto con Caerleon',
+        description: 'Objeto T4, calidad normal, una unidad y tax de 4%.',
+        action: 'Abrir comparación',
+        icon: BlackMarketIcon,
+        recommendation: 'Calidad normal · 1 unidad · tax 4% · transporte en cero.',
+        run: () => onRunBlackMarketExample(examples.blackMarket as Item),
+      },
+    ]
+    return definitions.filter(isExampleDefinition)
+  }, [examples, onRunBlackMarketExample, onRunCraftingExample])
 
   const recentItems = guidedState.recentItemIds
     .map((itemId) => repository.getById(itemId))
