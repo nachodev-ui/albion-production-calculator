@@ -90,7 +90,9 @@ function save(state: GuidedStartState): GuidedStartState {
       GUIDED_START_STORAGE_KEY,
       JSON.stringify({ version: 1, ...state }),
     )
-  } catch {}
+  } catch {
+    // Storage may be unavailable in private or server-side environments.
+  }
   return state
 }
 
