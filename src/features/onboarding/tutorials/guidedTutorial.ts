@@ -17,6 +17,8 @@ type TargetId =
   | 'black-market-result'
   | 'black-market-detail'
 
+type StyleSnapshot = readonly [string, string, string, string, string]
+
 interface Session {
   readonly id: GuidedTutorialId
   readonly step: number
@@ -34,6 +36,7 @@ interface Step {
 }
 
 const KEY = 'apc:active-tutorial:v1'
+const EMPTY_STYLE: StyleSnapshot = ['', '', '', '', '']
 const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
   bag: [
     {
@@ -126,7 +129,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
 
 let session: Session | null = null
 let highlighted: HTMLElement | null = null
-let oldStyle: readonly string[] = []
+let oldStyle: StyleSnapshot = EMPTY_STYLE
 let removeEvent: (() => void) | null = null
 let observer: MutationObserver | null = null
 let panel: HTMLElement | null = null
@@ -206,7 +209,7 @@ function clearHighlight() {
     ] = oldStyle
   }
   highlighted = null
-  oldStyle = []
+  oldStyle = EMPTY_STYLE
 }
 
 function close() {
