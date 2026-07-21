@@ -11,6 +11,8 @@ describe("routeFromPathname", () => {
     ["/presets", "presets"],
     ["/guias", "guides"],
     ["/guias/", "guides"],
+    ["/estado-datos", "guides"],
+    ["/estado-datos/", "guides"],
     ["/plans", "plans"],
     ["/account", "account"],
     ["/account/", "account"],
@@ -36,6 +38,10 @@ describe("routeFromPathname", () => {
     ],
   ] as const)("maps %s to %s", (pathname, expected) => {
     expect(routeFromPathname(pathname)).toBe(expected);
+  });
+
+  it("keeps the public data status page inside the guides shell", () => {
+    expect(routeFromPathname("/estado-datos")).toBe("guides");
   });
 
   it("falls back to crafting for unknown paths", () => {

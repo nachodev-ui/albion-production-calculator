@@ -222,6 +222,7 @@ function RecipeTreeNode({
                 automaticLabel={`${getMarketName(markets, materialPurchaseCity)} · ${automaticPriceLabel}`}
                 automaticUpdatedAt={automaticPriceDetail?.updatedAt ?? null}
                 automaticSource={automaticPriceDetail?.source ?? null}
+                automaticSnapshot={automaticPriceDetail?.snapshot ?? null}
                 isAutomaticLoading={marketStatus === 'loading'}
                 refreshResult={refreshResult}
                 quantity={node.quantity}

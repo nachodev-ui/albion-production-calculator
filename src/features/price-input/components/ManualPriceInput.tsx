@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
 import { MarketRefreshItemFeedback } from '@features/market-data/components/MarketRefreshFeedback'
 import type { MarketRefreshItemReport } from '@features/market-data/types/MarketRefresh'
-import type { MarketDataSource } from '@features/market-data/types/MarketPrice'
+import type {
+  MarketDataSource,
+  MarketPriceSnapshot,
+} from '@features/market-data/types/MarketPrice'
 
 function formatSilver(amount: number): string {
   return new Intl.NumberFormat('es-CL', {
@@ -17,6 +20,7 @@ interface ManualPriceInputProps {
   readonly automaticLabel?: string
   readonly automaticUpdatedAt?: string | null
   readonly automaticSource?: MarketDataSource | null
+  readonly automaticSnapshot?: MarketPriceSnapshot | null
   readonly isAutomaticLoading?: boolean
   readonly refreshResult?: MarketRefreshItemReport | null
   readonly quantity: number
@@ -38,6 +42,7 @@ export function ManualPriceInput({
   automaticLabel = 'Precio automático',
   automaticUpdatedAt = null,
   automaticSource = null,
+  automaticSnapshot,
   isAutomaticLoading = false,
   refreshResult = null,
   quantity,
@@ -177,6 +182,8 @@ export function ManualPriceInput({
           updatedAt={hasAutomaticValue ? automaticUpdatedAt : null}
           source={hasAutomaticValue ? automaticSource : null}
           isActive={hasAutomaticValue && !isManualOverride}
+          priceValue={hasAutomaticValue ? automaticValue ?? null : null}
+          snapshot={hasAutomaticValue ? automaticSnapshot ?? null : null}
           compact
         />
       )}
