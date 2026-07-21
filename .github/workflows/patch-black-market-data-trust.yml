@@ -1,0 +1,107 @@
+name: Connect Black Market trust evidence
+
+on:
+  push:
+    branches:
+      - feat/black-market-data-trust
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/black-market-data-trust
+          fetch-depth: 0
+      - name: Extend opportunity parsing and render confidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          types_path = Path('src/features/black-market/types.ts')
+          source = types_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  '''  readonly purchaseAgeMinutes: number;\n  readonly blackMarketQuality: number;\n''',
+                  '''  readonly purchaseAgeMinutes: number;\n  readonly purchaseBuyUnitPrice: number | null;\n  readonly purchaseHistoryObservations7d: number;\n  readonly purchaseHistoryVolume7d: number;\n  readonly purchaseMedianPrice7d: number | null;\n  readonly blackMarketQuality: number;\n''',
+              ),
+              (
+                  '''  readonly blackMarketAgeMinutes: number;\n  readonly blackMarketSellUnitPrice: number | null;\n''',
+                  '''  readonly blackMarketAgeMinutes: number;\n  readonly blackMarketHistoryObservations7d: number;\n  readonly blackMarketHistoryVolume7d: number;\n  readonly blackMarketMedianPrice7d: number | null;\n  readonly blackMarketSellUnitPrice: number | null;\n''',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f'types insertion point not found: {old!r}')
+              source = source.replace(old, new, 1)
+          types_path.write_text(source, encoding='utf-8')
+
+          api_path = Path('src/features/black-market/api/blackMarketOpportunitiesApi.ts')
+          source = api_path.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  '''    purchaseAgeMinutes: requiredNumber(\n      value["purchaseAgeMinutes"],\n      "opportunity.purchaseAgeMinutes",\n    ),\n    blackMarketQuality: requiredNumber(\n''',
+                  '''    purchaseAgeMinutes: requiredNumber(\n      value["purchaseAgeMinutes"],\n      "opportunity.purchaseAgeMinutes",\n    ),\n    purchaseBuyUnitPrice: nullableNumber(\n      value["purchaseBuyUnitPrice"],\n      "opportunity.purchaseBuyUnitPrice",\n    ),\n    purchaseHistoryObservations7d: requiredNumber(\n      value["purchaseHistoryObservations7d"],\n      "opportunity.purchaseHistoryObservations7d",\n    ),\n    purchaseHistoryVolume7d: requiredNumber(\n      value["purchaseHistoryVolume7d"],\n      "opportunity.purchaseHistoryVolume7d",\n    ),\n    purchaseMedianPrice7d: nullableNumber(\n      value["purchaseMedianPrice7d"],\n      "opportunity.purchaseMedianPrice7d",\n    ),\n    blackMarketQuality: requiredNumber(\n''',
+              ),
+              (
+                  '''    blackMarketAgeMinutes: requiredNumber(\n      value["blackMarketAgeMinutes"],\n      "opportunity.blackMarketAgeMinutes",\n    ),\n    blackMarketSellUnitPrice: nullableNumber(\n''',
+                  '''    blackMarketAgeMinutes: requiredNumber(\n      value["blackMarketAgeMinutes"],\n      "opportunity.blackMarketAgeMinutes",\n    ),\n    blackMarketHistoryObservations7d: requiredNumber(\n      value["blackMarketHistoryObservations7d"],\n      "opportunity.blackMarketHistoryObservations7d",\n    ),\n    blackMarketHistoryVolume7d: requiredNumber(\n      value["blackMarketHistoryVolume7d"],\n      "opportunity.blackMarketHistoryVolume7d",\n    ),\n    blackMarketMedianPrice7d: nullableNumber(\n      value["blackMarketMedianPrice7d"],\n      "opportunity.blackMarketMedianPrice7d",\n    ),\n    blackMarketSellUnitPrice: nullableNumber(\n''',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit(f'API parser insertion point not found: {old!r}')
+              source = source.replace(old, new, 1)
+          api_path.write_text(source, encoding='utf-8')
+
+          results_path = Path('src/features/black-market/components/BlackMarketOpportunityResults.tsx')
+          source = results_path.read_text(encoding='utf-8')
+          old = '''import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";\n'''
+          new = '''import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";\nimport { BlackMarketDataConfidenceBadge } from "./BlackMarketDataConfidenceBadge";\n'''
+          if old not in source:
+              raise SystemExit('Results import insertion point not found')
+          source = source.replace(old, new, 1)
+          old = '''        <p className="mt-0.5 text-[10px] text-text-faint">\n          {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} ·{" "}\n          {formatBlackMarketAge(opportunity.purchaseAgeMinutes)}\n        </p>\n      </td>\n'''
+          new = '''        <p className="mt-0.5 text-[10px] text-text-faint">\n          {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} ·{" "}\n          {formatBlackMarketAge(opportunity.purchaseAgeMinutes)}\n        </p>\n        <BlackMarketDataConfidenceBadge\n          label="Compra en ciudad"\n          evidence={{\n            ageMinutes: opportunity.purchaseAgeMinutes,\n            unitPrice: opportunity.purchaseUnitPrice,\n            observations7d: opportunity.purchaseHistoryObservations7d,\n            volume7d: opportunity.purchaseHistoryVolume7d,\n            medianPrice7d: opportunity.purchaseMedianPrice7d,\n            buyPrice: opportunity.purchaseBuyUnitPrice,\n            sellPrice: opportunity.purchaseUnitPrice,\n          }}\n          compact\n        />\n      </td>\n'''
+          if old not in source:
+              raise SystemExit('Purchase row insertion point not found')
+          source = source.replace(old, new, 1)
+          old = '''        <p className="mt-1 text-[10px] text-text-faint">\n          {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} ·{" "}\n          {formatBlackMarketAge(opportunity.blackMarketAgeMinutes)}\n        </p>\n      </td>\n'''
+          new = '''        <p className="mt-1 text-[10px] text-text-faint">\n          {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} ·{" "}\n          {formatBlackMarketAge(opportunity.blackMarketAgeMinutes)}\n        </p>\n        <BlackMarketDataConfidenceBadge\n          label="Orden Black Market"\n          evidence={{\n            ageMinutes: opportunity.blackMarketAgeMinutes,\n            unitPrice: opportunity.blackMarketBuyUnitPrice,\n            observations7d: opportunity.blackMarketHistoryObservations7d,\n            volume7d: opportunity.blackMarketHistoryVolume7d,\n            medianPrice7d: opportunity.blackMarketMedianPrice7d,\n            buyPrice: opportunity.blackMarketBuyUnitPrice,\n            sellPrice: opportunity.blackMarketSellUnitPrice,\n          }}\n          compact\n        />\n      </td>\n'''
+          if old not in source:
+              raise SystemExit('Black Market row insertion point not found')
+          results_path.write_text(source.replace(old, new, 1), encoding='utf-8')
+
+          detail_path = Path('src/features/black-market/components/BlackMarketOpportunityDetailDialog.tsx')
+          source = detail_path.read_text(encoding='utf-8')
+          old = '''import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";\n'''
+          new = '''import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";\nimport { BlackMarketDataConfidenceBadge } from "./BlackMarketDataConfidenceBadge";\n'''
+          if old not in source:
+              raise SystemExit('Detail import insertion point not found')
+          source = source.replace(old, new, 1)
+          old = '''          <p className="mt-1 text-xs text-text-faint">\n            Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} · precio por unidad\n          </p>\n        </article>\n'''
+          new = '''          <p className="mt-1 text-xs text-text-faint">\n            Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} · precio por unidad\n          </p>\n          <BlackMarketDataConfidenceBadge\n            label="Evidencia de compra"\n            evidence={{\n              ageMinutes: opportunity.purchaseAgeMinutes,\n              unitPrice: opportunity.purchaseUnitPrice,\n              observations7d: opportunity.purchaseHistoryObservations7d,\n              volume7d: opportunity.purchaseHistoryVolume7d,\n              medianPrice7d: opportunity.purchaseMedianPrice7d,\n              buyPrice: opportunity.purchaseBuyUnitPrice,\n              sellPrice: opportunity.purchaseUnitPrice,\n            }}\n          />\n        </article>\n'''
+          if old not in source:
+              raise SystemExit('Purchase detail insertion point not found')
+          source = source.replace(old, new, 1)
+          old = '''          <p className="mt-1 text-xs text-text-faint">\n            Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} · precio por unidad\n          </p>\n        </article>\n'''
+          new = '''          <p className="mt-1 text-xs text-text-faint">\n            Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} · precio por unidad\n          </p>\n          <BlackMarketDataConfidenceBadge\n            label="Evidencia Black Market"\n            evidence={{\n              ageMinutes: opportunity.blackMarketAgeMinutes,\n              unitPrice: opportunity.blackMarketBuyUnitPrice,\n              observations7d: opportunity.blackMarketHistoryObservations7d,\n              volume7d: opportunity.blackMarketHistoryVolume7d,\n              medianPrice7d: opportunity.blackMarketMedianPrice7d,\n              buyPrice: opportunity.blackMarketBuyUnitPrice,\n              sellPrice: opportunity.blackMarketSellUnitPrice,\n            }}\n          />\n        </article>\n'''
+          if old not in source:
+              raise SystemExit('Black Market detail insertion point not found')
+          detail_path.write_text(source.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Remove temporary workflow
+        run: rm -f .github/workflows/patch-black-market-data-trust.yml
+      - name: Commit implementation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: show trust evidence in Black Market scanner'
+          git push origin HEAD:feat/black-market-data-trust
