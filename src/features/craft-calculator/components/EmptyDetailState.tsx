@@ -61,7 +61,6 @@ const BASIC_CONCEPTS = [
   ['ROI', 'Ganancia o pérdida frente a lo invertido. Un ROI de 20% equivale a 20 de ganancia por cada 100 de plata gastada.'],
   ['Retorno de crafteo', 'Materiales que el juego devuelve al fabricar. Ciudad, foco y bonos cambian el porcentaje y reducen el costo real.'],
   ['Tax del Black Market', 'Impuesto descontado de la orden de compra antes de calcular la ganancia y otros costos, como transporte.'],
-  ['Precio de equilibrio', 'Precio mínimo de venta para no ganar ni perder. Vender por debajo produce una pérdida estimada.'],
 ] as const
 
 function isItem(value: Item | null): value is Item {
@@ -81,11 +80,7 @@ function resolvePreferredItem(
     const item = repository.getById(asBaseItemId(identifier))
     if (item) return item
   }
-  return (
-    repository
-      .getAll(category)
-      .find((item) => item.tier === 4 && item.recipe !== null) ?? null
-  )
+  return repository.getAll(category).find((item) => item.tier === 4 && item.recipe) ?? null
 }
 
 function IntentCard({
@@ -173,7 +168,6 @@ function ItemShortcut({
 
 function SavedItemsPanel({
   title,
-  description,
   emptyText,
   items,
   pinnedIds,
@@ -181,7 +175,6 @@ function SavedItemsPanel({
   onTogglePinned,
 }: {
   readonly title: string
-  readonly description: string
   readonly emptyText: string
   readonly items: readonly Item[]
   readonly pinnedIds: ReadonlySet<BaseItemId>
@@ -191,7 +184,6 @@ function SavedItemsPanel({
   return (
     <div>
       <h2 className="text-sm font-semibold text-text">{title}</h2>
-      <p className="mt-1 text-xs text-text-faint">{description}</p>
       <div className="mt-4 space-y-2">
         {items.length ? (
           items.map((item) => (
@@ -259,11 +251,7 @@ export function EmptyDetailState({
     () => ({
       bag: resolvePreferredItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory'),
       weapon: resolvePreferredItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon'),
-      blackMarket: resolvePreferredItem(
-        repository,
-        ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'],
-        'armor',
-      ),
+      blackMarket: resolvePreferredItem(repository, ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'], 'armor'),
     }),
     [repository],
   )
@@ -354,7 +342,6 @@ export function EmptyDetailState({
           <div className="grid gap-6 md:grid-cols-2">
             <SavedItemsPanel
               title="Últimos objetos usados"
-              description="Se guardan en este navegador."
               emptyText="Ejecuta un ejemplo o abre el catálogo para iniciar este historial."
               items={recentItems}
               pinnedIds={pinnedIds}
@@ -363,7 +350,6 @@ export function EmptyDetailState({
             />
             <SavedItemsPanel
               title="Objetos fijados"
-              description="La estrella mantiene accesibles tus recetas frecuentes."
               emptyText="Fija cualquiera de los ejemplos o de tus objetos recientes."
               items={pinnedItems}
               pinnedIds={pinnedIds}
@@ -397,13 +383,10 @@ export function EmptyDetailState({
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Configuraciones recomendadas</p>
           <h2 className="mt-1 font-display text-2xl text-text">Puntos de partida seguros</h2>
-          <ul className="mt-5 space-y-3">
-            {exampleDefinitions.map((example) => (
-              <li key={example.title} className="rounded-xl border border-border bg-surface-raised p-3">
-                <span className="text-sm font-semibold text-text">{example.title}</span>
-                <p className="mt-0.5 text-xs leading-relaxed text-text-faint">{example.detail}</p>
-              </li>
-            ))}
+          <ul className="mt-5 space-y-2 text-xs leading-relaxed text-text-faint">
+            <li><strong className="text-text">Crafteo básico:</strong> T4, una unidad y sin foco.</li>
+            <li><strong className="text-text">Retorno visible:</strong> T4, diez unidades y foco activo.</li>
+            <li><strong className="text-text">Black Market:</strong> calidad normal, tax 4% y transporte cero.</li>
           </ul>
         </section>
       </div>
@@ -411,7 +394,7 @@ export function EmptyDetailState({
       <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Conceptos básicos</p>
         <h2 className="mt-1 font-display text-2xl text-text">Lee resultados sin saber economía de juegos</h2>
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
           {BASIC_CONCEPTS.map(([term, explanation]) => (
             <article key={term} className="rounded-xl border border-border bg-bg/30 p-4">
               <h3 className="text-sm font-semibold text-text">{term}</h3>
