@@ -5,7 +5,6 @@ import {
   ChartIcon,
   HammerIcon,
   RefiningIcon,
-  ReturnIcon,
 } from '../../../app/AppIcons'
 import {
   asBaseItemId,
@@ -15,7 +14,6 @@ import {
 } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { ItemIcon } from '@shared/components/ItemIcon'
-import { InfoHint } from '@shared/components/InfoHint'
 import {
   loadGuidedStartState,
   togglePinnedItem,
@@ -42,12 +40,8 @@ interface EmptyDetailStateProps {
 
 interface ExampleDefinition {
   readonly item: Item
-  readonly eyebrow: string
   readonly title: string
-  readonly description: string
-  readonly action: string
-  readonly icon: IconComponent
-  readonly recommendation: string
+  readonly detail: string
   readonly run: () => void
 }
 
@@ -64,39 +58,17 @@ const CATEGORY_LABELS: Readonly<Record<ItemCategory, string>> = {
 }
 
 const BASIC_CONCEPTS = [
-  {
-    term: 'ROI',
-    summary: 'Cuánto ganas o pierdes frente a la plata invertida.',
-    explanation:
-      'Un ROI de 20% estima 20 de ganancia por cada 100 de plata gastada. Un valor negativo significa pérdida.',
-  },
-  {
-    term: 'Retorno de crafteo',
-    summary: 'La parte de los materiales que el juego devuelve al fabricar.',
-    explanation:
-      'El retorno reduce el costo real porque puedes reutilizar o vender lo recuperado. Ciudad, foco y bonos cambian el porcentaje.',
-  },
-  {
-    term: 'Tax del Black Market',
-    summary: 'El descuento aplicado a la venta antes de calcular la ganancia.',
-    explanation:
-      'No recibes todo el precio de la orden: primero se resta el impuesto y luego otros costos, como el transporte.',
-  },
-  {
-    term: 'Precio de equilibrio',
-    summary: 'El precio mínimo de venta para no ganar ni perder.',
-    explanation:
-      'Vender por debajo produce pérdida. Por encima comienza a existir una ganancia estimada.',
-  },
+  ['ROI', 'Ganancia o pérdida frente a lo invertido. Un ROI de 20% equivale a 20 de ganancia por cada 100 de plata gastada.'],
+  ['Retorno de crafteo', 'Materiales que el juego devuelve al fabricar. Ciudad, foco y bonos cambian el porcentaje y reducen el costo real.'],
+  ['Tax del Black Market', 'Impuesto descontado de la orden de compra antes de calcular la ganancia y otros costos, como transporte.'],
+  ['Precio de equilibrio', 'Precio mínimo de venta para no ganar ni perder. Vender por debajo produce una pérdida estimada.'],
 ] as const
 
 function isItem(value: Item | null): value is Item {
   return value !== null
 }
 
-function isExampleDefinition(
-  value: ExampleDefinition | null,
-): value is ExampleDefinition {
+function isExample(value: ExampleDefinition | null): value is ExampleDefinition {
   return value !== null
 }
 
@@ -110,17 +82,13 @@ function resolvePreferredItem(
     const item = repository.getById(asBaseItemId(identifier))
     if (item && !excludedIds.has(item.id)) return item
   }
-
   return (
     repository
       .getAll(category)
-      .find(
-        (item) =>
-          item.tier === 4 && item.recipe !== null && !excludedIds.has(item.id),
-      ) ??
+      .find((item) => item.tier === 4 && item.recipe && !excludedIds.has(item.id)) ??
     repository
       .getAll(category)
-      .find((item) => item.recipe !== null && !excludedIds.has(item.id)) ??
+      .find((item) => item.recipe && !excludedIds.has(item.id)) ??
     null
   )
 }
@@ -128,13 +96,11 @@ function resolvePreferredItem(
 function IntentCard({
   title,
   description,
-  action,
   icon: Icon,
   onClick,
 }: {
   readonly title: string
   readonly description: string
-  readonly action: string
   readonly icon: IconComponent
   readonly onClick: () => void
 }) {
@@ -148,11 +114,9 @@ function IntentCard({
         <Icon className="h-5 w-5" />
       </span>
       <span className="mt-4 text-base font-semibold text-text">{title}</span>
-      <span className="mt-1 flex-1 text-xs leading-relaxed text-text-faint">
-        {description}
-      </span>
+      <span className="mt-1 flex-1 text-xs leading-relaxed text-text-faint">{description}</span>
       <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
-        {action} <ArrowRightIcon className="h-3.5 w-3.5" />
+        Abrir <ArrowRightIcon className="h-3.5 w-3.5" />
       </span>
     </button>
   )
@@ -205,9 +169,7 @@ function ItemShortcut({
         <ItemIcon itemId={item.id} enchantment={0} name={item.name} size={42} />
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-text">{item.name}</span>
-          <span className="text-[10px] text-text-faint">
-            T{item.tier} · {CATEGORY_LABELS[item.category]}
-          </span>
+          <span className="text-[10px] text-text-faint">T{item.tier} · {CATEGORY_LABELS[item.category]}</span>
         </span>
       </button>
       <PinButton item={item} isPinned={isPinned} onToggle={onTogglePinned} />
@@ -237,7 +199,7 @@ function SavedItemsPanel({
       <h2 className="text-sm font-semibold text-text">{title}</h2>
       <p className="mt-1 text-xs text-text-faint">{description}</p>
       <div className="mt-4 space-y-2">
-        {items.length > 0 ? (
+        {items.length ? (
           items.map((item) => (
             <ItemShortcut
               key={item.id}
@@ -248,9 +210,7 @@ function SavedItemsPanel({
             />
           ))
         ) : (
-          <p className="rounded-xl border border-dashed border-border p-4 text-xs leading-relaxed text-text-faint">
-            {emptyText}
-          </p>
+          <p className="rounded-xl border border-dashed border-border p-4 text-xs leading-relaxed text-text-faint">{emptyText}</p>
         )}
       </div>
     </div>
@@ -269,32 +229,18 @@ function ExampleCard({
   return (
     <article className="flex h-full flex-col rounded-2xl border border-border bg-surface p-5">
       <div className="flex items-start justify-between gap-3">
-        <ItemIcon
-          itemId={example.item.id}
-          enchantment={0}
-          name={example.item.name}
-          size={64}
-          className="rounded-xl"
-        />
-        <PinButton
-          item={example.item}
-          isPinned={isPinned}
-          onToggle={onTogglePinned}
-        />
+        <ItemIcon itemId={example.item.id} enchantment={0} name={example.item.name} size={64} className="rounded-xl" />
+        <PinButton item={example.item} isPinned={isPinned} onToggle={onTogglePinned} />
       </div>
-      <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-        {example.eyebrow}
-      </p>
+      <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Ejemplo interactivo</p>
       <h3 className="mt-1 font-display text-xl text-text">{example.title}</h3>
-      <p className="mt-2 flex-1 text-xs leading-relaxed text-text-faint">
-        {example.description}
-      </p>
+      <p className="mt-2 flex-1 text-xs leading-relaxed text-text-faint">{example.detail}</p>
       <button
         type="button"
         onClick={example.run}
         className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
       >
-        {example.action} <ArrowRightIcon className="h-4 w-4" />
+        Ejecutar ejemplo <ArrowRightIcon className="h-4 w-4" />
       </button>
     </article>
   )
@@ -318,76 +264,57 @@ export function EmptyDetailState({
   const examples = useMemo(() => {
     const bag = resolvePreferredItem(repository, ['T4_BAG', 'T5_BAG'], 'accessory')
     const excluded = new Set(bag ? [bag.id] : [])
-    const weapon = resolvePreferredItem(
-      repository,
-      ['T4_MAIN_SWORD', 'T4_MAIN_AXE'],
-      'weapon',
-      excluded,
-    )
+    const weapon = resolvePreferredItem(repository, ['T4_MAIN_SWORD', 'T4_MAIN_AXE'], 'weapon', excluded)
     if (weapon) excluded.add(weapon.id)
-    const blackMarket = resolvePreferredItem(
-      repository,
-      ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'],
-      'armor',
-      excluded,
-    )
-    return { bag, weapon, blackMarket }
+    return {
+      bag,
+      weapon,
+      blackMarket: resolvePreferredItem(
+        repository,
+        ['T4_HEAD_CLOTH_SET1', 'T4_ARMOR_LEATHER_SET1'],
+        'armor',
+        excluded,
+      ),
+    }
   }, [repository])
 
   const exampleDefinitions = useMemo(() => {
     const definitions: Array<ExampleDefinition | null> = [
       examples.bag && {
         item: examples.bag,
-        eyebrow: 'Ejemplo 1 · Crafteo básico',
         title: 'Calcular una bolsa',
-        description: 'Bolsa T4, una unidad y sin foco para reconocer materiales y costos.',
-        action: 'Ejecutar ejemplo',
-        icon: HammerIcon,
-        recommendation: 'T4 · 1 unidad · sin foco. Ideal para aprender cada costo.',
+        detail: 'T4 · 1 unidad · sin foco para reconocer materiales y costos.',
         run: () => onRunCraftingExample(examples.bag as Item, 'basic'),
       },
       examples.weapon && {
         item: examples.weapon,
-        eyebrow: 'Ejemplo 2 · Retorno',
         title: 'Fabricar un arma con retorno',
-        description: 'Diez armas T4 con foco para ver materiales recuperados y ahorro.',
-        action: 'Calcular con retorno',
-        icon: ReturnIcon,
-        recommendation: 'T4 · 10 unidades · foco activo para comparar ahorro.',
+        detail: 'T4 · 10 unidades · foco activo para ver materiales recuperados.',
         run: () => onRunCraftingExample(examples.weapon as Item, 'return'),
       },
       examples.blackMarket && {
         item: examples.blackMarket,
-        eyebrow: 'Ejemplo 3 · Black Market',
         title: 'Comparar un objeto con Caerleon',
-        description: 'Objeto T4, calidad normal, una unidad y tax de 4%.',
-        action: 'Abrir comparación',
-        icon: BlackMarketIcon,
-        recommendation: 'Calidad normal · 1 unidad · tax 4% · transporte en cero.',
+        detail: 'T4 · calidad normal · 1 unidad · tax 4% · transporte en cero.',
         run: () => onRunBlackMarketExample(examples.blackMarket as Item),
       },
     ]
-    return definitions.filter(isExampleDefinition)
+    return definitions.filter(isExample)
   }, [examples, onRunBlackMarketExample, onRunCraftingExample])
 
-  const recentItems = guidedState.recentItemIds
-    .map((itemId) => repository.getById(itemId))
-    .filter(isItem)
-  const pinnedItems = guidedState.pinnedItemIds
-    .map((itemId) => repository.getById(itemId))
-    .filter(isItem)
+  const recentItems = guidedState.recentItemIds.map((id) => repository.getById(id)).filter(isItem)
+  const pinnedItems = guidedState.pinnedItemIds.map((id) => repository.getById(id)).filter(isItem)
   const pinnedIds = new Set(guidedState.pinnedItemIds)
+  const intentions = [
+    ['Fabricar un objeto', 'Materiales, tarifas, retorno y ganancia.', HammerIcon, onBrowseCatalog],
+    ['Refinar recursos', 'Convierte recursos crudos en refinados.', RefiningIcon, onOpenRefining],
+    ['Vender al Black Market', 'Compara un objeto con una orden de Caerleon.', BlackMarketIcon, onOpenBlackMarket],
+    ['Comparar ciudades', 'Ordena oportunidades por ganancia, ROI o frescura.', ChartIcon, onCompareCities],
+  ] as const
 
-  function handleTogglePinned(item: Item) {
+  function togglePinned(item: Item) {
     setGuidedState(togglePinnedItem(item.id))
   }
-
-  const intentions = [
-    ['Fabricar un objeto', 'Calcula materiales, tarifas, retorno y ganancia.', 'Elegir objeto', HammerIcon, onBrowseCatalog],
-    ['Refinar recursos', 'Convierte recursos crudos en materiales refinados.', 'Abrir refinamiento', RefiningIcon, onOpenRefining],
-    ['Vender al Black Market', 'Compara un objeto con una orden de Caerleon.', 'Comparar objeto', BlackMarketIcon, onOpenBlackMarket],
-    ['Comparar ciudades', 'Ordena oportunidades por ganancia, ROI o frescura.', 'Abrir escáner', ChartIcon, onCompareCities],
-  ] as const
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-5 pb-14 pt-1 sm:px-6">
@@ -396,11 +323,9 @@ export function EmptyDetailState({
         <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div className="max-w-3xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Inicio guiado</p>
-            <h2 className="mt-2 text-balance font-display text-3xl leading-tight text-text sm:text-4xl">
-              ¿Qué quieres hacer en Albion Online?
-            </h2>
+            <h2 className="mt-2 text-balance font-display text-3xl leading-tight text-text sm:text-4xl">¿Qué quieres hacer en Albion Online?</h2>
             <p className="mt-4 text-sm leading-relaxed text-text-muted sm:text-base">
-              Elige una intención o ejecuta un ejemplo. La app precargará un objeto real y valores iniciales para aprender modificando un cálculo funcional.
+              Elige una intención o ejecuta un ejemplo. La app precargará un objeto real y valores iniciales para aprender con un cálculo funcional.
             </p>
           </div>
           {lastCalculationItem && (
@@ -418,8 +343,8 @@ export function EmptyDetailState({
           )}
         </div>
         <div className="relative mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {intentions.map(([title, description, action, icon, onClick]) => (
-            <IntentCard key={title} title={title} description={description} action={action} icon={icon} onClick={onClick} />
+          {intentions.map(([title, description, icon, onClick]) => (
+            <IntentCard key={title} title={title} description={description} icon={icon} onClick={onClick} />
           ))}
         </div>
       </section>
@@ -427,17 +352,9 @@ export function EmptyDetailState({
       <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Ejemplos interactivos</p>
         <h2 className="mt-1 font-display text-2xl text-text">Aprende con un cálculo listo para usar</h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted">
-          Cada botón abre la herramienta y aplica valores reales que luego puedes cambiar.
-        </p>
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           {exampleDefinitions.map((example) => (
-            <ExampleCard
-              key={example.title}
-              example={example}
-              isPinned={pinnedIds.has(example.item.id)}
-              onTogglePinned={handleTogglePinned}
-            />
+            <ExampleCard key={example.title} example={example} isPinned={pinnedIds.has(example.item.id)} onTogglePinned={togglePinned} />
           ))}
         </div>
       </section>
@@ -452,7 +369,7 @@ export function EmptyDetailState({
               items={recentItems}
               pinnedIds={pinnedIds}
               onOpen={onOpenItem}
-              onTogglePinned={handleTogglePinned}
+              onTogglePinned={togglePinned}
             />
             <SavedItemsPanel
               title="Objetos fijados"
@@ -461,34 +378,28 @@ export function EmptyDetailState({
               items={pinnedItems}
               pinnedIds={pinnedIds}
               onOpen={onOpenItem}
-              onTogglePinned={handleTogglePinned}
+              onTogglePinned={togglePinned}
             />
           </div>
           <div className="mt-6 border-t border-border pt-5">
-            <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="flex items-end justify-between gap-3">
               <div>
                 <h2 className="text-sm font-semibold text-text">Búsquedas recientes</h2>
                 <p className="mt-1 text-xs text-text-faint">Reabre categoría y texto ya aplicados.</p>
               </div>
-              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent hover:underline">
-                Nueva búsqueda
-              </button>
+              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent hover:underline">Nueva búsqueda</button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
-              {guidedState.recentSearches.length > 0 ? (
-                guidedState.recentSearches.map((search) => (
-                  <button
-                    key={`${search.category}:${search.query.toLocaleLowerCase('es')}`}
-                    type="button"
-                    onClick={() => onOpenRecentSearch(search)}
-                    className="rounded-full border border-border bg-surface-raised px-3 py-2 text-xs text-text-muted hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-                  >
-                    {search.query} · {CATEGORY_LABELS[search.category]}
-                  </button>
-                ))
-              ) : (
-                <span className="text-xs text-text-faint">Las búsquedas aparecerán al usar el catálogo.</span>
-              )}
+              {guidedState.recentSearches.length ? guidedState.recentSearches.map((search) => (
+                <button
+                  key={`${search.category}:${search.query.toLowerCase()}`}
+                  type="button"
+                  onClick={() => onOpenRecentSearch(search)}
+                  className="rounded-full border border-border bg-surface-raised px-3 py-2 text-xs text-text-muted hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                >
+                  {search.query} · {CATEGORY_LABELS[search.category]}
+                </button>
+              )) : <span className="text-xs text-text-faint">Las búsquedas aparecerán al usar el catálogo.</span>}
             </div>
           </div>
         </section>
@@ -498,18 +409,13 @@ export function EmptyDetailState({
           <h2 className="mt-1 font-display text-2xl text-text">Puntos de partida seguros</h2>
           <div className="mt-5 space-y-3">
             {exampleDefinitions.map((example) => (
-              <button
-                key={example.recommendation}
-                type="button"
-                onClick={example.run}
-                className="flex w-full items-start gap-3 rounded-xl border border-border bg-surface-raised p-4 text-left hover:border-accent-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
-              >
-                <example.icon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+              <div key={example.title} className="flex items-center gap-3 rounded-xl border border-border bg-surface-raised p-3">
+                <ItemIcon itemId={example.item.id} enchantment={0} name={example.item.name} size={38} />
                 <span>
                   <span className="block text-sm font-semibold text-text">{example.title}</span>
-                  <span className="mt-1 block text-xs leading-relaxed text-text-faint">{example.recommendation}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-text-faint">{example.detail}</span>
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </section>
@@ -518,15 +424,11 @@ export function EmptyDetailState({
       <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Conceptos básicos</p>
         <h2 className="mt-1 font-display text-2xl text-text">Lee resultados sin saber economía de juegos</h2>
-        <p className="mt-2 text-sm leading-relaxed text-text-muted">Pulsa el icono de información para ampliar cada explicación.</p>
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {BASIC_CONCEPTS.map(({ term, summary, explanation }) => (
-            <article key={term} className="rounded-xl border border-border bg-bg/30 p-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-text">{term}</h3>
-                <InfoHint label={term} text={explanation} openOnHover align="left" width={288} />
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-text-faint">{summary}</p>
+          {BASIC_CONCEPTS.map(([term, explanation]) => (
+            <article key={term} className="rounded-xl border border-border bg-bg/30 p-4" title={explanation}>
+              <h3 className="text-sm font-semibold text-text">{term}</h3>
+              <p className="mt-2 text-xs leading-relaxed text-text-faint">{explanation}</p>
             </article>
           ))}
         </div>
