@@ -1,3 +1,4 @@
+import { DataConfidenceHint } from "@features/data-trust/components/DataConfidenceHint";
 import {
   buildBlackMarketDataConfidence,
   type BlackMarketDataConfidenceLevel,
@@ -10,15 +11,18 @@ const PRESENTATION: Record<
 > = {
   high: {
     label: "Confianza alta",
-    className: "border-positive/50 bg-positive-muted text-positive",
+    className:
+      "border-positive/50 bg-positive-muted px-2 py-0.5 text-[9px] text-positive",
   },
   medium: {
     label: "Confianza media",
-    className: "border-accent-border bg-accent-muted text-accent",
+    className:
+      "border-accent-border bg-accent-muted px-2 py-0.5 text-[9px] text-accent",
   },
   low: {
     label: "Confianza baja",
-    className: "border-negative/40 bg-negative-muted text-negative",
+    className:
+      "border-negative/40 bg-negative-muted px-2 py-0.5 text-[9px] text-negative",
   },
 };
 
@@ -49,14 +53,14 @@ export function BlackMarketDataConfidenceBadge({
   if (compact) {
     return (
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <span
-          className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold ${presentation.className}`}
-          title={`${label}: ${confidence.reasons.join(" ") || "Evidencia suficiente."}`}
-        >
-          {presentation.label}
-        </span>
+        <DataConfidenceHint
+          level={confidence.level}
+          label={presentation.label}
+          className={presentation.className}
+        />
         <span className="text-[9px] tabular text-text-faint">
-          {formatInteger(evidence.observations7d)} obs · vol. {formatInteger(evidence.volume7d)}
+          {formatInteger(evidence.observations7d)} precios ·{" "}
+          {formatInteger(evidence.volume7d)} unidades
         </span>
       </div>
     );
@@ -68,19 +72,26 @@ export function BlackMarketDataConfidenceBadge({
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-faint">
           {label}
         </p>
-        <span
-          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${presentation.className}`}
-        >
-          {presentation.label}
-        </span>
+        <DataConfidenceHint
+          level={confidence.level}
+          label={presentation.label}
+          className={`${presentation.className} px-2.5 py-1 text-[10px]`}
+        />
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-text-muted">
-        {formatInteger(evidence.observations7d)} observaciones · volumen {formatInteger(evidence.volume7d)}
+        {formatInteger(evidence.observations7d)} precios guardados ·{" "}
+        {formatInteger(evidence.volume7d)} unidades registradas
         {confidence.deviationFromMedianPercent !== null && (
-          <> · {formatSignedPercent(confidence.deviationFromMedianPercent)} frente a la mediana de 7 días</>
+          <>
+            {" "}· {formatSignedPercent(confidence.deviationFromMedianPercent)} frente
+            al precio habitual de 7 días
+          </>
         )}
         {confidence.spreadPercent !== null && (
-          <> · spread {formatSignedPercent(confidence.spreadPercent)}</>
+          <>
+            {" "}· diferencia compra/venta{" "}
+            {formatSignedPercent(confidence.spreadPercent)}
+          </>
         )}
       </p>
       {confidence.reasons.length > 0 && (
