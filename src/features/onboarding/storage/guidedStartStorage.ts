@@ -85,16 +85,12 @@ export function loadGuidedStartState(): GuidedStartState {
 }
 
 function save(state: GuidedStartState): GuidedStartState {
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(
-        GUIDED_START_STORAGE_KEY,
-        JSON.stringify({ version: 1, ...state }),
-      )
-    } catch {
-      // El inicio continúa operativo aunque el navegador bloquee storage.
-    }
-  }
+  try {
+    localStorage.setItem(
+      GUIDED_START_STORAGE_KEY,
+      JSON.stringify({ version: 1, ...state }),
+    )
+  } catch {}
   return state
 }
 
