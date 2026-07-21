@@ -58,9 +58,9 @@ const CATEGORY_LABELS: Readonly<Record<ItemCategory, string>> = {
 }
 
 const BASIC_CONCEPTS = [
-  ['ROI', 'Ganancia o pérdida frente a lo invertido. Un ROI de 20% equivale a 20 de ganancia por cada 100 de plata gastada.'],
-  ['Retorno de crafteo', 'Materiales que el juego devuelve al fabricar. Ciudad, foco y bonos cambian el porcentaje y reducen el costo real.'],
-  ['Tax del Black Market', 'Impuesto descontado de la orden de compra antes de calcular la ganancia y otros costos, como transporte.'],
+  ['ROI', 'Porcentaje ganado o perdido respecto de la plata invertida.'],
+  ['Retorno de crafteo', 'Materiales devueltos al fabricar; reducen el costo real.'],
+  ['Tax del Black Market', 'Impuesto restado de la orden antes de calcular la ganancia.'],
 ] as const
 
 function isItem(value: Item | null): value is Item {
@@ -261,19 +261,19 @@ export function EmptyDetailState({
       examples.bag && {
         item: examples.bag,
         title: 'Calcular una bolsa',
-        detail: 'T4 · 1 unidad · sin foco para reconocer materiales y costos.',
+        detail: 'T4 · 1 unidad · sin foco.',
         run: () => onRunCraftingExample(examples.bag as Item, 'basic'),
       },
       examples.weapon && {
         item: examples.weapon,
         title: 'Fabricar un arma con retorno',
-        detail: 'T4 · 10 unidades · foco activo para ver materiales recuperados.',
+        detail: 'T4 · 10 unidades · foco activo.',
         run: () => onRunCraftingExample(examples.weapon as Item, 'return'),
       },
       examples.blackMarket && {
         item: examples.blackMarket,
         title: 'Comparar un objeto con Caerleon',
-        detail: 'T4 · calidad normal · 1 unidad · tax 4% · transporte en cero.',
+        detail: 'T4 · normal · tax 4% · transporte cero.',
         run: () => onRunBlackMarketExample(examples.blackMarket as Item),
       },
     ]
@@ -284,10 +284,10 @@ export function EmptyDetailState({
   const pinnedItems = guidedState.pinnedItemIds.map((id) => repository.getById(id)).filter(isItem)
   const pinnedIds = new Set(guidedState.pinnedItemIds)
   const intentions = [
-    ['Fabricar un objeto', 'Materiales, tarifas, retorno y ganancia.', HammerIcon, onBrowseCatalog],
-    ['Refinar recursos', 'Convierte recursos crudos en refinados.', RefiningIcon, onOpenRefining],
-    ['Vender al Black Market', 'Compara un objeto con una orden de Caerleon.', BlackMarketIcon, onOpenBlackMarket],
-    ['Comparar ciudades', 'Ordena oportunidades por ganancia, ROI o frescura.', ChartIcon, onCompareCities],
+    ['Fabricar un objeto', 'Calcula costos y ganancia.', HammerIcon, onBrowseCatalog],
+    ['Refinar recursos', 'Convierte recursos en refinados.', RefiningIcon, onOpenRefining],
+    ['Vender al Black Market', 'Compara un objeto con Caerleon.', BlackMarketIcon, onOpenBlackMarket],
+    ['Comparar ciudades', 'Ordena oportunidades y ROI.', ChartIcon, onCompareCities],
   ] as const
 
   function togglePinned(item: Item) {
@@ -301,9 +301,9 @@ export function EmptyDetailState({
         <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div className="max-w-3xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Inicio guiado</p>
-            <h2 className="mt-2 text-balance font-display text-3xl leading-tight text-text sm:text-4xl">¿Qué quieres hacer en Albion Online?</h2>
+            <h2 className="mt-2 text-balance font-display text-3xl leading-tight text-text sm:text-4xl">¿Qué quieres hacer?</h2>
             <p className="mt-4 text-sm leading-relaxed text-text-muted sm:text-base">
-              Elige una intención o ejecuta un ejemplo. La app precargará un objeto real y valores iniciales para aprender con un cálculo funcional.
+              Elige una intención o ejecuta un ejemplo precargado.
             </p>
           </div>
           {lastCalculationItem && (
@@ -314,7 +314,7 @@ export function EmptyDetailState({
             >
               <ItemIcon itemId={lastCalculationItem.id} enchantment={0} name={lastCalculationItem.name} size={38} />
               <span>
-                <span className="block text-[10px] uppercase tracking-[0.12em] text-text-faint">Restaurar último cálculo</span>
+                <span className="block text-[10px] uppercase tracking-[0.12em] text-text-faint">Restaurar cálculo</span>
                 <span className="block max-w-52 truncate text-text">{lastCalculationItem.name}</span>
               </span>
             </button>
@@ -329,7 +329,7 @@ export function EmptyDetailState({
 
       <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Ejemplos interactivos</p>
-        <h2 className="mt-1 font-display text-2xl text-text">Aprende con un cálculo listo para usar</h2>
+        <h2 className="mt-1 font-display text-2xl text-text">Prueba un cálculo</h2>
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           {exampleDefinitions.map((example) => (
             <ExampleCard key={example.title} example={example} isPinned={pinnedIds.has(example.item.id)} onTogglePinned={togglePinned} />
@@ -341,8 +341,8 @@ export function EmptyDetailState({
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <div className="grid gap-6 md:grid-cols-2">
             <SavedItemsPanel
-              title="Últimos objetos usados"
-              emptyText="Ejecuta un ejemplo o abre el catálogo para iniciar este historial."
+              title="Últimos objetos"
+              emptyText="Abre un ejemplo o el catálogo."
               items={recentItems}
               pinnedIds={pinnedIds}
               onOpen={onOpenItem}
@@ -350,7 +350,7 @@ export function EmptyDetailState({
             />
             <SavedItemsPanel
               title="Objetos fijados"
-              emptyText="Fija cualquiera de los ejemplos o de tus objetos recientes."
+              emptyText="Fija un ejemplo u objeto reciente."
               items={pinnedItems}
               pinnedIds={pinnedIds}
               onOpen={onOpenItem}
@@ -359,11 +359,8 @@ export function EmptyDetailState({
           </div>
           <div className="mt-6 border-t border-border pt-5">
             <div className="flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-text">Búsquedas recientes</h2>
-                <p className="mt-1 text-xs text-text-faint">Reabre categoría y texto ya aplicados.</p>
-              </div>
-              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent hover:underline">Nueva búsqueda</button>
+              <h2 className="text-sm font-semibold text-text">Búsquedas recientes</h2>
+              <button type="button" onClick={onBrowseCatalog} className="text-xs font-semibold text-accent hover:underline">Nueva</button>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {guidedState.recentSearches.length ? guidedState.recentSearches.map((search) => (
@@ -375,25 +372,24 @@ export function EmptyDetailState({
                 >
                   {search.query} · {CATEGORY_LABELS[search.category]}
                 </button>
-              )) : <span className="text-xs text-text-faint">Las búsquedas aparecerán al usar el catálogo.</span>}
+              )) : <span className="text-xs text-text-faint">Aún no hay búsquedas.</span>}
             </div>
           </div>
         </section>
 
         <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Configuraciones recomendadas</p>
-          <h2 className="mt-1 font-display text-2xl text-text">Puntos de partida seguros</h2>
-          <ul className="mt-5 space-y-2 text-xs leading-relaxed text-text-faint">
-            <li><strong className="text-text">Crafteo básico:</strong> T4, una unidad y sin foco.</li>
-            <li><strong className="text-text">Retorno visible:</strong> T4, diez unidades y foco activo.</li>
-            <li><strong className="text-text">Black Market:</strong> calidad normal, tax 4% y transporte cero.</li>
+          <ul className="mt-4 space-y-2 text-xs leading-relaxed text-text-faint">
+            <li><strong className="text-text">Básico:</strong> T4, 1 unidad, sin foco.</li>
+            <li><strong className="text-text">Retorno:</strong> T4, 10 unidades, con foco.</li>
+            <li><strong className="text-text">Black Market:</strong> normal, tax 4%, transporte cero.</li>
           </ul>
         </section>
       </div>
 
       <section className="rounded-2xl border border-border bg-surface/82 p-5 sm:p-6">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">Conceptos básicos</p>
-        <h2 className="mt-1 font-display text-2xl text-text">Lee resultados sin saber economía de juegos</h2>
+        <h2 className="mt-1 font-display text-2xl text-text">Entiende los resultados</h2>
         <div className="mt-5 grid gap-3 md:grid-cols-3">
           {BASIC_CONCEPTS.map(([term, explanation]) => (
             <article key={term} className="rounded-xl border border-border bg-bg/30 p-4">
