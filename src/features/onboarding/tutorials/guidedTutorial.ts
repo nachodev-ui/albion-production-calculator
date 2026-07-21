@@ -1,9 +1,6 @@
 import type { BaseItemId } from '@core/domain/entities/Item'
 import { useCraftTreeStore } from '@features/craft-calculator/store/craftTreeStore'
-import {
-  loadCraftWorkspace,
-  updateCraftWorkspace,
-} from '@features/craft-calculator/store/craftWorkspaceStorage'
+import { updateCraftWorkspace } from '@features/craft-calculator/store/craftWorkspaceStorage'
 
 export type GuidedTutorialId = 'bag' | 'return' | 'black-market'
 
@@ -20,14 +17,14 @@ type TargetId =
   | 'black-market-result'
   | 'black-market-detail'
 
-interface TutorialSession {
+interface Session {
   readonly id: GuidedTutorialId
   readonly step: number
   readonly itemId?: BaseItemId
   readonly itemName?: string
 }
 
-interface TutorialStep {
+interface Step {
   readonly target: TargetId
   readonly title: string
   readonly text: string
@@ -36,19 +33,18 @@ interface TutorialStep {
   readonly focus?: boolean
 }
 
-const STORAGE_KEY = 'apc:active-tutorial:v1'
-
-const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly TutorialStep[]>> = {
+const KEY = 'apc:active-tutorial:v1'
+const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
   bag: [
     {
       target: 'craft-item',
       title: 'Esta es la receta que vas a estudiar',
-      text: 'El encabezado identifica el objeto, su tier y el costo neto que la app puede calcular con los precios disponibles.',
+      text: 'El encabezado identifica el objeto, su tier y el costo neto calculado con los precios disponibles.',
     },
     {
       target: 'craft-quantity',
       title: 'Prueba cómo cambia un lote',
-      text: 'Escribe 5 en el campo resaltado. La receta, los materiales y los costos se multiplicarán automáticamente.',
+      text: 'Escribe 5. La receta, los materiales y los costos se multiplicarán automáticamente.',
       event: 'input',
       expected: '5',
       focus: true,
@@ -56,30 +52,30 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly TutorialStep[]>> = {
     {
       target: 'craft-sale-city',
       title: 'Elige dónde venderás',
-      text: 'Abre este selector y cambia la ciudad. El precio de venta y el resultado económico se actualizarán con ese mercado.',
+      text: 'Cambia la ciudad. El precio de venta y el resultado económico se actualizarán con ese mercado.',
       event: 'change',
     },
     {
       target: 'craft-materials',
       title: 'La app resuelve los materiales',
-      text: 'Aquí ves qué recursos necesita la receta, qué precios encontró y en qué ciudad conviene comprar cada uno.',
+      text: 'Aquí ves qué recursos necesita la receta, qué precios encontró y dónde conviene comprar cada uno.',
     },
     {
       target: 'craft-roi',
       title: 'Termina leyendo la rentabilidad',
-      text: 'El ROI compara el resultado con la plata invertida. Un valor positivo no garantiza la venta: revisa también precio, volumen y frescura.',
+      text: 'El ROI compara el resultado con la plata invertida. Revisa también precio, volumen y frescura antes de decidir.',
     },
   ],
   return: [
     {
       target: 'craft-item',
       title: 'Empezamos con un arma real',
-      text: 'La receta ya está abierta, pero todavía no activamos el retorno con foco. Tú harás los dos cambios importantes.',
+      text: 'La receta ya está abierta, pero todavía no activamos el retorno con foco. Tú harás los cambios importantes.',
     },
     {
       target: 'craft-quantity',
       title: 'Define el tamaño del lote',
-      text: 'Escribe 10. Esto permite comparar el ahorro total y el ahorro por cada arma fabricada.',
+      text: 'Escribe 10 para comparar el ahorro total y el ahorro por cada arma.',
       event: 'input',
       expected: '10',
       focus: true,
@@ -87,56 +83,56 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly TutorialStep[]>> = {
     {
       target: 'craft-focus',
       title: 'Activa el foco',
-      text: 'Presiona el control resaltado. El foco aumenta el retorno de materiales, pero consume puntos de foco del personaje.',
+      text: 'Presiona el control resaltado. El foco aumenta el retorno, pero consume puntos del personaje.',
       event: 'change',
       expected: true,
     },
     {
       target: 'craft-return',
-      title: 'Este es el ahorro producido por el retorno',
-      text: 'Costo bruto es lo que gastarías sin recuperar materiales. Ahorro por RRR es el valor que vuelve a tu inventario. El costo neto descuenta ese retorno.',
+      title: 'Este es el ahorro por retorno',
+      text: 'Costo bruto es el gasto sin recuperación. Ahorro por RRR es el valor que vuelve. El costo neto descuenta ese retorno.',
     },
     {
       target: 'craft-roi',
       title: 'Distingue plata y valor recuperado',
-      text: 'La rentabilidad en plata usa solo dinero líquido. La rentabilidad económica total también considera los materiales recuperados que podrás reutilizar.',
+      text: 'La rentabilidad en plata usa dinero líquido. La económica también cuenta los materiales que podrás reutilizar.',
     },
   ],
   'black-market': [
     {
       target: 'black-market-intro',
-      title: 'Usaremos el escáner con filtros simples',
-      text: 'El tutorial dejó Tier 4, calidad normal y límites amplios para encontrar una oportunidad real con pocos pasos.',
+      title: 'Usaremos filtros simples',
+      text: 'El tutorial dejó Tier 4, calidad normal y límites amplios para encontrar una oportunidad real.',
     },
     {
       target: 'black-market-search',
       title: 'Busca oportunidades reales',
-      text: 'Presiona Buscar oportunidades. La API comparará ciudades, órdenes del Black Market, impuestos, transporte y estrategias de fabricación.',
+      text: 'Presiona Buscar oportunidades. La API comparará ciudades, órdenes, impuesto, transporte y fabricación.',
       event: 'click',
     },
     {
       target: 'black-market-result',
       title: 'Abre el primer resultado',
-      text: 'Cada fila ya resume beneficio, ROI, riesgo y la mejor estrategia. Presiona Ver detalle en la primera oportunidad disponible.',
+      text: 'La fila resume beneficio, ROI, riesgo y mejor estrategia. Presiona Ver detalle.',
       event: 'click',
     },
     {
       target: 'black-market-detail',
       title: 'Lee la comparación completa',
-      text: 'El detalle separa precio de compra, orden del Black Market, impuesto, transporte, beneficio, ROI, confianza de los datos y riesgo. Verifica siempre la orden dentro del juego antes de mover plata o mercancía.',
+      text: 'El detalle separa compra, orden, impuesto, transporte, beneficio, ROI, confianza y riesgo. Confirma la orden dentro del juego.',
     },
   ],
 }
 
-let current: TutorialSession | null = null
+let session: Session | null = null
 let highlighted: HTMLElement | null = null
-let previousStyle: Partial<CSSStyleDeclaration> | null = null
+let oldStyle: readonly string[] = []
+let removeEvent: (() => void) | null = null
 let observer: MutationObserver | null = null
-let eventCleanup: (() => void) | null = null
 let panel: HTMLElement | null = null
-let backdrop: HTMLElement | null = null
+let shade: HTMLElement | null = null
 
-function byExactText(selector: string, text: string): HTMLElement | null {
+function exact(selector: string, text: string): HTMLElement | null {
   return (
     [...document.querySelectorAll<HTMLElement>(selector)].find(
       (element) => element.textContent?.trim() === text,
@@ -144,97 +140,93 @@ function byExactText(selector: string, text: string): HTMLElement | null {
   )
 }
 
-function targetElement(target: TargetId): HTMLElement | null {
-  if (target === 'craft-quantity') {
-    return document.querySelector<HTMLElement>(
-      '[aria-label="Cantidad a craftear"]',
-    )
+function findTarget(id: TargetId): HTMLElement | null {
+  if (id === 'craft-quantity') {
+    return document.querySelector('[aria-label="Cantidad a craftear"]')
   }
-  if (target === 'craft-focus') {
-    return byExactText('span', 'Usar foco')?.closest<HTMLElement>('label') ?? null
+  if (id === 'craft-focus') {
+    return exact('span', 'Usar foco')?.closest('label') ?? null
   }
-  if (target === 'craft-sale-city') {
-    return byExactText('span', 'Vender en')?.closest<HTMLElement>('label') ?? null
+  if (id === 'craft-sale-city') {
+    return exact('span', 'Vender en')?.closest('label') ?? null
   }
-  if (target === 'craft-materials') {
-    return byExactText('h3', 'Materiales de la receta')?.closest<HTMLElement>(
+  if (id === 'craft-materials') {
+    return exact('h3', 'Materiales de la receta')?.closest('section') ?? null
+  }
+  if (id === 'craft-return') {
+    return exact('h3', 'Costo de producción')?.closest('section') ?? null
+  }
+  if (id === 'craft-roi') {
+    return exact('span', 'Rentabilidad económica total')?.parentElement
+      ?.parentElement ?? null
+  }
+  if (id === 'black-market-intro') {
+    return exact('h2', 'Oportunidades ciudad → Black Market')?.closest(
       'section',
     ) ?? null
   }
-  if (target === 'craft-return') {
-    return byExactText('h3', 'Costo de producción')?.closest<HTMLElement>(
-      'section',
-    ) ?? null
-  }
-  if (target === 'craft-roi') {
-    return (
-      byExactText('span', 'Rentabilidad económica total')?.parentElement
-        ?.parentElement ?? null
-    )
-  }
-  if (target === 'black-market-intro') {
-    return byExactText('h2', 'Oportunidades ciudad → Black Market')?.closest<HTMLElement>(
-      'section',
-    ) ?? null
-  }
-  if (target === 'black-market-search') {
-    return byExactText('button', 'Buscar oportunidades')
-  }
-  if (target === 'black-market-result') {
-    return byExactText('button', 'Ver detalle')
-  }
-  if (target === 'black-market-detail') {
-    return document.querySelector<HTMLElement>('[role="dialog"]')
-  }
-
-  const itemName = current?.itemName
-  if (!itemName) return null
-  return byExactText('p', itemName)?.closest<HTMLElement>('.mb-4') ?? null
+  if (id === 'black-market-search') return exact('button', 'Buscar oportunidades')
+  if (id === 'black-market-result') return exact('button', 'Ver detalle')
+  if (id === 'black-market-detail') return document.querySelector('[role="dialog"]')
+  return session?.itemName
+    ? exact('p', session.itemName)?.closest('.mb-4') ?? null
+    : null
 }
 
-function saveSession(session: TutorialSession | null) {
+function store(value: Session | null) {
   try {
-    if (session) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session))
-    else sessionStorage.removeItem(STORAGE_KEY)
+    if (value) sessionStorage.setItem(KEY, JSON.stringify(value))
+    else sessionStorage.removeItem(KEY)
   } catch {
-    // El tutorial sigue disponible aunque sessionStorage esté bloqueado.
+    // El recorrido continúa aunque sessionStorage esté bloqueado.
   }
 }
 
-function loadSession(): TutorialSession | null {
+function load(): Session | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const value = JSON.parse(raw) as Partial<TutorialSession>
-    if (!value.id || !TUTORIALS[value.id] || typeof value.step !== 'number') {
-      return null
-    }
-    return value as TutorialSession
+    const value = JSON.parse(sessionStorage.getItem(KEY) ?? 'null') as Session | null
+    return value && TUTORIALS[value.id] && Number.isInteger(value.step)
+      ? value
+      : null
   } catch {
     return null
   }
 }
 
 function clearHighlight() {
-  eventCleanup?.()
-  eventCleanup = null
-  if (highlighted && previousStyle) {
-    highlighted.style.position = previousStyle.position ?? ''
-    highlighted.style.zIndex = previousStyle.zIndex ?? ''
-    highlighted.style.outline = previousStyle.outline ?? ''
-    highlighted.style.outlineOffset = previousStyle.outlineOffset ?? ''
-    highlighted.style.boxShadow = previousStyle.boxShadow ?? ''
+  removeEvent?.()
+  removeEvent = null
+  if (highlighted) {
+    ;[
+      highlighted.style.position,
+      highlighted.style.zIndex,
+      highlighted.style.outline,
+      highlighted.style.outlineOffset,
+      highlighted.style.boxShadow,
+    ] = oldStyle
   }
   highlighted = null
-  previousStyle = null
+  oldStyle = []
 }
 
-function ensureChrome() {
-  if (!backdrop) {
-    backdrop = document.createElement('div')
-    backdrop.className = 'fixed inset-0 z-[60] bg-bg/65 backdrop-blur-[1px]'
-    backdrop.style.pointerEvents = 'none'
-    document.body.append(backdrop)
+function close() {
+  clearHighlight()
+  observer?.disconnect()
+  panel?.remove()
+  shade?.remove()
+  observer = null
+  panel = null
+  shade = null
+  session = null
+  store(null)
+}
+
+function chrome() {
+  if (!shade) {
+    shade = document.createElement('div')
+    shade.className = 'fixed inset-0 z-[60] bg-bg/65 backdrop-blur-[1px]'
+    shade.style.pointerEvents = 'none'
+    document.body.append(shade)
   }
   if (!panel) {
     panel = document.createElement('aside')
@@ -246,112 +238,38 @@ function ensureChrome() {
   }
 }
 
-function closeTutorial() {
-  clearHighlight()
-  observer?.disconnect()
-  observer = null
-  panel?.remove()
-  backdrop?.remove()
-  panel = null
-  backdrop = null
-  current = null
-  saveSession(null)
-}
-
-function setStep(step: number) {
-  if (!current) return
-  const steps = TUTORIALS[current.id]
-  if (step >= steps.length) {
-    closeTutorial()
+function go(next: number) {
+  if (!session) return
+  const steps = TUTORIALS[session.id]
+  if (next >= steps.length) {
+    close()
     return
   }
-  current = { ...current, step: Math.max(0, step) }
-  saveSession(current)
+  session = { ...session, step: Math.max(0, next) }
+  store(session)
   render()
 }
 
-function renderPanel(step: TutorialStep, found: boolean) {
-  if (!panel || !current) return
-  const steps = TUTORIALS[current.id]
-  panel.replaceChildren()
-
-  const top = document.createElement('div')
-  top.className = 'flex items-center justify-between gap-3'
-  const progress = document.createElement('span')
-  progress.className =
-    'text-[10px] font-semibold uppercase tracking-[0.16em] text-accent'
-  progress.textContent = `Tutorial · ${current.step + 1} de ${steps.length}`
-  const close = document.createElement('button')
-  close.type = 'button'
-  close.className = 'text-xs font-medium text-text-faint hover:text-text'
-  close.textContent = 'Salir'
-  close.addEventListener('click', closeTutorial)
-  top.append(progress, close)
-
-  const title = document.createElement('h2')
-  title.className = 'mt-3 font-display text-xl text-text'
-  title.textContent = step.title
-  const text = document.createElement('p')
-  text.className = 'mt-2 text-sm leading-relaxed text-text-muted'
-  text.textContent = found
-    ? step.text
-    : `${step.text} Estamos esperando que esta parte de la interfaz esté disponible.`
-
-  const actions = document.createElement('div')
-  actions.className = 'mt-4 flex items-center justify-between gap-3'
-  const back = document.createElement('button')
-  back.type = 'button'
-  back.className = 'text-xs font-semibold text-text-faint hover:text-text'
-  back.textContent = current.step === 0 ? 'Cerrar' : 'Anterior'
-  back.addEventListener('click', () =>
-    current?.step === 0 ? closeTutorial() : setStep(current.step - 1),
-  )
-  const next = document.createElement('button')
-  next.type = 'button'
-  next.className =
-    'rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg disabled:cursor-wait disabled:opacity-55'
-  next.disabled = Boolean(step.event) || !found
-  next.textContent = step.event
-    ? 'Haz la acción resaltada'
-    : current.step === steps.length - 1
-      ? 'Terminar tutorial'
-      : 'Siguiente'
-  next.addEventListener('click', () => setStep(current!.step + 1))
-  actions.append(back, next)
-
-  if (step.event) {
-    const skip = document.createElement('button')
-    skip.type = 'button'
-    skip.className = 'mt-3 w-full text-center text-xs text-text-faint underline'
-    skip.textContent = 'Omitir este paso'
-    skip.addEventListener('click', () => setStep(current!.step + 1))
-    panel.append(top, title, text, actions, skip)
-  } else {
-    panel.append(top, title, text, actions)
-  }
-}
-
-function validEvent(step: TutorialStep, element: HTMLElement): boolean {
+function valid(step: Step, element: HTMLElement): boolean {
   if (step.expected === undefined) return true
-  if (typeof step.expected === 'boolean') {
-    return element instanceof HTMLInputElement && element.checked === step.expected
-  }
-  return element instanceof HTMLInputElement && element.value === step.expected
+  if (!(element instanceof HTMLInputElement)) return false
+  return typeof step.expected === 'boolean'
+    ? element.checked === step.expected
+    : element.value === step.expected
 }
 
-function highlight(step: TutorialStep, element: HTMLElement) {
+function highlight(step: Step, element: HTMLElement) {
   if (highlighted === element) return
   clearHighlight()
   highlighted = element
-  previousStyle = {
-    position: element.style.position,
-    zIndex: element.style.zIndex,
-    outline: element.style.outline,
-    outlineOffset: element.style.outlineOffset,
-    boxShadow: element.style.boxShadow,
-  }
-  const position = getComputedStyle(element).position
-  if (position === 'static') element.style.position = 'relative'
+  oldStyle = [
+    element.style.position,
+    element.style.zIndex,
+    element.style.outline,
+    element.style.outlineOffset,
+    element.style.boxShadow,
+  ]
+  if (getComputedStyle(element).position === 'static') element.style.position = 'relative'
   element.style.zIndex = '80'
   element.style.outline = '3px solid var(--color-accent, #d8b45b)'
   element.style.outlineOffset = '5px'
@@ -364,52 +282,87 @@ function highlight(step: TutorialStep, element: HTMLElement) {
       element.select()
     }, 350)
   }
-
   if (step.event) {
     const handler = () => {
-      if (validEvent(step, element)) window.setTimeout(() => setStep(current!.step + 1), 120)
+      if (valid(step, element)) window.setTimeout(() => go(session!.step + 1), 120)
     }
     element.addEventListener(step.event, handler)
-    eventCleanup = () => element.removeEventListener(step.event!, handler)
+    removeEvent = () => element.removeEventListener(step.event!, handler)
+  }
+}
+
+function draw(step: Step, found: boolean) {
+  if (!panel || !session) return
+  const steps = TUTORIALS[session.id]
+  panel.innerHTML = `
+    <div class="flex items-center justify-between gap-3">
+      <span data-progress class="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"></span>
+      <button data-close type="button" class="text-xs font-medium text-text-faint hover:text-text">Salir</button>
+    </div>
+    <h2 data-title class="mt-3 font-display text-xl text-text"></h2>
+    <p data-text class="mt-2 text-sm leading-relaxed text-text-muted"></p>
+    <div class="mt-4 flex items-center justify-between gap-3">
+      <button data-back type="button" class="text-xs font-semibold text-text-faint hover:text-text"></button>
+      <button data-next type="button" class="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-bg disabled:cursor-wait disabled:opacity-55"></button>
+    </div>
+    <button data-skip type="button" class="mt-3 hidden w-full text-center text-xs text-text-faint underline">Omitir este paso</button>`
+
+  const get = (name: string) => panel!.querySelector<HTMLElement>(`[data-${name}]`)!
+  get('progress').textContent = `Tutorial · ${session.step + 1} de ${steps.length}`
+  get('title').textContent = step.title
+  get('text').textContent = found
+    ? step.text
+    : `${step.text} Esperando que esta parte de la interfaz esté disponible.`
+  get('close').addEventListener('click', close)
+  get('back').textContent = session.step === 0 ? 'Cerrar' : 'Anterior'
+  get('back').addEventListener('click', () =>
+    session?.step === 0 ? close() : go(session!.step - 1),
+  )
+
+  const next = get('next') as HTMLButtonElement
+  next.disabled = Boolean(step.event) || !found
+  next.textContent = step.event
+    ? 'Haz la acción resaltada'
+    : session.step === steps.length - 1
+      ? 'Terminar tutorial'
+      : 'Siguiente'
+  next.addEventListener('click', () => go(session!.step + 1))
+
+  if (step.event) {
+    const skip = get('skip')
+    skip.classList.remove('hidden')
+    skip.addEventListener('click', () => go(session!.step + 1))
   }
 }
 
 function render() {
-  if (!current) return
-  ensureChrome()
-  const step = TUTORIALS[current.id][current.step]
-  if (!step) {
-    closeTutorial()
-    return
-  }
-  const element = targetElement(step.target)
-  renderPanel(step, Boolean(element))
+  if (!session) return
+  chrome()
+  const step = TUTORIALS[session.id][session.step]
+  if (!step) return close()
+  const element = findTarget(step.target)
+  draw(step, Boolean(element))
   if (element) highlight(step, element)
   else clearHighlight()
 
   observer?.disconnect()
   observer = new MutationObserver(() => {
-    const next = targetElement(step.target)
-    if (!next) return
+    const target = findTarget(step.target)
+    if (!target) return
     observer?.disconnect()
-    renderPanel(step, true)
-    highlight(step, next)
+    draw(step, true)
+    highlight(step, target)
   })
   observer.observe(document.body, { childList: true, subtree: true })
 }
 
-function prepareReturnTutorial(itemId: BaseItemId) {
-  const store = useCraftTreeStore.getState()
-  store.setProductionConfig({ ...store.productionConfig, useFocus: false })
+function resetReturnExample(itemId: BaseItemId) {
+  const state = useCraftTreeStore.getState()
+  state.setProductionConfig({ ...state.productionConfig, useFocus: false })
   updateCraftWorkspace((workspace) => {
     const quantitiesByRoot = new Map(workspace.quantitiesByRoot)
     quantitiesByRoot.set(`${itemId}@0`, 1)
-    return {
-      ...workspace,
-      selectedItemId: itemId,
-      quantitiesByRoot,
-      productionConfig: { ...(workspace.productionConfig ?? store.productionConfig), useFocus: false },
-    }
+    return { ...workspace, selectedItemId: itemId, quantitiesByRoot }
   })
 }
 
@@ -417,22 +370,15 @@ export function startGuidedTutorial(
   id: GuidedTutorialId,
   item?: { readonly id: BaseItemId; readonly name: string },
 ) {
-  if (id === 'return' && item) prepareReturnTutorial(item.id)
-  current = {
-    id,
-    step: 0,
-    itemId: item?.id,
-    itemName: item?.name,
-  }
-  saveSession(current)
+  if (id === 'return' && item) resetReturnExample(item.id)
+  session = { id, step: 0, itemId: item?.id, itemName: item?.name }
+  store(session)
   window.setTimeout(render, 0)
 }
 
 if (typeof window !== 'undefined') {
   window.setTimeout(() => {
-    const stored = loadSession()
-    if (!stored) return
-    current = stored
-    render()
+    session = load()
+    if (session) render()
   }, 0)
 }
