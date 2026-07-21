@@ -9,12 +9,26 @@ import { useAppRoute } from "./app/routing";
 import { RouteSeo } from "./app/seo/RouteSeo";
 import { isSeoGuideRoute } from "./app/types";
 import type { AppModule, AppRoute } from "./app/types";
-import { EmptyDetailState } from "@features/craft-calculator/components/EmptyDetailState";
+import {
+  EmptyDetailState,
+  type GuidedCraftingExample,
+} from "@features/craft-calculator/components/EmptyDetailState";
 import { ItemDetailPanel } from "@features/craft-calculator/components/ItemDetailPanel";
+import { useCraftTreeStore } from "@features/craft-calculator/store/craftTreeStore";
 import {
   loadCraftWorkspace,
   updateCraftWorkspace,
 } from "@features/craft-calculator/store/craftWorkspaceStorage";
+import {
+  loadBlackMarketWorkspace,
+  saveBlackMarketWorkspace,
+} from "@features/black-market/storage/blackMarketWorkspaceStorage";
+import {
+  recordRecentItem,
+  recordRecentSearch,
+  type RecentCatalogSearch,
+} from "@features/onboarding/storage/guidedStartStorage";
+import type { ItemBrowserSearchRequest } from "@features/item-browser/components/ItemBrowserPanel";
 
 const ItemBrowserPanel = lazy(() =>
   import("@features/item-browser/components/ItemBrowserPanel").then(
@@ -27,6 +41,11 @@ const BlackMarketOpportunityScannerPage = lazy(() =>
       default: module.BlackMarketOpportunityScannerPage,
     }),
   ),
+);
+const BlackMarketPage = lazy(() =>
+  import("@features/black-market/components/BlackMarketPage").then((module) => ({
+    default: module.BlackMarketPage,
+  })),
 );
 const PresetLibraryPage = lazy(() =>
   import("@features/presets/components/PresetLibraryPage").then((module) => ({
@@ -114,16 +133,26 @@ function RepositoryError({ message }: { readonly message: string }) {
   );
 }
 
+type BlackMarketView = "scanner" | "single";
+
 function App() {
   const { route, navigate } = useAppRoute();
-  const [selectedItemId, setSelectedItemId] = useState<BaseItemId | null>(
-    () => loadCraftWorkspace().selectedItemId,
-  );
+  const [selectedItemId, setSelectedItemId] = useState<BaseItemId | null>(null);
+  const [lastCalculationItemId, setLastCalculationItemId] =
+    useState<BaseItemId | null>(() => loadCraftWorkspace().selectedItemId);
   const [repository, setRepository] = useState<ItemRepository | null>(null);
   const [repositoryError, setRepositoryError] = useState<string | null>(null);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [catalogSearchRequest, setCatalogSearchRequest] =
+    useState<ItemBrowserSearchRequest | null>(null);
+  const [blackMarketView, setBlackMarketView] =
+    useState<BlackMarketView>("scanner");
   const selectedItem =
     repository && selectedItemId ? repository.getById(selectedItemId) : null;
+  const lastCalculationItem =
+    repository && lastCalculationItemId
+      ? repository.getById(lastCalculationItemId)
+      : null;
 
   useEffect(() => {
     let isActive = true;
@@ -133,6 +162,12 @@ function App() {
 
         setRepository(nextRepository);
         setSelectedItemId((currentItemId) => {
+          if (!currentItemId || nextRepository.getById(currentItemId)) {
+            return currentItemId;
+          }
+          return null;
+        });
+        setLastCalculationItemId((currentItemId) => {
           if (!currentItemId || nextRepository.getById(currentItemId)) {
             return currentItemId;
           }
@@ -161,20 +196,104 @@ function App() {
     navigate(nextRoute);
     setIsCatalogOpen(false);
   }
+
   function navigateModule(module: AppModule) {
     navigateTo(module);
   }
+
   function selectItem(item: Item) {
     setSelectedItemId(item.id);
+    setLastCalculationItemId(item.id);
+    recordRecentItem(item.id);
     updateCraftWorkspace((current) => ({
       ...current,
       selectedItemId: item.id,
     }));
     setIsCatalogOpen(false);
   }
+
   function openPreloadedCraftingItem(item: Item) {
-    setSelectedItemId(item.id);
+    selectItem(item);
     navigateTo("crafting");
+  }
+
+  function showGuidedStart() {
+    setSelectedItemId(null);
+    setIsCatalogOpen(false);
+  }
+
+  function restoreLastCalculation() {
+    if (lastCalculationItem) selectItem(lastCalculationItem);
+  }
+
+  function openRecentSearch(search: RecentCatalogSearch) {
+    setCatalogSearchRequest((current) => ({
+      requestId: (current?.requestId ?? 0) + 1,
+      query: search.query,
+      category: search.category,
+    }));
+    setIsCatalogOpen(true);
+  }
+
+  function runCraftingExample(item: Item, example: GuidedCraftingExample) {
+    const enchantment = 0 as const;
+    const quantity = example === "return" ? 10 : 1;
+    const currentStore = useCraftTreeStore.getState();
+    const productionConfig = {
+      ...currentStore.productionConfig,
+      hasSpecialtyBonus: example === "return",
+      specialtyKind: "crafting" as const,
+      useFocus: example === "return",
+      hasDailyBonus: false,
+      dailyBonusAmount: 0.1 as const,
+      isIsland: false,
+      isHideout: false,
+      hideoutSpecialized: false,
+    };
+
+    currentStore.setProductionConfig(productionConfig);
+    if (example === "return") currentStore.setIsPremium(true);
+
+    updateCraftWorkspace((current) => {
+      const enchantmentsByItem = new Map(current.enchantmentsByItem);
+      enchantmentsByItem.set(item.id, enchantment);
+      const quantitiesByRoot = new Map(current.quantitiesByRoot);
+      quantitiesByRoot.set(`${item.id}@${enchantment}`, quantity);
+
+      return {
+        ...current,
+        selectedItemId: item.id,
+        enchantmentsByItem,
+        quantitiesByRoot,
+        productionConfig,
+        isPremium: example === "return" ? true : current.isPremium,
+      };
+    });
+
+    setSelectedItemId(item.id);
+    setLastCalculationItemId(item.id);
+    recordRecentItem(item.id);
+    navigateTo("crafting");
+  }
+
+  function openBlackMarket(view: BlackMarketView) {
+    setBlackMarketView(view);
+    navigateTo("black-market");
+  }
+
+  function runBlackMarketExample(item: Item) {
+    const workspace = loadBlackMarketWorkspace();
+    saveBlackMarketWorkspace({
+      ...workspace,
+      selectedItemId: item.id,
+      enchantment: 0,
+      quality: 1,
+      quantity: 1,
+      salesTaxPercent: 4,
+      transportCost: 0,
+    });
+    recordRecentItem(item.id);
+    openBlackMarket("single");
   }
 
   const header = (
@@ -192,7 +311,11 @@ function App() {
           <ItemBrowserPanel
             repository={repository}
             selectedId={selectedItemId}
+            searchRequest={catalogSearchRequest}
             onSelect={selectItem}
+            onRecordSearch={(query, category) =>
+              recordRecentSearch({ query, category })
+            }
           />
         </Suspense>
       ) : (
@@ -227,14 +350,25 @@ function App() {
               title="Calculadora de producción"
               description="Selecciona un objeto, configura las condiciones de producción y compara materiales, retorno, costos y rentabilidad antes de craftear."
               actions={
-                <button
-                  type="button"
-                  onClick={() => setIsCatalogOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border lg:hidden"
-                >
-                  <CatalogIcon className="h-4 w-4" />
-                  Explorar catálogo
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {selectedItem && (
+                    <button
+                      type="button"
+                      onClick={showGuidedStart}
+                      className="inline-flex items-center rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                    >
+                      Inicio guiado
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsCatalogOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-raised px-3.5 py-2.5 text-sm font-medium text-text-muted transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border lg:hidden"
+                  >
+                    <CatalogIcon className="h-4 w-4" />
+                    Explorar catálogo
+                  </button>
+                </div>
               }
             />
             {repositoryError ? (
@@ -247,8 +381,22 @@ function App() {
               />
             ) : selectedItemId ? (
               <ModuleFallback label="calculadora de producción" />
+            ) : repository ? (
+              <EmptyDetailState
+                repository={repository}
+                lastCalculationItem={lastCalculationItem}
+                onBrowseCatalog={() => setIsCatalogOpen(true)}
+                onOpenItem={selectItem}
+                onRunCraftingExample={runCraftingExample}
+                onRunBlackMarketExample={runBlackMarketExample}
+                onOpenBlackMarket={() => openBlackMarket("single")}
+                onCompareCities={() => openBlackMarket("scanner")}
+                onOpenRefining={() => navigateModule("refining")}
+                onRestoreLastCalculation={restoreLastCalculation}
+                onOpenRecentSearch={openRecentSearch}
+              />
             ) : (
-              <EmptyDetailState onBrowseCatalog={() => setIsCatalogOpen(true)} />
+              <ModuleFallback label="inicio guiado" />
             )}
           </>
         )}
@@ -271,19 +419,61 @@ function App() {
           <>
             <ModuleHeader
               eyebrow="Mercado especial de Caerleon"
-              title="Black Market Opportunity Scanner"
-              description="Descubre comparaciones rentables entre ciudades y órdenes de compra del Black Market; abre cada resultado para validar su detalle económico e histórico."
+              title={
+                blackMarketView === "single"
+                  ? "Comparación individual con el Black Market"
+                  : "Black Market Opportunity Scanner"
+              }
+              description={
+                blackMarketView === "single"
+                  ? "Selecciona un objeto concreto y compara su costo de compra con la orden observada en el Black Market, descontando tax y transporte."
+                  : "Descubre comparaciones rentables entre ciudades y órdenes de compra del Black Market; abre cada resultado para validar su detalle económico e histórico."
+              }
               badge="Pro"
+              actions={
+                <div className="flex flex-wrap rounded-xl border border-border bg-surface-raised p-1">
+                  <button
+                    type="button"
+                    onClick={() => setBlackMarketView("single")}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${
+                      blackMarketView === "single"
+                        ? "bg-accent text-bg"
+                        : "text-text-muted hover:text-text"
+                    }`}
+                  >
+                    Comparar un objeto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBlackMarketView("scanner")}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${
+                      blackMarketView === "scanner"
+                        ? "bg-accent text-bg"
+                        : "text-text-muted hover:text-text"
+                    }`}
+                  >
+                    Comparar ciudades
+                  </button>
+                </div>
+              }
             />
             {repositoryError ? (
               <RepositoryError message={repositoryError} />
             ) : repository ? (
               <Suspense fallback={<ModuleFallback label="Black Market" />}>
-                <BlackMarketOpportunityScannerPage
-                  repository={repository}
-                  onNavigate={navigateTo}
-                  onOpenCrafting={openPreloadedCraftingItem}
-                />
+                {blackMarketView === "single" ? (
+                  <BlackMarketPage
+                    key={loadBlackMarketWorkspace().selectedItemId ?? "empty"}
+                    repository={repository}
+                    onNavigate={navigateTo}
+                  />
+                ) : (
+                  <BlackMarketOpportunityScannerPage
+                    repository={repository}
+                    onNavigate={navigateTo}
+                    onOpenCrafting={openPreloadedCraftingItem}
+                  />
+                )}
               </Suspense>
             ) : (
               <ModuleFallback label="Black Market" />
