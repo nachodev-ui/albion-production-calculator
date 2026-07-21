@@ -27,7 +27,7 @@ function SnapshotAudit({ summary }: { readonly summary: SavedCalculationSnapshot
       : MARKET_QUALITY_LABELS[summary.quality]
 
   return (
-    <section className="print-card print-table-section">
+    <section className="print-audit-card print-card print-table-section print-avoid-break">
       <h2>Datos auditables de la captura</h2>
       <p className="print-muted">Calidad de venta: {qualityLabel}</p>
 
@@ -144,7 +144,11 @@ export function CalculationPrintPage({
           </span>
         </div>
         <div className="print-toolbar-actions">
-          <button type="button" onClick={() => window.print()}>
+          <button
+            type="button"
+            className="print-primary-button"
+            onClick={() => window.print()}
+          >
             Imprimir / Guardar PDF
           </button>
           {shared ? (
