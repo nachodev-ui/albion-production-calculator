@@ -1,3 +1,5 @@
+import { DataStatusPage } from '@features/data-trust/components/DataStatusPage'
+
 interface GuideCard {
   readonly href: string;
   readonly eyebrow: string;
@@ -34,6 +36,13 @@ const GUIDES: readonly GuideCard[] = [
 ];
 
 export function GuidesHubPage() {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.pathname.replace(/\/+$/, '') === '/estado-datos'
+  ) {
+    return <DataStatusPage />
+  }
+
   return (
     <main className="mx-auto w-full max-w-6xl px-5 pb-16 sm:px-6">
       <section className="overflow-hidden rounded-2xl border border-border bg-surface-raised/55 shadow-xl shadow-black/10">
@@ -137,8 +146,9 @@ export function GuidesHubPage() {
                   Aplica las fórmulas con datos reales
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
-                  Usa la calculadora para estimar producción y retorno, o compara
-                  oportunidades de compra y fabricación para Caerleon.
+                  Usa la calculadora para estimar producción y retorno, compara
+                  oportunidades para Caerleon y revisa la cobertura antes de confiar
+                  en un resultado automático.
                 </p>
               </div>
 
@@ -154,6 +164,12 @@ export function GuidesHubPage() {
                   className="inline-flex items-center justify-center rounded-xl border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
                 >
                   Explorar Black Market
+                </a>
+                <a
+                  href="/estado-datos"
+                  className="inline-flex items-center justify-center rounded-xl border border-border bg-surface-raised px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent-border hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
+                >
+                  Ver estado de los datos
                 </a>
               </div>
             </div>
