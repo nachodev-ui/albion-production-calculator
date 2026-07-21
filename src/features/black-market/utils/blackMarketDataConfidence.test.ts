@@ -16,6 +16,7 @@ describe("buildBlackMarketDataConfidence", () => {
     expect(result.level).toBe("high");
     expect(result.deviationFromMedianPercent).toBeCloseTo(5);
     expect(result.spreadPercent).toBeCloseTo(10);
+    expect(result.reasons).toEqual([]);
   });
 
   it("classifies moderate evidence as medium", () => {
@@ -52,6 +53,26 @@ describe("buildBlackMarketDataConfidence", () => {
     );
     expect(result.reasons).toContain(
       "La orden actual se aleja más de 35% de la mediana de 7 días.",
+    );
+  });
+
+  it("treats missing historical evidence as low confidence during rolling deployments", () => {
+    const result = buildBlackMarketDataConfidence({
+      ageMinutes: 5,
+      unitPrice: 100_000,
+      observations7d: 0,
+      volume7d: 0,
+      medianPrice7d: null,
+      buyPrice: null,
+      sellPrice: 100_000,
+    });
+
+    expect(result.level).toBe("low");
+    expect(result.reasons).toContain(
+      "Hay menos de 3 observaciones históricas en 7 días.",
+    );
+    expect(result.reasons).toContain(
+      "El volumen histórico registrado es bajo.",
     );
   });
 });
