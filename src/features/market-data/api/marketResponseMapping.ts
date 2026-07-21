@@ -16,6 +16,12 @@ function normalizePrice(value: unknown): number | null {
     : null
 }
 
+function normalizeNonNegativeInteger(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? Math.trunc(value)
+    : 0
+}
+
 function normalizeDate(value: unknown): string | null {
   if (typeof value !== 'string' || value.length === 0) return null
 
@@ -73,7 +79,14 @@ export function mapMarketPriceRow({
     buyPriceSource: buyPriceMax === null ? null : source,
     source,
     fetchedAt,
-  }
+    historyObservations7d: normalizeNonNegativeInteger(
+      readField(row, 'historyObservations7d'),
+    ),
+    historyVolume7d: normalizeNonNegativeInteger(
+      readField(row, 'historyVolume7d'),
+    ),
+    medianPrice7d: normalizePrice(readField(row, 'medianPrice7d')),
+  } as MarketPriceSnapshot
 }
 
 export function parsePriceRows(payload: unknown): readonly MarketPriceRow[] {
