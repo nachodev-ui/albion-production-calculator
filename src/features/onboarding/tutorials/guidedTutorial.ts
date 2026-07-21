@@ -12,6 +12,20 @@ type TargetId =
   | 'craft-focus'
   | 'craft-return'
   | 'craft-roi'
+  | 'preset-open'
+  | 'preset-name'
+  | 'preset-save'
+  | 'station-panel'
+  | 'station-cost'
+  | 'specialization-panel'
+  | 'focus-efficiency'
+  | 'available-focus'
+  | 'quality-increase'
+  | 'projection-panel'
+  | 'projection-current-level'
+  | 'projection-progress'
+  | 'projection-target'
+  | 'projection-required-fame'
   | 'black-market-intro'
   | 'black-market-search'
   | 'black-market-result'
@@ -73,7 +87,7 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
     {
       target: 'craft-item',
       title: 'Empezamos con un arma real',
-      text: 'La receta ya está abierta, pero todavía no activamos el retorno con foco. Tú harás los cambios importantes.',
+      text: 'La receta ya está abierta. Aprenderás retorno, puesto, especialización, foco, presets y proyección usando los controles reales.',
     },
     {
       target: 'craft-quantity',
@@ -91,14 +105,89 @@ const TUTORIALS: Readonly<Record<GuidedTutorialId, readonly Step[]>> = {
       expected: true,
     },
     {
+      target: 'station-panel',
+      title: 'Identifica el puesto correcto',
+      text: 'Esta sección indica el tipo de puesto necesario para el objeto. Dentro del juego abre ese puesto, selecciona el mismo objeto y la misma cantidad.',
+    },
+    {
+      target: 'station-cost',
+      title: 'Copia el Total Cost de Albion',
+      text: 'Antes de confirmar la fabricación, Albion muestra Total Cost. Copia ese monto aquí. Debe corresponder al lote actual; no es el precio de los materiales ni la tarifa por 100 de nutrición.',
+    },
+    {
+      target: 'specialization-panel',
+      title: 'Abre el Destiny Board con B',
+      text: 'En Albion presiona B y busca la familia del objeto. Primero abre el nodo general: sus bonos se aplican a todas las armas o armaduras de esa familia.',
+    },
+    {
+      target: 'focus-efficiency',
+      title: 'Suma nodo general y nodo específico',
+      text: 'Después abre el nodo especialista del objeto concreto. Suma ambos valores de Bonus to Focus Cost Efficiency y escribe aquí el total. No introduzcas el nivel de los nodos.',
+    },
+    {
+      target: 'available-focus',
+      title: 'Indica cuánto foco puedes gastar',
+      text: 'Copia tu foco disponible actual. La calculadora mostrará el foco efectivo por tirada, el requerido para el lote y cuántos objetos puedes fabricar.',
+    },
+    {
+      target: 'quality-increase',
+      title: 'Suma también Increase in Quality',
+      text: 'Suma Increase in Quality del nodo general y del especialista. Este valor alimenta la estimación de calidades del Black Market; no garantiza una calidad concreta en la calculadora general.',
+    },
+    {
       target: 'craft-return',
-      title: 'Este es el ahorro por retorno',
-      text: 'Costo bruto es el gasto sin recuperación. Ahorro por RRR es el valor que vuelve. El costo neto descuenta ese retorno.',
+      title: 'Lee el ahorro real por retorno',
+      text: 'Costo bruto es el gasto sin recuperación. Ahorro por RRR es el valor que vuelve. El costo neto descuenta ese retorno y añade el costo del puesto.',
+    },
+    {
+      target: 'preset-open',
+      title: 'Guarda esta configuración como preset',
+      text: 'Presiona Guardar actual. El preset conserva ciudad, foco, Premium, retorno, tarifas y especialización; no guarda el objeto, la cantidad ni los precios.',
+      event: 'click',
+    },
+    {
+      target: 'preset-name',
+      title: 'Ponle un nombre reconocible',
+      text: 'Usa un nombre que describa el escenario, por ejemplo Bridgewatch con foco. Puedes escribirlo o usar el nombre de ejemplo.',
+      event: 'input',
+      expected: 'Bridgewatch con foco',
+      focus: true,
+    },
+    {
+      target: 'preset-save',
+      title: 'Confirma el preset',
+      text: 'Presiona Guardar. Después podrás aplicarlo a cualquier receta y marcarlo como configuración predeterminada.',
+      event: 'click',
+    },
+    {
+      target: 'projection-panel',
+      title: 'Ahora proyecta tu especialización',
+      text: 'Esta sección estima cuánto avanzará el nodo especialista con la fama de fabricar y, cuando corresponda, estudiar los objetos del lote.',
+    },
+    {
+      target: 'projection-current-level',
+      title: 'Copia el nivel actual',
+      text: 'En el encabezado del nodo especialista verás tu nivel actual. Escribe solo el número del nivel, no el nivel del nodo general.',
+    },
+    {
+      target: 'projection-progress',
+      title: 'Copia el progreso dentro del nivel',
+      text: 'La barra muestra fama actual / fama requerida para subir. Introduce aquí la fama que ya llevas acumulada dentro del nivel actual.',
+    },
+    {
+      target: 'projection-target',
+      title: 'Elige el nivel que quieres alcanzar',
+      text: 'Nivel objetivo es tu meta de simulación. La aplicación calculará la fama restante y cuántos lotes iguales necesitarías.',
+    },
+    {
+      target: 'projection-required-fame',
+      title: 'Verifica la curva de fama',
+      text: 'Fama requerida 0 → 1 define la curva completa. La calculadora detecta el valor normal, pero queda editable por si Albion modifica el Destiny Board.',
     },
     {
       target: 'craft-roi',
-      title: 'Distingue plata y valor recuperado',
-      text: 'La rentabilidad en plata usa dinero líquido. La económica también cuenta los materiales que podrás reutilizar.',
+      title: 'Termina leyendo la rentabilidad',
+      text: 'Distingue rentabilidad en plata de rentabilidad económica total. La segunda también cuenta el valor de los materiales recuperados.',
     },
   ],
   'black-market': [
@@ -143,16 +232,16 @@ function exact(selector: string, text: string): HTMLElement | null {
   )
 }
 
+function fieldByLabel(text: string): HTMLElement | null {
+  return exact('span', text)?.closest('label') ?? null
+}
+
 function findTarget(id: TargetId): HTMLElement | null {
   if (id === 'craft-quantity') {
     return document.querySelector('[aria-label="Cantidad a craftear"]')
   }
-  if (id === 'craft-focus') {
-    return exact('span', 'Usar foco')?.closest('label') ?? null
-  }
-  if (id === 'craft-sale-city') {
-    return exact('span', 'Vender en')?.closest('label') ?? null
-  }
+  if (id === 'craft-focus') return fieldByLabel('Usar foco')
+  if (id === 'craft-sale-city') return fieldByLabel('Vender en')
   if (id === 'craft-materials') {
     return exact('h3', 'Materiales de la receta')?.closest('section') ?? null
   }
@@ -162,6 +251,34 @@ function findTarget(id: TargetId): HTMLElement | null {
   if (id === 'craft-roi') {
     return exact('h3', 'Resumen de ganancia')?.closest('section') ?? null
   }
+  if (id === 'preset-open') return exact('button', 'Guardar actual')
+  if (id === 'preset-name') return document.querySelector('#craft-preset-name')
+  if (id === 'preset-save') return exact('button', 'Guardar')
+  if (id === 'station-panel') {
+    return exact('h4', 'Puesto y costo de fabricación')?.closest('.rounded-lg') ?? null
+  }
+  if (id === 'station-cost') {
+    return document.querySelector('[aria-label="Costo total mostrado por Albion"]')
+  }
+  if (id === 'specialization-panel') {
+    return document.querySelector('[data-tutorial="craft-specialization"]')
+  }
+  if (id === 'focus-efficiency') {
+    return document.querySelector('[data-tutorial="focus-cost-efficiency"]')
+  }
+  if (id === 'available-focus') {
+    return document.querySelector('[data-tutorial="available-focus"]')
+  }
+  if (id === 'quality-increase') {
+    return document.querySelector('[data-tutorial="quality-increase"]')
+  }
+  if (id === 'projection-panel') {
+    return exact('h4', 'Proyección de especialización')?.closest('article') ?? null
+  }
+  if (id === 'projection-current-level') return fieldByLabel('Nivel actual')
+  if (id === 'projection-progress') return fieldByLabel('Progreso dentro del nivel')
+  if (id === 'projection-target') return fieldByLabel('Nivel objetivo')
+  if (id === 'projection-required-fame') return fieldByLabel('Fama requerida 0 → 1')
   if (id === 'black-market-intro') {
     return exact('h2', 'Oportunidades ciudad → Black Market')?.closest(
       'section',
@@ -233,7 +350,7 @@ function chrome() {
   if (!panel) {
     panel = document.createElement('aside')
     panel.className =
-      'fixed bottom-4 left-4 right-4 z-[9999] rounded-2xl border border-accent-border bg-surface p-5 shadow-2xl sm:left-auto sm:w-[25rem]'
+      'fixed bottom-4 left-4 right-4 z-[9999] max-h-[45vh] overflow-y-auto rounded-2xl border border-accent-border bg-surface p-5 shadow-2xl sm:left-auto sm:w-[27rem]'
     panel.setAttribute('role', 'dialog')
     panel.setAttribute('aria-live', 'polite')
     document.body.append(panel)
@@ -302,6 +419,9 @@ function actionLabel(step: Step): string {
   }
   if (step.target === 'craft-focus') return 'Activar foco y continuar'
   if (step.target === 'craft-sale-city') return 'Cambiar ciudad y continuar'
+  if (step.target === 'preset-open') return 'Crear preset'
+  if (step.target === 'preset-name') return 'Usar nombre de ejemplo'
+  if (step.target === 'preset-save') return 'Guardar preset'
   if (step.target === 'black-market-search') return 'Buscar oportunidades'
   if (step.target === 'black-market-result') return 'Abrir detalle'
   return 'Realizar acción'
