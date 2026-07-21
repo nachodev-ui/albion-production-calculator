@@ -18,6 +18,7 @@ import {
   formatBlackMarketSilver,
 } from "./blackMarketScannerConfig";
 import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";
+import { BlackMarketDataConfidenceBadge } from "./BlackMarketDataConfidenceBadge";
 import { BlackMarketStrategyComparison } from "./BlackMarketStrategyComparison";
 
 interface BlackMarketOpportunityDetailDialogProps {
@@ -159,6 +160,18 @@ export function BlackMarketOpportunityDetailDialog({
           <p className="mt-1 text-xs text-text-faint">
             Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} · precio por unidad
           </p>
+          <BlackMarketDataConfidenceBadge
+            label="Evidencia de compra"
+            evidence={{
+              ageMinutes: opportunity.purchaseAgeMinutes,
+              unitPrice: opportunity.purchaseUnitPrice,
+              observations7d: opportunity.purchaseHistoryObservations7d,
+              volume7d: opportunity.purchaseHistoryVolume7d,
+              medianPrice7d: opportunity.purchaseMedianPrice7d,
+              buyPrice: opportunity.purchaseBuyUnitPrice,
+              sellPrice: opportunity.purchaseUnitPrice,
+            }}
+          />
         </article>
 
         <article className="rounded-xl border border-accent-border/40 bg-accent-muted/35 p-4">
@@ -181,6 +194,18 @@ export function BlackMarketOpportunityDetailDialog({
           <p className="mt-1 text-xs text-text-faint">
             Calidad {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} · precio por unidad
           </p>
+          <BlackMarketDataConfidenceBadge
+            label="Evidencia Black Market"
+            evidence={{
+              ageMinutes: opportunity.blackMarketAgeMinutes,
+              unitPrice: opportunity.blackMarketBuyUnitPrice,
+              observations7d: opportunity.blackMarketHistoryObservations7d,
+              volume7d: opportunity.blackMarketHistoryVolume7d,
+              medianPrice7d: opportunity.blackMarketMedianPrice7d,
+              buyPrice: opportunity.blackMarketBuyUnitPrice,
+              sellPrice: opportunity.blackMarketSellUnitPrice,
+            }}
+          />
         </article>
       </div>
 

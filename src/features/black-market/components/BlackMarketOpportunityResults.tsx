@@ -20,6 +20,7 @@ import {
   formatBlackMarketSilver,
 } from "./blackMarketScannerConfig";
 import { BlackMarketRiskBadge } from "./BlackMarketRiskBadge";
+import { BlackMarketDataConfidenceBadge } from "./BlackMarketDataConfidenceBadge";
 
 interface BlackMarketOpportunityResultsProps {
   readonly response: BlackMarketOpportunitiesResponse;
@@ -181,6 +182,19 @@ function OpportunityRow({
           {BLACK_MARKET_QUALITY_LABELS[opportunity.purchaseQuality]} ·{" "}
           {formatBlackMarketAge(opportunity.purchaseAgeMinutes)}
         </p>
+        <BlackMarketDataConfidenceBadge
+          label="Compra en ciudad"
+          evidence={{
+            ageMinutes: opportunity.purchaseAgeMinutes,
+            unitPrice: opportunity.purchaseUnitPrice,
+            observations7d: opportunity.purchaseHistoryObservations7d,
+            volume7d: opportunity.purchaseHistoryVolume7d,
+            medianPrice7d: opportunity.purchaseMedianPrice7d,
+            buyPrice: opportunity.purchaseBuyUnitPrice,
+            sellPrice: opportunity.purchaseUnitPrice,
+          }}
+          compact
+        />
       </td>
       <td className="px-3 py-3 text-xs">
         <p className="font-medium tabular text-text">
@@ -190,6 +204,19 @@ function OpportunityRow({
           {BLACK_MARKET_QUALITY_LABELS[opportunity.blackMarketQuality]} ·{" "}
           {formatBlackMarketAge(opportunity.blackMarketAgeMinutes)}
         </p>
+        <BlackMarketDataConfidenceBadge
+          label="Orden Black Market"
+          evidence={{
+            ageMinutes: opportunity.blackMarketAgeMinutes,
+            unitPrice: opportunity.blackMarketBuyUnitPrice,
+            observations7d: opportunity.blackMarketHistoryObservations7d,
+            volume7d: opportunity.blackMarketHistoryVolume7d,
+            medianPrice7d: opportunity.blackMarketMedianPrice7d,
+            buyPrice: opportunity.blackMarketBuyUnitPrice,
+            sellPrice: opportunity.blackMarketSellUnitPrice,
+          }}
+          compact
+        />
       </td>
       <td className="px-3 py-3 text-xs">
         <span
