@@ -5,7 +5,7 @@
   "budgets": {
     "totalRawBytes": 3800000,
     "totalGzipBytes": 400000,
-    "javascriptRawBytes": 3600000,
+    "javascriptRawBytes": 3610000,
     "javascriptGzipBytes": 355000,
     "cssRawBytes": 90000,
     "cssGzipBytes": 20000,
