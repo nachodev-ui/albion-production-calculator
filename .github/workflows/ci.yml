@@ -24,7 +24,7 @@ jobs:
   quality:
     name: Quality checks
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       VITE_CENTRAL_MARKET_API_URL: https://api.example.invalid/api/v1
       VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
@@ -130,3 +130,27 @@ jobs:
           path: artifacts/docs-output.log
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Build production Auth0 variant
+        shell: bash
+        env:
+          VITE_CENTRAL_MARKET_API_URL: https://albion-market-api.onrender.com/api/v1
+          VITE_ENABLE_LOCAL_RECEIVER_FALLBACK: 'false'
+          VITE_MARKET_REQUEST_TIMEOUT_MS: '7000'
+          VITE_AUTH0_ENABLED: 'true'
+          VITE_AUTH0_DOMAIN: albion-production-calculator.us.auth0.com
+          VITE_AUTH0_CLIENT_ID: 4Bhvhd3PcxNwmMyvK5ocLi9Q33hHr74y
+          VITE_AUTH0_AUDIENCE: https://albion-market-api
+          VITE_AUTH0_SCOPE: openid profile email read:account
+        run: |
+          pnpm build
+          pnpm exec tsx scripts/check-bundle-budget.ts --write-report
+          cp artifacts/performance/bundle-report.json artifacts/performance/production-bundle-report.json
+
+      - name: Upload production bundle report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-bundle-report
+          path: artifacts/performance/production-bundle-report.json
+          if-no-files-found: ignore
