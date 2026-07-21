@@ -40,6 +40,10 @@ describe("routeFromPathname", () => {
     expect(routeFromPathname(pathname)).toBe(expected);
   });
 
+  it("keeps the public data status page inside the guides shell", () => {
+    expect(routeFromPathname("/estado-datos")).toBe("guides");
+  });
+
   it("falls back to crafting for unknown paths", () => {
     expect(routeFromPathname("/unknown")).toBe("crafting");
   });
