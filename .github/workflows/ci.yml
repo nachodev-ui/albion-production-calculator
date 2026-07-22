@@ -37,6 +37,7 @@ jobs:
         with:
           ref: fix/refining-icon-loading-perception-v2
 
+      # Temporary branch-local step; it restores this workflow from main before committing.
       - name: Apply one-time refining loading UX patch
         shell: bash
         run: |
