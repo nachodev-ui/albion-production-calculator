@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildItemIconUrl, type BaseItemId } from '@core/domain/entities/Item'
+import type { BaseItemId } from '@core/domain/entities/Item'
+import { ItemIcon } from '@shared/components/ItemIcon'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
 import {
@@ -108,7 +109,7 @@ function Field({
   children,
 }: {
   readonly label: string
-  readonly hint?: string
+  readonly hint?: ReactNode
   readonly children: ReactNode
 }) {
   return (
@@ -166,20 +167,35 @@ function PriceField({
   label,
   manualValue,
   automaticDetail,
+  loading,
   onChange,
 }: {
   readonly label: string
   readonly manualValue: number | null
   readonly automaticDetail: AutomaticMarketPriceDetail | undefined
+  readonly loading: boolean
   readonly onChange: (value: number | null) => void
 }) {
+  const waitingForAutomaticPrice =
+    loading && manualValue === null && automaticDetail?.value == null
+  const automaticHint = waitingForAutomaticPrice ? (
+    <span className="inline-flex items-center gap-2" aria-live="polite">
+      <span className="h-2.5 w-24 animate-pulse rounded-full bg-border" />
+      Consultando precio…
+    </span>
+  ) : (
+    automaticPriceLabel(automaticDetail)
+  )
+
   return (
     <Field
       label={label}
       hint={
-        manualValue === null
-          ? automaticPriceLabel(automaticDetail)
-          : `Manual · automático: ${automaticPriceLabel(automaticDetail)}`
+        manualValue === null ? (
+          automaticHint
+        ) : (
+          <>Manual · automático: {automaticHint}</>
+        )
       }
     >
       <input
@@ -187,7 +203,12 @@ function PriceField({
         min="0"
         step="1"
         value={manualValue ?? ''}
-        placeholder={automaticDetail?.value?.toString() ?? 'Sin dato'}
+        placeholder={
+          waitingForAutomaticPrice
+            ? 'Consultando…'
+            : (automaticDetail?.value?.toString() ?? 'Sin dato')
+        }
+        aria-busy={waitingForAutomaticPrice}
         onChange={(event) => onChange(parseManualPrice(event.target.value))}
         className={INPUT_CLASS}
       />
@@ -228,20 +249,22 @@ function VisualRecipeChoice({
       } ${dense ? 'p-2.5' : 'p-3.5'}`}
     >
       <span className="flex items-center justify-center gap-1.5">
-        <img
-          src={buildItemIconUrl(rawItemId, rawEnchantment, dense ? 64 : 80)}
-          alt=""
-          className={`${dense ? 'h-10 w-10' : 'h-14 w-14'} rounded-lg bg-bg/45 object-contain transition-transform group-hover:scale-105`}
+        <ItemIcon
+          itemId={rawItemId}
+          enchantment={rawEnchantment}
+          name={`${label} · recurso`}
+          size={dense ? 40 : 56}
+          priority={selected ? 'high' : 'low'}
+          className="rounded-lg bg-bg/45 transition-transform group-hover:scale-105"
         />
         <span className="text-xs text-text-faint">→</span>
-        <img
-          src={buildItemIconUrl(
-            outputItemId,
-            outputEnchantment,
-            dense ? 64 : 80,
-          )}
-          alt=""
-          className={`${dense ? 'h-10 w-10' : 'h-14 w-14'} rounded-lg bg-bg/45 object-contain transition-transform group-hover:scale-105`}
+        <ItemIcon
+          itemId={outputItemId}
+          enchantment={outputEnchantment}
+          name={`${label} · resultado`}
+          size={dense ? 40 : 56}
+          priority={selected ? 'high' : 'low'}
+          className="rounded-lg bg-bg/45 transition-transform group-hover:scale-105"
         />
       </span>
       <span
@@ -573,20 +596,22 @@ export function RefiningCalculatorPage({
             </div>
           </div>
           <div className="flex items-center gap-4 rounded-xl border border-border bg-surface/70 p-3">
-            <img
-              src={buildItemIconUrl(recipe.rawItemId, recipe.rawEnchantment, 80)}
-              alt=""
-              className="h-14 w-14 rounded-lg bg-bg/45 object-contain"
+            <ItemIcon
+              itemId={recipe.rawItemId}
+              enchantment={recipe.rawEnchantment}
+              name={rawName}
+              size={56}
+              priority="high"
+              className="rounded-lg bg-bg/45"
             />
             <span className="text-xl text-text-faint">→</span>
-            <img
-              src={buildItemIconUrl(
-                recipe.outputItemId,
-                recipe.outputEnchantment,
-                80,
-              )}
-              alt=""
-              className="h-14 w-14 rounded-lg bg-bg/45 object-contain"
+            <ItemIcon
+              itemId={recipe.outputItemId}
+              enchantment={recipe.outputEnchantment}
+              name={outputName}
+              size={56}
+              priority="high"
+              className="rounded-lg bg-bg/45"
             />
           </div>
         </div>
@@ -774,10 +799,13 @@ export function RefiningCalculatorPage({
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
                 <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-border bg-surface p-3">
-                  <img
-                    src={buildItemIconUrl(recipe.rawItemId, recipe.rawEnchantment, 96)}
-                    alt=""
-                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  <ItemIcon
+                    itemId={recipe.rawItemId}
+                    enchantment={recipe.rawEnchantment}
+                    name={rawName}
+                    size={64}
+                    priority="high"
+                    className="rounded-lg bg-bg/45"
                   />
                   <div>
                     <p className="text-lg font-semibold tabular text-text">{recipe.rawPerCraft}×</p>
@@ -788,14 +816,13 @@ export function RefiningCalculatorPage({
                   <>
                     <span className="text-lg text-text-faint">+</span>
                     <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-border bg-surface p-3">
-                      <img
-                        src={buildItemIconUrl(
-                          recipe.previousRefinedItemId,
-                          recipe.previousRefinedEnchantment,
-                          96,
-                        )}
-                        alt=""
-                        className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                      <ItemIcon
+                        itemId={recipe.previousRefinedItemId}
+                        enchantment={recipe.previousRefinedEnchantment}
+                        name={previousName}
+                        size={64}
+                        priority="high"
+                        className="rounded-lg bg-bg/45"
                       />
                       <div>
                         <p className="text-lg font-semibold tabular text-text">
@@ -808,14 +835,13 @@ export function RefiningCalculatorPage({
                 )}
                 <span className="text-xl text-text-faint">→</span>
                 <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-accent-border bg-accent-muted/25 p-3">
-                  <img
-                    src={buildItemIconUrl(
-                      recipe.outputItemId,
-                      recipe.outputEnchantment,
-                      96,
-                    )}
-                    alt=""
-                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  <ItemIcon
+                    itemId={recipe.outputItemId}
+                    enchantment={recipe.outputEnchantment}
+                    name={outputName}
+                    size={64}
+                    priority="high"
+                    className="rounded-lg bg-bg/45"
                   />
                   <div>
                     <p className="text-lg font-semibold tabular text-accent">
@@ -993,20 +1019,22 @@ export function RefiningCalculatorPage({
               <section className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-5">
                 <div className="flex items-center gap-3 border-b border-border pb-4">
                   <div className="flex -space-x-3">
-                    <img
-                      src={buildItemIconUrl(recipe.rawItemId, recipe.rawEnchantment, 80)}
-                      alt=""
-                      className="h-14 w-14 rounded-lg border border-border bg-bg/70 object-contain"
+                    <ItemIcon
+                      itemId={recipe.rawItemId}
+                      enchantment={recipe.rawEnchantment}
+                      name={rawName}
+                      size={56}
+                      priority="high"
+                      className="rounded-lg border-border bg-bg/70"
                     />
                     {recipe.previousRefinedItemId && (
-                      <img
-                        src={buildItemIconUrl(
-                          recipe.previousRefinedItemId,
-                          recipe.previousRefinedEnchantment,
-                          80,
-                        )}
-                        alt=""
-                        className="h-14 w-14 rounded-lg border border-border bg-bg/70 object-contain"
+                      <ItemIcon
+                        itemId={recipe.previousRefinedItemId}
+                        enchantment={recipe.previousRefinedEnchantment}
+                        name={previousName}
+                        size={56}
+                        priority="high"
+                        className="rounded-lg border-border bg-bg/70"
                       />
                     )}
                   </div>
@@ -1027,6 +1055,7 @@ export function RefiningCalculatorPage({
                     label={`Compra: ${rawName}`}
                     manualValue={manualRawPrice}
                     automaticDetail={automaticRawDetail}
+                    loading={market.status === 'loading'}
                     onChange={setManualRawPrice}
                   />
                   {recipe.previousRefinedItemId && (
@@ -1034,6 +1063,7 @@ export function RefiningCalculatorPage({
                       label={`Compra: ${previousName}`}
                       manualValue={manualPreviousPrice}
                       automaticDetail={automaticPreviousDetail}
+                      loading={market.status === 'loading'}
                       onChange={setManualPreviousPrice}
                     />
                   )}
@@ -1042,14 +1072,13 @@ export function RefiningCalculatorPage({
 
               <section className="rounded-2xl border border-accent-border bg-accent-muted/20 p-4 sm:p-5">
                 <div className="flex items-center gap-3 border-b border-accent-border/50 pb-4">
-                  <img
-                    src={buildItemIconUrl(
-                      recipe.outputItemId,
-                      recipe.outputEnchantment,
-                      96,
-                    )}
-                    alt=""
-                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  <ItemIcon
+                    itemId={recipe.outputItemId}
+                    enchantment={recipe.outputEnchantment}
+                    name={outputName}
+                    size={64}
+                    priority="high"
+                    className="rounded-lg bg-bg/45"
                   />
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">
@@ -1068,6 +1097,7 @@ export function RefiningCalculatorPage({
                     label={`Venta: ${outputName}`}
                     manualValue={manualOutputPrice}
                     automaticDetail={market.automaticSalePriceDetail}
+                    loading={market.status === 'loading'}
                     onChange={setManualOutputPrice}
                   />
                 </div>
@@ -1075,7 +1105,10 @@ export function RefiningCalculatorPage({
             </div>
 
             <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border bg-surface-raised p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-relaxed text-text-faint">
+              <p
+                className="text-xs leading-relaxed text-text-faint"
+                aria-live="polite"
+              >
                 {market.status === 'loading'
                   ? 'Consultando precios mediante el pipeline central…'
                   : market.error
