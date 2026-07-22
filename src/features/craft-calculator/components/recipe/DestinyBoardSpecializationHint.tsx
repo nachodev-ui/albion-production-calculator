@@ -14,10 +14,10 @@ const ScreenshotWalkthrough = lazy(async () => {
 const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   {
     image: '/assets/ui/destiny-board/destiny-board-open.png',
-    aspectRatio: 320 / 300,
-    maxWidth: 320,
-    zoom: 1.3,
-    highlightArea: { x: 87.8, y: 30.5, width: 10.8, height: 12.5 },
+    aspectRatio: 400 / 200,
+    maxWidth: 400,
+    zoom: 1.22,
+    highlightArea: { x: 92.5, y: 27, width: 6.5, height: 17 },
     title: '1. Abre el Destiny Board',
     caption:
       'Presiona B dentro del juego. El recuadro marca exactamente el icono del Destiny Board en el menú derecho; ambos accesos abren la misma tabla.',
@@ -25,9 +25,9 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-general-node.png',
-    aspectRatio: 520 / 578,
-    maxWidth: 520,
-    zoom: 1.18,
+    aspectRatio: 280 / 311,
+    maxWidth: 280,
+    zoom: 1.12,
     highlightArea: { x: 2.2, y: 0.7, width: 53.8, height: 17.2 },
     title: '2. Identifica el nodo general',
     caption:
@@ -36,9 +36,9 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-general-node.png',
-    aspectRatio: 520 / 578,
-    maxWidth: 520,
-    zoom: 1.28,
+    aspectRatio: 280 / 311,
+    maxWidth: 280,
+    zoom: 1.18,
     highlightArea: { x: 56.5, y: 6.6, width: 42.7, height: 19.8 },
     title: '3. Anota los bonos generales',
     caption:
@@ -47,9 +47,9 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
-    aspectRatio: 520 / 577,
-    maxWidth: 520,
-    zoom: 1.18,
+    aspectRatio: 280 / 311,
+    maxWidth: 280,
+    zoom: 1.12,
     highlightArea: { x: 2.2, y: 0.7, width: 54.5, height: 17.5 },
     title: '4. Abre el nodo específico',
     caption:
@@ -58,9 +58,9 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
-    aspectRatio: 520 / 577,
-    maxWidth: 520,
-    zoom: 1.24,
+    aspectRatio: 280 / 311,
+    maxWidth: 280,
+    zoom: 1.16,
     highlightArea: { x: 56.5, y: 6.5, width: 42.7, height: 28.5 },
     title: '5. Suma todos los bonos equivalentes',
     caption:
@@ -69,9 +69,9 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-progress.png',
-    aspectRatio: 283 / 106,
-    maxWidth: 283,
-    zoom: 1.08,
+    aspectRatio: 240 / 90,
+    maxWidth: 240,
+    zoom: 1.05,
     highlightArea: { x: 1.5, y: 61.5, width: 97, height: 33 },
     title: '6. Completa la proyección de especialización',
     caption:
