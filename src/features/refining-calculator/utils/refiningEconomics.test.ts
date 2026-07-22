@@ -41,24 +41,27 @@ describe('refining game configuration', () => {
     expect(recipe.outputEnchantment).toBe(1)
   })
 
-  it('models enchanted stone as multiplied previous blocks and output', () => {
+  it('normalizes stone to the flat .0 refining recipe', () => {
+    const resource = getRefiningResource('rock')
     const recipe = getRefiningRecipe({
       resourceKind: 'rock',
       tier: 5,
       enchantment: 3,
     })
 
-    expect(recipe.rawItemId).toBe('T5_ROCK_LEVEL3')
-    expect(recipe.rawEnchantment).toBe(3)
+    expect(resource.maximumEnchantment).toBe(0)
+    expect(recipe.enchantment).toBe(0)
+    expect(recipe.rawItemId).toBe('T5_ROCK')
+    expect(recipe.rawEnchantment).toBe(0)
     expect(recipe.previousRefinedItemId).toBe('T4_STONEBLOCK')
     expect(recipe.previousRefinedEnchantment).toBe(0)
     expect(recipe.outputItemId).toBe('T5_STONEBLOCK')
     expect(recipe.outputEnchantment).toBe(0)
     expect(recipe.rawPerCraft).toBe(3)
-    expect(recipe.previousRefinedPerCraft).toBe(8)
-    expect(recipe.outputPerCraft).toBe(8)
-    expect(recipe.baseFocusPerCraft).toBe(752)
-    expect(recipe.itemValuePerCraft).toBe(256)
+    expect(recipe.previousRefinedPerCraft).toBe(1)
+    expect(recipe.outputPerCraft).toBe(1)
+    expect(recipe.baseFocusPerCraft).toBe(94)
+    expect(recipe.itemValuePerCraft).toBe(32)
   })
 
   it('derives the full 40,000 focus efficiency from five maxed refining nodes', () => {

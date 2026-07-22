@@ -103,7 +103,7 @@ export const REFINING_RESOURCES: readonly RefiningResourceDefinition[] = [
     rawItemSuffix: 'ROCK',
     refinedItemSuffix: 'STONEBLOCK',
     specialtyCity: 'bridgewatch',
-    maximumEnchantment: 3,
+    maximumEnchantment: 0,
   },
 ] as const
 
