@@ -1,4 +1,5 @@
-import { DataStatusPage } from '@features/data-trust/components/DataStatusPage'
+import { DataStatusPage } from "@features/data-trust/components/DataStatusPage";
+import { BatchPlannerGuidePage } from "./BatchPlannerGuidePage";
 
 interface GuideCard {
   readonly href: string;
@@ -33,14 +34,25 @@ const GUIDES: readonly GuideCard[] = [
       "Compara comprar y transportar contra fabricar con RRR antes de comprometer plata, volumen y riesgo de ruta.",
     topics: ["Compra y transporte", "Fabricación con RRR", "Liquidez y riesgo"],
   },
+  {
+    href: "/guias/planificador-batch-lista-compra-albion-online",
+    eyebrow: "Herramienta Pro",
+    title: "Cómo usar el planificador batch y la lista de compra",
+    description:
+      "Planifica varios objetos, interpreta capital, ROI y confianza, consolida materiales y organiza las compras por ciudad.",
+    topics: ["Lotes múltiples", "Lista por ciudad", "Sin cobertura"],
+  },
 ];
 
 export function GuidesHubPage() {
-  if (
-    typeof window !== 'undefined' &&
-    window.location.pathname.replace(/\/+$/, '') === '/estado-datos'
-  ) {
-    return <DataStatusPage />
+  if (typeof window !== "undefined") {
+    const pathname = window.location.pathname.replace(/\/+$/, "");
+    if (pathname === "/estado-datos") {
+      return <DataStatusPage />;
+    }
+    if (pathname === "/guias/planificador-batch-lista-compra-albion-online") {
+      return <BatchPlannerGuidePage />;
+    }
   }
 
   return (
@@ -88,7 +100,7 @@ export function GuidesHubPage() {
               </p>
             </div>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {GUIDES.map((guide) => (
                 <article key={guide.href} className="h-full">
                   <a
