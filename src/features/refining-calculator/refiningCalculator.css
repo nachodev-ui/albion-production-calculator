@@ -1,1 +1,1 @@
-div:has(>div>[aria-label^=Tier]){display:flex;flex-flow:column}[aria-label^=Tier]>button>span:last-child{display:none}
+div:has(>[aria-label$=recurso]){grid-column:1/-1}[aria-label^=Tier]>button>span:last-child{display:none}
