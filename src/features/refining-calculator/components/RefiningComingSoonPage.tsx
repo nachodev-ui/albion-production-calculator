@@ -12,7 +12,7 @@ interface RefiningComingSoonPageProps {
 const repository = new JsonItemRepository()
 
 export function RefiningComingSoonPage({
-  onOpenCrafting: _onOpenCrafting,
+  onOpenCrafting,
 }: RefiningComingSoonPageProps) {
   void onOpenCrafting
   return <RefiningCalculatorPage repository={repository} />
