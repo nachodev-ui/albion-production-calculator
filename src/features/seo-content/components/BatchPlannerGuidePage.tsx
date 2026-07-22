@@ -17,7 +17,7 @@ function Note({ children }: { readonly children: ReactNode }) {
   );
 }
 
-function Term({
+function Definition({
   title,
   children,
 }: {
@@ -65,7 +65,7 @@ export function BatchPlannerGuidePage() {
             el resultado en una lista de materiales agrupada por ciudad.
           </p>
           <p className="mt-4 text-xs text-text-faint">
-            Actualizado: 22 de julio de 2026 · Lectura para principiantes y jugadores
+            Actualizado: 22 de julio de 2026 · Para principiantes y jugadores
             experimentados · Sin precios de mercado fijos
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -106,108 +106,103 @@ export function BatchPlannerGuidePage() {
             />
           </picture>
           <figcaption className="border-t border-border px-4 py-3 text-xs leading-5 text-text-faint sm:px-5">
-            El planificador usa capturas de mercado para preparar una decisión. Las
-            órdenes y los precios deben confirmarse nuevamente dentro del juego.
+            El planificador usa capturas almacenadas de mercado. Confirma precios,
+            volumen y órdenes dentro del juego antes de ejecutar el lote.
           </figcaption>
         </figure>
 
         <div className="prose-albion mt-8 space-y-8 text-[15px] leading-7 text-text-muted">
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Respuesta rápida: qué hace el planificador
+              Qué problema resuelve
             </h2>
             <p className="mt-3">
-              Una calculadora normal estudia un solo objeto. El planificador batch
-              estudia un <strong className="text-text">lote de objetos distintos</strong>
-              y responde tres preguntas:
+              Una calculadora normal estudia un objeto. El planificador batch estudia
+              un <strong className="text-text">lote de objetos diferentes</strong> y
+              responde tres preguntas:
             </p>
             <ol className="mt-3 list-decimal space-y-2 pl-6">
-              <li>¿Qué estrategia deja más beneficio para cada objeto?</li>
+              <li>¿Conviene comprar o fabricar cada objeto?</li>
               <li>¿Cuánta plata y cuántos materiales necesita todo el lote?</li>
-              <li>¿En qué ciudad conviene comprar cada material?</li>
+              <li>¿En qué ciudad aparece el precio más bajo de cada material?</li>
             </ol>
             <p className="mt-3">
-              Para cada fila compara comprar el objeto terminado, fabricarlo sin foco
-              o fabricarlo con foco. Después suma únicamente los materiales de las
-              estrategias que recomienda fabricar.
+              Para cada fila compara comprar terminado, fabricar sin foco y fabricar
+              con foco. Después consolida únicamente los ingredientes de las filas que
+              recomienda fabricar.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Antes de empezar: conceptos del juego
+              Conceptos del juego que debes conocer
             </h2>
             <dl className="mt-4 grid gap-3 md:grid-cols-2">
-              <Term title="Black Market">
+              <Definition title="Black Market">
                 Mercado especial de Caerleon que publica órdenes de compra para
-                objetos terminados. El plan usa el precio de esas órdenes como ingreso
-                potencial.
-              </Term>
-              <Term title="Encantamiento">
-                El nivel .0, .1, .2, .3 o .4 del objeto. Un objeto T6.2 no es la misma
-                variante que T6.1 y necesita materiales y órdenes diferentes.
-              </Term>
-              <Term title="Calidad">
+                objetos terminados. El precio de la orden representa ingreso potencial,
+                no una venta reservada para ti.
+              </Definition>
+              <Definition title="Encantamiento">
+                La variante .0, .1, .2, .3 o .4. Un T6.2 usa materiales y órdenes
+                diferentes de un T6.1.
+              </Definition>
+              <Definition title="Calidad">
                 Normal, Buena, Sobresaliente, Excelente u Obra maestra. La calidad
-                seleccionada debe poder cubrir la calidad mínima solicitada por la
-                orden del Black Market.
-              </Term>
-              <Term title="RRR o retorno de recursos">
-                Porcentaje esperado de ingredientes recuperables que vuelve al
-                inventario al fabricar. Devuelve materiales, no plata ni objetos
-                terminados.
-              </Term>
-              <Term title="Foco">
-                Recurso limitado del personaje que aumenta el retorno de materiales.
-                Una estrategia con foco puede costar menos, pero consume puntos que
-                podrían usarse en otra receta.
-              </Term>
-              <Term title="Orden de compra">
-                Oferta de otro mercado o del Black Market para comprar inmediatamente.
-                Puede desaparecer o reducirse mientras preparas el lote.
-              </Term>
+                elegida debe ser compatible con la calidad mínima de la orden.
+              </Definition>
+              <Definition title="RRR">
+                Resource Return Rate: porcentaje esperado de ingredientes recuperables
+                que vuelve al inventario. Devuelve materiales, no plata.
+              </Definition>
+              <Definition title="Foco">
+                Recurso limitado que aumenta el retorno de materiales. Ahorrar más no
+                implica que sea el mejor uso posible de tus puntos de foco.
+              </Definition>
+              <Definition title="Orden de compra">
+                Oferta que puede llenarse, bajar o desaparecer mientras reúnes el lote.
+                Por eso el resultado debe verificarse otra vez dentro del juego.
+              </Definition>
             </dl>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Paso 1: añade los objetos exactos
+              Paso 1: añade los objetos y cantidades
             </h2>
             <p className="mt-3">
-              Busca cada objeto terminado que quieres incluir. La cantidad significa
-              cuántas unidades planeas comprar o fabricar, no cuántas tiradas harás.
-              La calculadora transforma esa cantidad en tiradas según la salida de la
-              receta.
+              Añade cada objeto terminado que pretendes vender. La cantidad es el
+              número de unidades finales, no el número de tiradas. La aplicación
+              convierte la cantidad en tiradas según la salida de cada receta.
             </p>
             <Note>
-              No mezcles una cantidad de venta con una cantidad de fabricación. Si
-              necesitas vender diez cascos, escribe diez aunque una receta futura
-              pudiera producir más de una unidad por tirada.
+              Si quieres vender diez cascos, escribe diez. No introduzcas la cantidad
+              de materiales ni el número de veces que presionarás Fabricar.
             </Note>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Paso 2: configura servidor, encantamiento, calidad e impuesto
+              Paso 2: confirma servidor, encantamiento, calidad e impuesto
             </h2>
-            <h3 className="mt-3 text-lg font-semibold text-text">Servidor</h3>
-            <p className="mt-2">
-              Selecciona Americas, Europe o Asia según el personaje que ejecutará la
-              operación. Los mercados de servidores distintos no son intercambiables.
-            </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Encantamiento y calidad
-            </h3>
-            <p className="mt-2">
-              Estos dos campos limitan la variante estudiada. Si eliges una calidad
-              muy específica puede no existir una orden compatible. Cambiar la calidad
-              no cambia el tier ni el encantamiento del objeto.
-            </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">Impuesto BM</h3>
-            <p className="mt-2">
-              Es el porcentaje descontado del ingreso de venta. El precio visible de
-              la orden es ingreso bruto; la plata que realmente recibes es menor.
-            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-6">
+              <li>
+                <strong className="text-text">Servidor:</strong> Americas, Europe o
+                Asia. Los precios de servidores distintos no se mezclan.
+              </li>
+              <li>
+                <strong className="text-text">Encantamiento:</strong> determina la
+                receta y la variante exacta del objeto.
+              </li>
+              <li>
+                <strong className="text-text">Calidad:</strong> limita las órdenes
+                compatibles del Black Market.
+              </li>
+              <li>
+                <strong className="text-text">Impuesto BM:</strong> porcentaje que se
+                descuenta del ingreso bruto de venta.
+              </li>
+            </ul>
             <Formula>
               ingreso neto = precio de la orden × cantidad × (1 − impuesto)
             </Formula>
@@ -215,26 +210,26 @@ export function BatchPlannerGuidePage() {
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Paso 3: entiende las tres estrategias
+              Paso 3: entiende las estrategias comparadas
             </h2>
             <h3 className="mt-3 text-lg font-semibold text-text">
               Comprar terminado
             </h3>
             <p className="mt-2">
-              Compra el objeto en la ciudad donde aparece la mejor oportunidad y lo
-              vende al Black Market. No necesita materiales ni puesto de fabricación,
-              pero inmoviliza el precio completo del objeto terminado.
+              Compra el objeto en una ciudad y lo vende a la orden del Black Market.
+              No necesita ingredientes ni puesto, pero compromete el precio completo
+              del objeto.
             </p>
             <Formula>
-              beneficio de compra = ingreso neto − costo del objeto − logística
+              beneficio mostrado de compra = ingreso neto − costo del objeto
             </Formula>
 
             <h3 className="mt-4 text-lg font-semibold text-text">
               Fabricar sin foco
             </h3>
             <p className="mt-2">
-              Compra los ingredientes, aplica el retorno normal de la ubicación,
-              añade tarifas de fabricación y vende el resultado. Los artefactos y
+              Compra ingredientes, aplica el retorno normal de la ubicación, añade el
+              puesto de fabricación y vende los objetos terminados. Artefactos y otros
               componentes no recuperables permanecen al costo completo.
             </p>
 
@@ -242,65 +237,99 @@ export function BatchPlannerGuidePage() {
               Fabricar con foco
             </h3>
             <p className="mt-2">
-              Repite el cálculo con mayor retorno. La estrategia solo debería ganar si
-              el ahorro adicional justifica el foco usado. El planificador compara el
-              beneficio económico, pero tú debes decidir cuánto vale cada punto de
-              foco en tu cuenta.
+              Repite el cálculo con mayor retorno. Puede reducir el costo, pero consume
+              foco. La versión actual no asigna un costo de oportunidad monetario al
+              foco dentro del planificador batch.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Paso 4: lee beneficio, capital y ROI juntos
+              Qué incluye y qué no incluye el resultado
+            </h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-positive/30 bg-positive-muted p-4">
+                <h3 className="font-semibold text-positive">Incluido</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                  <li>precios observados de objetos y materiales;</li>
+                  <li>impuesto seleccionado;</li>
+                  <li>retorno de materiales y foco;</li>
+                  <li>tarifas de fabricación calculadas;</li>
+                  <li>valor esperado según calidad.</li>
+                </ul>
+              </div>
+              <div className="rounded-xl border border-warning/35 bg-warning-muted p-4">
+                <h3 className="font-semibold text-warning">Debes descontar aparte</h3>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                  <li>transporte entre ciudades y hacia Caerleon;</li>
+                  <li>escolta, consumibles y montura;</li>
+                  <li>riesgo de muerte o pérdida del lote;</li>
+                  <li>valor de tu tiempo;</li>
+                  <li>costo de oportunidad del foco.</li>
+                </ul>
+              </div>
+            </div>
+            <Formula>
+              beneficio real estimado = beneficio mostrado − ruta − riesgo − tiempo −
+              otros costos propios
+            </Formula>
+            <Note>
+              Un resultado positivo puede dejar de ser rentable después de la ruta.
+              El planificador prepara la operación; no reemplaza tu evaluación logística.
+            </Note>
+          </section>
+
+          <section>
+            <h2 className="font-display text-2xl font-semibold text-text">
+              Cómo leer beneficio, capital y ROI
             </h2>
             <h3 className="mt-3 text-lg font-semibold text-text">Beneficio</h3>
             <p className="mt-2">
-              Es la plata restante después de los costos incluidos. Un beneficio de
-              50.000 no indica por sí solo si la operación es eficiente.
+              Plata restante después de los costos incluidos en el modelo. No es una
+              promesa de ganancia ni incluye automáticamente los costos de ruta.
             </p>
             <h3 className="mt-4 text-lg font-semibold text-text">
               Capital requerido
             </h3>
             <p className="mt-2">
-              Es la plata que debes comprometer antes de vender: costo de objetos o
-              materiales, puesto y logística directa. No es una pérdida; es capital
-              temporalmente inmovilizado.
+              Plata que debes comprometer antes de cobrar la venta: costo del objeto o
+              de los materiales y tarifas de fabricación. Es capital inmovilizado, no
+              una pérdida inmediata.
             </p>
             <h3 className="mt-4 text-lg font-semibold text-text">ROI</h3>
-            <Formula>ROI = beneficio / capital requerido × 100</Formula>
+            <Formula>ROI = beneficio mostrado / capital requerido × 100</Formula>
             <p>
-              Dos lotes pueden dejar el mismo beneficio usando capital muy distinto.
-              El ROI permite compararlos, pero no mide cuánto tardará la orden en
-              llenarse ni el riesgo de transportar el lote.
+              El ROI permite comparar lotes de precios distintos. No mide velocidad de
+              venta, volumen disponible ni seguridad de la ruta.
             </p>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Paso 5: interpreta la confianza
+              Cómo interpretar la confianza
             </h2>
             <p className="mt-3">
-              La confianza no mide si el objeto es bueno. Mide cuánta evidencia existe
-              para confiar en los precios usados. El plan toma la peor señal entre la
-              compra y la orden del Black Market.
+              La confianza mide la evidencia que respalda los precios, no la calidad
+              económica del objeto. Se toma la peor señal entre la compra y la orden
+              del Black Market.
             </p>
             <dl className="mt-4 grid gap-3 md:grid-cols-3">
-              <Term title="Alta">
-                Precio reciente, suficientes observaciones, volumen razonable y valor
-                cercano a su mediana histórica.
-              </Term>
-              <Term title="Media">
-                La operación tiene evidencia utilizable, pero alguno de los factores
-                es moderado o el precio está envejeciendo.
-              </Term>
-              <Term title="Baja">
-                Precio antiguo, poco historial, volumen bajo o diferencia fuerte
-                frente al comportamiento habitual.
-              </Term>
+              <Definition title="Alta">
+                Precio reciente, historial suficiente, volumen razonable y valor
+                cercano a la mediana.
+              </Definition>
+              <Definition title="Media">
+                Evidencia utilizable, pero con antigüedad, volumen o desviación
+                moderados.
+              </Definition>
+              <Definition title="Baja">
+                Precio antiguo, poco historial, volumen bajo o valor muy alejado de lo
+                habitual.
+              </Definition>
             </dl>
             <Note>
-              Confianza alta no significa beneficio garantizado. Solo significa que
-              la señal está mejor respaldada por los datos disponibles.
+              Confianza alta no garantiza que la orden siga abierta. Solo indica que
+              la captura está mejor respaldada por los datos disponibles.
             </Note>
           </section>
 
@@ -309,19 +338,18 @@ export function BatchPlannerGuidePage() {
               Materiales brutos, recuperados y consumo efectivo
             </h2>
             <p className="mt-3">
-              La sección de materiales incluye únicamente los objetos cuya estrategia
-              recomendada es fabricar. Si una fila recomienda comprar terminado, ese
-              objeto no añade ingredientes a la lista de compra.
+              Solo las filas recomendadas para fabricar aportan ingredientes. Una fila
+              recomendada para comprar terminado no aparece en materiales consolidados.
             </p>
             <Formula>
               recuperado esperado = material recuperable bruto × RRR
               <br />
-              consumo efectivo = material bruto − recuperado esperado
+              consumo efectivo = bruto − recuperado esperado
             </Formula>
             <p>
               La lista de compra redondea hacia arriba las cantidades efectivas para
-              evitar quedarse corto. Por eso puede mostrar una unidad más que la cifra
-              decimal del cálculo económico.
+              evitar quedarse corto. Los artefactos y componentes no retornables no se
+              descuentan por RRR.
             </p>
           </section>
 
@@ -330,38 +358,29 @@ export function BatchPlannerGuidePage() {
               Lista de compra por ciudad
             </h2>
             <p className="mt-3">
-              Para cada material, la herramienta compara los precios disponibles en
-              las ciudades configuradas y lo asigna a la más barata. Después agrupa
-              todos los materiales que deberían comprarse en Bridgewatch, Martlock,
-              Lymhurst, Fort Sterling, Thetford o Caerleon.
+              Cada material se asigna a la ciudad con el precio disponible más bajo y
+              luego se agrupa con los demás materiales de esa ciudad. Esto produce una
+              ruta de compra inicial como Bridgewatch: lingotes; Martlock: tela;
+              Caerleon: artefactos.
             </p>
-            <p>
-              “Más barato” se refiere al precio observado, no al costo completo de la
-              ruta. Si ahorrar 2.000 de plata exige viajar con un mamut a otra ciudad,
-              puede ser mejor comprar localmente. Usa la agrupación como plan inicial,
-              no como obligación.
-            </p>
+            <Note>
+              Precio más bajo no significa costo logístico más bajo. Si el ahorro es
+              pequeño, comprar localmente puede ser mejor que viajar a otra ciudad.
+            </Note>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
               Peso estimado y orden de fabricación
             </h2>
-            <h3 className="mt-3 text-lg font-semibold text-text">Peso estimado</h3>
-            <p className="mt-2">
-              Es una aproximación para dimensionar el transporte. No sustituye el
-              peso mostrado por Albion, las bonificaciones de montura, bolsas,
-              habilidades o Premium. Confirma la carga dentro del juego antes de
-              iniciar la ruta.
+            <p className="mt-3">
+              El peso es una aproximación para dimensionar el transporte. Confirma el
+              peso real, bolsa, montura y bonificaciones dentro de Albion.
             </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Orden de fabricación sugerido
-            </h3>
-            <p className="mt-2">
-              Si un objeto seleccionado funciona como ingrediente de otro, el plan lo
-              coloca primero. Esto evita intentar fabricar un producto final antes de
-              preparar sus componentes. Cuando no hay dependencias, el orden es una
-              recomendación organizativa y no cambia el beneficio.
+            <p>
+              El orden sugerido coloca primero los objetos seleccionados que funcionan
+              como componentes de otros. Si no hay dependencias, el orden solo ayuda a
+              organizar el trabajo y no cambia el beneficio.
             </p>
           </section>
 
@@ -370,48 +389,36 @@ export function BatchPlannerGuidePage() {
               Qué significa “Sin cobertura”
             </h2>
             <p className="mt-3">
-              “Sin cobertura” no significa que el beneficio sea cero. Significa que no
-              se encontró una combinación compatible y utilizable para producir el
-              cálculo. Las causas más habituales son:
+              No significa beneficio cero. Significa que no existe evidencia suficiente
+              para resolver esa combinación. Puede faltar una orden, un precio de
+              material o una coincidencia de servidor, encantamiento y calidad.
             </p>
-            <ul className="mt-3 list-disc space-y-2 pl-6">
-              <li>No existe una orden observada para ese objeto y calidad.</li>
-              <li>La captura disponible es demasiado antigua o incompleta.</li>
-              <li>El servidor, encantamiento o calidad no coincide.</li>
-              <li>Faltan precios para uno o más materiales de fabricación.</li>
-              <li>La API todavía no recibió datos recientes de ese mercado.</li>
-            </ul>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Qué hacer cuando aparece
-            </h3>
-            <ol className="mt-2 list-decimal space-y-2 pl-6">
-              <li>Confirma el servidor seleccionado.</li>
+            <ol className="mt-3 list-decimal space-y-2 pl-6">
+              <li>Confirma el servidor.</li>
+              <li>Verifica objeto y encantamiento exactos.</li>
               <li>Prueba calidad Normal si elegiste una calidad superior.</li>
-              <li>Verifica el objeto exacto y su encantamiento.</li>
               <li>Revisa el estado de los datos y vuelve a calcular.</li>
               <li>Busca la orden directamente dentro del Black Market.</li>
             </ol>
+            <p className="mt-3">
+              Si todas las filas están sin cobertura, los totales permanecen en cero
+              porque no existe ninguna línea resuelta para sumar.
+            </p>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Ejemplo completo con dos objetos
+              Ejemplo completo
             </h2>
             <p className="mt-3">
-              Supón un lote con diez cascos y cinco armas. Después de consultar
-              precios, el plan recomienda comprar los cascos terminados y fabricar las
-              armas con foco.
+              Supón diez cascos y cinco armas. El plan recomienda comprar los cascos y
+              fabricar las armas con foco. Los cascos aportan beneficio y capital, pero
+              no ingredientes. Las armas necesitan 400 lingotes recuperables y cinco
+              artefactos no retornables.
             </p>
-            <ul className="mt-3 list-disc space-y-2 pl-6">
-              <li>Los cascos aportan beneficio y capital, pero no materiales.</li>
-              <li>Las armas aportan sus materiales brutos y su retorno estimado.</li>
-              <li>Los lingotes más baratos aparecen en Bridgewatch.</li>
-              <li>Los artefactos aparecen en Caerleon y no reciben RRR.</li>
-            </ul>
-            <p className="mt-3">
-              Si fabricar las armas requiere 400 lingotes recuperables y 5 artefactos,
-              con un RRR de 30% el plan estima recuperar 120 lingotes. La compra
-              efectiva queda en 280 lingotes y 5 artefactos.
+            <p>
+              Con 30% de RRR se recuperan económicamente 120 lingotes. La compra
+              efectiva queda en 280 lingotes y cinco artefactos.
             </p>
             <Formula>
               bruto: 400 lingotes + 5 artefactos
@@ -420,23 +427,25 @@ export function BatchPlannerGuidePage() {
               <br />
               efectivo: 280 lingotes + 5 artefactos
             </Formula>
+            <p>
+              Después debes restar transporte, riesgo y tiempo del beneficio mostrado
+              antes de decidir si ejecutar el lote completo.
+            </p>
           </section>
 
           <section>
             <h2 className="font-display text-2xl font-semibold text-text">
-              Cómo funciona técnicamente sin ser un precio en vivo
+              Cómo funciona técnicamente
             </h2>
             <p className="mt-3">
-              La aplicación consulta capturas almacenadas de precios e historial. Para
-              evitar una petición por cada fila, reúne los objetos y materiales únicos
-              y los consulta en lotes. Después reutiliza esas respuestas en todos los
-              cálculos del reporte.
+              La aplicación no consulta un precio en vivo garantizado. Usa capturas
+              almacenadas de precios e historial. Reúne objetos y materiales únicos,
+              los consulta en lotes y reutiliza la misma respuesta en todas las filas.
             </p>
             <p>
-              Esta arquitectura hace el cálculo más rápido y coherente, pero no puede
-              impedir que una orden cambie después de la captura. La antigüedad, el
-              volumen y el historial se muestran precisamente para que puedas medir esa
-              incertidumbre.
+              Esto evita una petición por objeto y mantiene cálculos coherentes, pero
+              una orden puede cambiar después de la captura. Por eso se muestran
+              antigüedad, volumen, historial y confianza.
             </p>
           </section>
 
@@ -444,36 +453,14 @@ export function BatchPlannerGuidePage() {
             <h2 className="font-display text-2xl font-semibold text-text">
               Errores frecuentes
             </h2>
-            <h3 className="mt-3 text-lg font-semibold text-text">
-              Elegir calidad alta sin revisar la orden
-            </h3>
-            <p className="mt-2">
-              Una calidad superior puede costar más y no tener demanda suficiente. No
-              la elijas solo porque el objeto disponible en tu inventario tiene esa
-              calidad.
-            </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Multiplicar beneficio sin comprobar volumen
-            </h3>
-            <p className="mt-2">
-              Una orden puede absorber menos unidades que tu lote. Limita la ejecución
-              al volumen que realmente existe dentro del juego.
-            </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Tratar el retorno como materiales gratis garantizados
-            </h3>
-            <p className="mt-2">
-              El RRR es una estimación económica. Lotes pequeños pueden variar por
-              redondeos y los ingredientes no recuperables no deben descontarse.
-            </p>
-            <h3 className="mt-4 text-lg font-semibold text-text">
-              Ignorar el costo de reunir ciudades
-            </h3>
-            <p className="mt-2">
-              La ciudad más barata por material puede generar una ruta poco práctica.
-              Valora tiempo, montura, riesgo y capacidad antes de seguir la lista al pie
-              de la letra.
-            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-6">
+              <li>Elegir una calidad alta sin comprobar que exista demanda.</li>
+              <li>Multiplicar el beneficio sin revisar el volumen de la orden.</li>
+              <li>Aplicar RRR a artefactos o componentes no recuperables.</li>
+              <li>Interpretar Sin cobertura como beneficio cero.</li>
+              <li>Seguir la ciudad más barata sin valorar la ruta.</li>
+              <li>Gastar foco sin compararlo con otras recetas.</li>
+            </ul>
           </section>
 
           <section>
@@ -482,14 +469,15 @@ export function BatchPlannerGuidePage() {
             </h2>
             <ol className="mt-3 list-decimal space-y-2 pl-6">
               <li>Confirma servidor, objeto, encantamiento y calidad.</li>
-              <li>Revisa qué estrategia ganó en cada fila.</li>
-              <li>Comprueba beneficio, capital y ROI juntos.</li>
-              <li>Abre las razones de confianza baja o media.</li>
+              <li>Revisa la estrategia ganadora de cada fila.</li>
+              <li>Compara beneficio, capital y ROI juntos.</li>
+              <li>Lee las razones de confianza media o baja.</li>
               <li>Limita la cantidad al volumen real de la orden.</li>
-              <li>Confirma los precios de materiales en cada ciudad.</li>
-              <li>Verifica el peso real con tu montura y equipamiento.</li>
-              <li>Comprueba nuevamente la orden del Black Market.</li>
-              <li>Ejecuta primero un lote pequeño si la señal es incierta.</li>
+              <li>Verifica precios de materiales en cada ciudad.</li>
+              <li>Resta transporte, riesgo, tiempo y costo del foco.</li>
+              <li>Confirma peso y capacidad dentro del juego.</li>
+              <li>Comprueba otra vez la orden antes de invertir.</li>
+              <li>Empieza con un lote pequeño cuando haya incertidumbre.</li>
             </ol>
           </section>
 
@@ -498,34 +486,32 @@ export function BatchPlannerGuidePage() {
               Preguntas frecuentes
             </h2>
             <h3 className="mt-4 text-lg font-semibold text-text">
-              ¿Los materiales consolidados incluyen objetos que conviene comprar?
+              ¿Los materiales incluyen objetos recomendados para comprar?
             </h3>
             <p className="mt-2">
-              No. Solo se consolidan ingredientes de las filas cuya estrategia
-              recomendada es fabricar.
+              No. Solo se consolidan ingredientes de estrategias recomendadas para
+              fabricar.
             </p>
             <h3 className="mt-4 text-lg font-semibold text-text">
-              ¿Beneficio total es la plata que recibiré con certeza?
+              ¿Beneficio total es ganancia segura?
             </h3>
             <p className="mt-2">
-              No. Es una estimación basada en los precios y supuestos disponibles. El
-              resultado real depende de que las órdenes sigan activas y del costo de
-              ejecución.
+              No. Es una estimación con los costos incluidos. Debes comprobar órdenes
+              y restar tus costos logísticos y de riesgo.
             </p>
             <h3 className="mt-4 text-lg font-semibold text-text">
-              ¿Por qué aparece cero en el resumen cuando hay filas sin cobertura?
+              ¿Por qué el resumen muestra cero?
             </h3>
             <p className="mt-2">
-              Las filas sin un cálculo resoluble no se suman. Cero significa que no hay
-              líneas resueltas en el resumen actual, no que la oportunidad comprobada
-              dentro del juego tenga exactamente beneficio cero.
+              Si no hay filas resueltas, no existe nada que sumar. Cero no afirma que
+              el objeto tenga exactamente rentabilidad cero dentro del juego.
             </p>
             <h3 className="mt-4 text-lg font-semibold text-text">
-              ¿Dónde encuentro la herramienta?
+              ¿Dónde está la herramienta?
             </h3>
             <p className="mt-2">
               Abre el <a className="text-accent underline" href="/black-market">módulo del Black Market</a>
-              y selecciona la pestaña <strong className="text-text">Planificador batch</strong>.
+              y selecciona <strong className="text-text">Planificador batch</strong>.
             </p>
           </section>
         </div>
@@ -539,11 +525,11 @@ export function BatchPlannerGuidePage() {
               {
                 href: "/guias/black-market-caerleon-rentable",
                 title: "Rentabilidad del Black Market",
-                text: "Impuesto, transporte, liquidez, riesgo y precio de equilibrio.",
+                text: "Impuesto, transporte, liquidez, riesgo y equilibrio.",
               },
               {
                 href: "/guias/retorno-materiales-rrr-albion-online",
-                title: "Retorno de materiales (RRR)",
+                title: "Retorno de materiales",
                 text: "Production Bonus, foco y materiales recuperables.",
               },
               {
