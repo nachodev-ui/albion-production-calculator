@@ -15,11 +15,6 @@ export function ModuleHeader({
   badge,
   actions,
 }: ModuleHeaderProps) {
-  const visibleBadge =
-    title === 'Calculadora de refinamiento' && badge === 'Próximamente'
-      ? undefined
-      : badge
-
   return (
     <section className="mx-auto w-full max-w-7xl px-5 pb-4 pt-6 sm:px-6 sm:pt-8">
       <div className="flex flex-col gap-5 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
@@ -28,9 +23,9 @@ export function ModuleHeader({
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
               {eyebrow}
             </p>
-            {visibleBadge && (
+            {badge && (
               <span className="rounded-full border border-accent-border bg-accent-muted px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-accent">
-                {visibleBadge}
+                {badge}
               </span>
             )}
           </div>
