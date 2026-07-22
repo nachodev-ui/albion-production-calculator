@@ -13,6 +13,14 @@ describe("routeFromPathname", () => {
     ["/guias/", "guides"],
     ["/estado-datos", "guides"],
     ["/estado-datos/", "guides"],
+    [
+      "/guias/planificador-batch-lista-compra-albion-online",
+      "guides",
+    ],
+    [
+      "/guias/planificador-batch-lista-compra-albion-online/",
+      "guides",
+    ],
     ["/plans", "plans"],
     ["/account", "account"],
     ["/account/", "account"],
@@ -40,8 +48,13 @@ describe("routeFromPathname", () => {
     expect(routeFromPathname(pathname)).toBe(expected);
   });
 
-  it("keeps the public data status page inside the guides shell", () => {
+  it("keeps public auxiliary pages inside the guides shell", () => {
     expect(routeFromPathname("/estado-datos")).toBe("guides");
+    expect(
+      routeFromPathname(
+        "/guias/planificador-batch-lista-compra-albion-online",
+      ),
+    ).toBe("guides");
   });
 
   it("falls back to crafting for unknown paths", () => {

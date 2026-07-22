@@ -31,6 +31,7 @@ export function routeFromPathname(pathname: string): AppRoute {
       return "presets";
     case "/guias":
     case "/estado-datos":
+    case "/guias/planificador-batch-lista-compra-albion-online":
       return "guides";
     case "/plans":
       return "plans";

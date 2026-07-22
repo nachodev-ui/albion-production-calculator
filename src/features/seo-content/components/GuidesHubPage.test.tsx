@@ -12,6 +12,9 @@ describe("GuidesHubPage", () => {
       'href="/guias/retorno-materiales-rrr-albion-online"',
     );
     expect(markup).toContain('href="/guias/black-market-caerleon-rentable"');
+    expect(markup).toContain(
+      'href="/guias/planificador-batch-lista-compra-albion-online"',
+    );
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/black-market"');
     expect(markup).toContain('aria-label="Migas de pan"');

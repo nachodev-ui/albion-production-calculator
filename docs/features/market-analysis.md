@@ -76,6 +76,30 @@ El peso es deliberadamente aproximado. Se usa únicamente para planificación y 
 presenta como estimación, ya que el dataset de recetas no contiene el peso oficial
 de inventario de cada objeto.
 
+### Alcance económico actual del planificador
+
+El resumen batch usa impuesto, precios de compra, materiales, retorno y tarifas de
+fabricación. En esta versión, sus costos de transporte, escolta, pérdida por muerte
+y tiempo están configurados en cero. El usuario debe descontarlos antes de ejecutar
+o revisar el detalle del escáner, donde esos supuestos sí son configurables.
+
+Por esta razón, `beneficio` significa beneficio bajo los costos incluidos y no una
+ganancia garantizada después de la ruta real.
+
+### Ayuda para el usuario
+
+La pestaña incluye una guía breve desplegable que explica:
+
+- el flujo de cuatro pasos;
+- las tres estrategias comparadas;
+- capital, ROI, consumo efectivo y confianza;
+- por qué `Sin cobertura` no equivale a beneficio cero.
+
+La guía pública completa se publica en
+`/guias/planificador-batch-lista-compra-albion-online`. Explica conceptos del juego,
+fórmulas, estados sin cobertura, arquitectura batch, un ejemplo completo, errores
+frecuentes y una lista de comprobación antes de invertir.
+
 ## Valor económico del foco
 
 El beneficio con foco se presenta de dos formas:
@@ -109,7 +133,7 @@ predeterminado es cero para no inventar ingresos.
 
 ## Logística y riesgo
 
-La fabricación separa los siguientes costos:
+La fabricación del escáner de oportunidades separa los siguientes costos:
 
 - materiales hacia la ciudad de producción;
 - producto terminado hacia Caerleon;

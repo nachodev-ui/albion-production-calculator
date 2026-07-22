@@ -19,6 +19,15 @@ const DATA_STATUS_SEO: SeoEntry = [
   true,
 ];
 
+const BATCH_PLANNER_GUIDE_SEO: SeoEntry = [
+  "/guias/planificador-batch-lista-compra-albion-online",
+  "Planificador Batch Albion Online | Guía de Lista de Compra",
+  "Aprende a planificar varios objetos, comparar comprar contra fabricar y leer beneficio, ROI, capital, confianza, RRR y compras por ciudad.",
+  true,
+  "/images/guides/black-market-caerleon-16x9.png",
+  "Guía para comparar compra, fabricación, materiales y venta al Black Market de Caerleon",
+];
+
 const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
   crafting: [
     "/",
@@ -47,7 +56,7 @@ const ROUTE_SEO: Readonly<Record<AppRoute, SeoEntry>> = {
   guides: [
     "/guias",
     "Guías de Economía de Albion Online | Albion Calculator",
-    "Explora guías prácticas sobre rentabilidad de crafteo, retorno de materiales y Black Market de Caerleon, con fórmulas y enlaces a las calculadoras.",
+    "Explora guías prácticas sobre rentabilidad de crafteo, retorno de materiales, Black Market y planificación de lotes con listas de compra por ciudad.",
     true,
   ],
   plans: [
@@ -124,12 +133,17 @@ function meta(
 
 export function RouteSeo({ route }: { readonly route: AppRoute }) {
   useEffect(() => {
-    const isDataStatus =
+    const pathname = window.location.pathname.replace(/\/+$/, "");
+    const isDataStatus = route === "guides" && pathname === "/estado-datos";
+    const isBatchPlannerGuide =
       route === "guides" &&
-      window.location.pathname.replace(/\/+$/, "") === "/estado-datos";
-    const [path, title, description, index, imagePath, imageAlt] = isDataStatus
+      pathname === "/guias/planificador-batch-lista-compra-albion-online";
+    const entry = isDataStatus
       ? DATA_STATUS_SEO
-      : ROUTE_SEO[route];
+      : isBatchPlannerGuide
+        ? BATCH_PLANNER_GUIDE_SEO
+        : ROUTE_SEO[route];
+    const [path, title, description, index, imagePath, imageAlt] = entry;
     const canonical = `${ORIGIN}${path === "/" ? "/" : path}`;
     let link = document.head.querySelector<HTMLLinkElement>(
       'link[rel="canonical"]',

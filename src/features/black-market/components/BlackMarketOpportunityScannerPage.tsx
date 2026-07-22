@@ -16,6 +16,7 @@ import type {
   BlackMarketOpportunity,
   BlackMarketOpportunityFilters,
 } from "../types";
+import { BlackMarketBatchPlannerLearningCard } from "./BlackMarketBatchPlannerLearningCard";
 import { BlackMarketBatchPlannerPage } from "./BlackMarketBatchPlannerPage";
 import { BlackMarketOpportunityDetailDialog } from "./BlackMarketOpportunityDetailDialog";
 import { BlackMarketOpportunityResults } from "./BlackMarketOpportunityResults";
@@ -267,7 +268,12 @@ export function BlackMarketOpportunityScannerPage({
         </div>
       </div>
       {view === "batch" ? (
-        <BlackMarketBatchPlannerPage repository={repository} />
+        <>
+          <div className="mx-auto w-full max-w-[92rem] px-5 sm:px-6">
+            <BlackMarketBatchPlannerLearningCard />
+          </div>
+          <BlackMarketBatchPlannerPage repository={repository} />
+        </>
       ) : (
         <Scanner repository={repository} onOpenCrafting={onOpenCrafting} />
       )}

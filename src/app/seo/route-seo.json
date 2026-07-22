@@ -53,13 +53,13 @@
     "guides": {
       "path": "/guias",
       "title": "Guías de Economía de Albion Online | Albion Calculator",
-      "description": "Explora guías prácticas sobre rentabilidad de crafteo, retorno de materiales y Black Market de Caerleon, con fórmulas y enlaces a las calculadoras.",
+      "description": "Explora guías prácticas sobre crafteo, retorno de materiales, Black Market y planificación de lotes con listas de compra por ciudad.",
       "index": true,
       "changefreq": "monthly",
       "priority": 0.8,
       "schemaType": "CollectionPage",
       "schemaName": "Guías de economía de Albion Online",
-      "dateModified": "2026-07-21",
+      "dateModified": "2026-07-22",
       "breadcrumbs": [
         {
           "name": "Calculadora",
@@ -227,6 +227,38 @@
         "/images/guides/black-market-caerleon-16x9.png"
       ],
       "imageAlt": "Comparación ilustrativa entre comprar y transportar o fabricar con RRR para vender en el Black Market de Caerleon"
+    },
+    "guide-batch-planner": {
+      "path": "/guias/planificador-batch-lista-compra-albion-online",
+      "title": "Planificador Batch Albion Online | Guía de Lista de Compra",
+      "description": "Aprende a planificar varios objetos, comparar comprar contra fabricar y leer beneficio, ROI, capital, confianza, RRR y compras por ciudad.",
+      "index": true,
+      "changefreq": "monthly",
+      "priority": 0.8,
+      "schemaType": "Article",
+      "schemaName": "Cómo usar el planificador batch y la lista de compra en Albion Online",
+      "datePublished": "2026-07-22",
+      "dateModified": "2026-07-22",
+      "breadcrumbs": [
+        {
+          "name": "Calculadora",
+          "path": "/"
+        },
+        {
+          "name": "Guías",
+          "path": "/guias"
+        },
+        {
+          "name": "Planificador batch",
+          "path": "/guias/planificador-batch-lista-compra-albion-online"
+        }
+      ],
+      "images": [
+        "/images/guides/black-market-caerleon-1x1.png",
+        "/images/guides/black-market-caerleon-4x3.png",
+        "/images/guides/black-market-caerleon-16x9.png"
+      ],
+      "imageAlt": "Guía para comparar compra, fabricación, materiales y venta al Black Market de Caerleon"
     }
   }
 }
