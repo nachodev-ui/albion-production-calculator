@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { buildItemIconUrl } from '@core/domain/entities/Item'
 import type { BaseItemId } from '@core/domain/entities/Item'
 import type { EnchantmentLevel } from '@core/domain/entities/Enchantment'
@@ -41,11 +41,8 @@ export function ItemIcon({
   const [loadedUrl, setLoadedUrl] = useState<string | null>(null)
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    setLoadedUrl(null)
-    setFailedUrl(null)
-  }, [url])
-
+  // El estado conserva la URL que terminó de cargar o fallar. Al cambiar `url`,
+  // ambas comparaciones pasan a false en el mismo render, sin un efecto posterior.
   const loaded = loadedUrl === url
   const failed = failedUrl === url
   const loading = !loaded && !failed
