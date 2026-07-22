@@ -14,5 +14,6 @@ const repository = new JsonItemRepository()
 export function RefiningComingSoonPage({
   onOpenCrafting: _onOpenCrafting,
 }: RefiningComingSoonPageProps) {
+  void onOpenCrafting
   return <RefiningCalculatorPage repository={repository} />
 }

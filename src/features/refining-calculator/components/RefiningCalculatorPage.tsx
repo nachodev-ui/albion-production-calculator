@@ -1,8 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import {
-  buildItemIconUrl,
-  type BaseItemId,
-} from '@core/domain/entities/Item'
+import { buildItemIconUrl } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
 import {
@@ -94,6 +91,11 @@ function Panel({
   readonly title: string
   readonly children: ReactNode
 }) {
+  function changeEnchantment(nextEnchantment: RefiningEnchantment) {
+    resetManualPrices()
+    setEnchantment(nextEnchantment)
+  }
+
   return (
     <section className="rounded-2xl border border-border bg-surface/86 p-5 sm:p-6">
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -361,16 +363,11 @@ export function RefiningCalculatorPage({
     saleTarget: outputTarget,
     targetLabels,
   })
+  const setMarketConfig = market.setConfig
 
   useEffect(() => {
-    market.setConfig({ purchaseCity: city, saleCity: city, quality: 1 })
-  }, [city, market.setConfig])
-
-  useEffect(() => {
-    setManualRawPrice(null)
-    setManualPreviousPrice(null)
-    setManualOutputPrice(null)
-  }, [recipe.rawItemId, recipe.rawEnchantment, recipe.outputItemId])
+    setMarketConfig({ purchaseCity: city, saleCity: city, quality: 1 })
+  }, [city, setMarketConfig])
 
   const rawKey = buildItemPriceKey(rawTarget.itemId, rawTarget.enchantment)
   const previousKey = previousTarget
@@ -453,7 +450,14 @@ export function RefiningCalculatorPage({
     previousItem?.name ?? `${resource.refinedLabel} T${Math.max(2, tier - 1)}`
   const outputName = outputItem?.name ?? `${resource.refinedLabel} T${tier}`
 
+  function resetManualPrices() {
+    setManualRawPrice(null)
+    setManualPreviousPrice(null)
+    setManualOutputPrice(null)
+  }
+
   function changeResource(nextKind: RefiningResourceKind) {
+    resetManualPrices()
     const nextResource = getRefiningResource(nextKind)
     setResourceKind(nextKind)
     setCity(nextResource.specialtyCity)
@@ -463,6 +467,7 @@ export function RefiningCalculatorPage({
   }
 
   function changeTier(nextTier: RefiningTier) {
+    resetManualPrices()
     setTier(nextTier)
     setEnchantment((current) =>
       normalizeRefiningEnchantment(resource, nextTier, current),
@@ -557,7 +562,9 @@ export function RefiningCalculatorPage({
                 <select
                   value={enchantment}
                   onChange={(event) =>
-                    setEnchantment(Number(event.target.value) as RefiningEnchantment)
+                    changeEnchantment(
+                      Number(event.target.value) as RefiningEnchantment,
+                    )
                   }
                   className={INPUT_CLASS}
                 >
