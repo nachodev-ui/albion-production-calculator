@@ -70,6 +70,33 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+
+/* Tipografía editorial exclusiva del bloque 2 · Mecánica del refinador. */
+.refining-mechanics-section > section > p:first-child {
+  font-family: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+}
+
+.refining-mechanics-section > section > h2 {
+  font-family: 'Spectral', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.refining-mechanics-section article > p:first-child {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.refining-mechanics-section article > p:nth-child(2).tabular {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.refining-mechanics-section article > p:nth-child(3),
+.refining-mechanics-section > section > div > p:last-child {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
 /* Scrollbar discreta, a tono con el panel oscuro — el default del
    navegador (gris claro) desentona fuerte contra el fondo carbón. */
 * {

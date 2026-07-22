@@ -854,7 +854,8 @@ export function RefiningCalculatorPage({
             </div>
           </Panel>
 
-                    <Panel eyebrow="2 · Mecánica" title="Materiales y retorno esperado">
+                    <div className="refining-mechanics-section">
+            <Panel eyebrow="2 · Mecánica" title="Materiales y retorno esperado">
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <Metric
                 label="Recurso bruto necesario"
@@ -909,7 +910,8 @@ export function RefiningCalculatorPage({
               tanda para aproximar el promedio, por lo que una operación pequeña puede
               devolver una unidad más o menos.
             </p>
-          </Panel>
+            </Panel>
+          </div>
 
           <Panel eyebrow="3 · Mercado" title="Dónde comprar y dónde vender">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
