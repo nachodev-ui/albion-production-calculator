@@ -16,6 +16,7 @@ import type {
   BlackMarketOpportunity,
   BlackMarketOpportunityFilters,
 } from "../types";
+import { BlackMarketBatchPlannerPage } from "./BlackMarketBatchPlannerPage";
 import { BlackMarketOpportunityDetailDialog } from "./BlackMarketOpportunityDetailDialog";
 import { BlackMarketOpportunityResults } from "./BlackMarketOpportunityResults";
 import { BlackMarketScannerControls } from "./BlackMarketScannerControls";
@@ -230,6 +231,8 @@ export function BlackMarketOpportunityScannerPage({
   onNavigate,
   onOpenCrafting,
 }: BlackMarketOpportunityScannerPageProps) {
+  const [view, setView] = useState<"opportunities" | "batch">("opportunities");
+
   return (
     <FeatureGate
       entitlementKey={ENTITLEMENT_KEYS.blackMarketAnalytics}
@@ -237,7 +240,37 @@ export function BlackMarketOpportunityScannerPage({
       description="La comparación masiva entre ciudades, fabricación y órdenes de compra del Black Market es exclusiva para cuentas Pro y se autoriza nuevamente en la API central."
       onViewPlans={() => onNavigate("plans")}
     >
-      <Scanner repository={repository} onOpenCrafting={onOpenCrafting} />
+      <div className="mx-auto mb-4 flex w-full max-w-[92rem] px-5 sm:px-6">
+        <div className="flex flex-wrap rounded-xl border border-border bg-surface-raised p-1">
+          <button
+            type="button"
+            onClick={() => setView("opportunities")}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+              view === "opportunities"
+                ? "bg-accent text-bg"
+                : "text-text-muted hover:text-text"
+            }`}
+          >
+            Explorar oportunidades
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("batch")}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+              view === "batch"
+                ? "bg-accent text-bg"
+                : "text-text-muted hover:text-text"
+            }`}
+          >
+            Planificador batch
+          </button>
+        </div>
+      </div>
+      {view === "batch" ? (
+        <BlackMarketBatchPlannerPage repository={repository} />
+      ) : (
+        <Scanner repository={repository} onOpenCrafting={onOpenCrafting} />
+      )}
     </FeatureGate>
   );
 }

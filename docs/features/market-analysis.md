@@ -49,6 +49,33 @@ el uso de memoria, la cantidad de combinaciones y el trabajo del navegador.
 La recomendación se puede filtrar u ordenar por estrategia, beneficio ajustado,
 ROI ajustado o ventaja frente a comprar terminado.
 
+## Planificador batch y lista de compra
+
+El planificador Pro admite hasta 25 objetos por lote. Para cada objeto conserva la
+cantidad, el encantamiento y la calidad objetivo. Al calcular:
+
+- solicita las oportunidades compatibles mediante el endpoint batch existente del
+  Black Market;
+- reúne los ingredientes únicos de todas las recetas y los consulta mediante el
+  mismo flujo batch, caché y fallback usado por la calculadora;
+- compara comprar terminado, fabricar sin foco y fabricar con foco;
+- muestra beneficio, ROI, capital requerido y confianza por objeto;
+- consolida cantidades brutas, materiales recuperados por RRR y consumo efectivo;
+- asigna cada material a la ciudad con el menor precio disponible;
+- estima el peso del lote y ordena la fabricación respetando dependencias entre
+  objetos seleccionados;
+- exporta filas, resumen, materiales y orden de fabricación a CSV cuando el
+  entitlement `exports.csv` está habilitado.
+
+La confianza del lote no inventa una señal nueva: para cada fila usa las reglas
+compartidas de antigüedad, observaciones, volumen y desviación frente a la mediana.
+El nivel visible corresponde a la peor señal entre la compra de ciudad y la orden
+del Black Market.
+
+El peso es deliberadamente aproximado. Se usa únicamente para planificación y se
+presenta como estimación, ya que el dataset de recetas no contiene el peso oficial
+de inventario de cada objeto.
+
 ## Valor económico del foco
 
 El beneficio con foco se presenta de dos formas:
