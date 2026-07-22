@@ -1,8 +1,68 @@
+import { Suspense, lazy } from 'react'
 import { InfoHint } from '@shared/components/InfoHint'
+import type { ScreenshotWalkthroughStep } from '@shared/components/ScreenshotWalkthrough'
 
 interface DestinyBoardSpecializationHintProps {
   readonly align?: 'left' | 'center' | 'right'
 }
+
+const ScreenshotWalkthrough = lazy(async () => {
+  const module = await import('@shared/components/ScreenshotWalkthrough')
+  return { default: module.ScreenshotWalkthrough }
+})
+
+const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
+  {
+    image: '/assets/ui/destiny-board/destiny-board-open.png',
+    aspectRatio: 400 / 200,
+    zoom: 2.5,
+    highlightArea: { x: 93, y: 28, width: 6, height: 15 },
+    title: '1. Abre el Destiny Board',
+    caption:
+      'Presiona B dentro del juego. También puedes usar el icono resaltado del menú derecho para abrir la misma tabla.',
+    alt: 'Captura real de Albion Online con el acceso al Destiny Board resaltado',
+  },
+  {
+    image: '/assets/ui/destiny-board/destiny-board-general-node.png',
+    aspectRatio: 280 / 311,
+    zoom: 1.75,
+    highlightArea: { x: 58, y: 8, width: 39.5, height: 23.5 },
+    title: '2. Revisa el nodo general de la familia',
+    caption:
+      'Busca el nodo general, como Spear Crafter. Sus bonos se aplican a todas las lanzas de la familia. Anota Focus Cost Efficiency e Increase in Quality.',
+    alt: 'Nodo general Spear Crafter con los bonos para todas las lanzas resaltados',
+  },
+  {
+    image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
+    aspectRatio: 280 / 311,
+    zoom: 1.65,
+    highlightArea: { x: 2.8, y: 1.5, width: 53.5, height: 18 },
+    title: '3. Abre el nodo específico del objeto',
+    caption:
+      'Después abre el especialista que lleva el nombre exacto del objeto que fabricarás. No confundas este nodo con el nodo general de la familia.',
+    alt: 'Nodo Spear Crafting Specialist del objeto concreto resaltado',
+  },
+  {
+    image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
+    aspectRatio: 280 / 311,
+    zoom: 1.75,
+    highlightArea: { x: 57.8, y: 8.5, width: 40, height: 27 },
+    title: '4. Suma los bonos general y específico',
+    caption:
+      'Suma los valores del nodo general con los del especialista para cada métrica. Introduce el total en la calculadora; no escribas el nivel del nodo.',
+    alt: 'Resumen de bonos del especialista de lanzas resaltado para realizar la suma',
+  },
+  {
+    image: '/assets/ui/destiny-board/destiny-board-progress.png',
+    aspectRatio: 240 / 90,
+    zoom: 1.65,
+    highlightArea: { x: 2, y: 39, width: 95, height: 40 },
+    title: '5. Completa la proyección de especialización',
+    caption:
+      'Copia el nivel actual, el progreso dentro de ese nivel y la fama requerida que muestra la barra. Luego elige el nivel objetivo para proyectar cuánta fama falta.',
+    alt: 'Barra real de progreso de especialización con nivel y fama resaltados',
+  },
+]
 
 export function DestinyBoardSpecializationHint({
   align = 'left',
@@ -11,7 +71,7 @@ export function DestinyBoardSpecializationHint({
     <InfoHint
       label="Guía visual de especialización y foco"
       align={align}
-      width={500}
+      width={620}
       trigger={
         <>
           <span aria-hidden="true" className="text-[8px]">
@@ -29,40 +89,24 @@ export function DestinyBoardSpecializationHint({
               Cómo obtener especialización y eficiencia de foco
             </p>
             <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
-              Abre el Destiny Board con B y suma los bonos del nodo general de la
-              familia con los del objeto específico.
+              Recorrido interactivo sobre capturas reales: Destiny Board, nodo
+              general, especialista, suma de bonos y proyección.
             </p>
           </div>
 
           <div className="bg-surface-raised p-3">
-            <div className="mx-auto w-full max-w-[330px] overflow-hidden rounded-md border border-border bg-black/20">
-              <img
-                src="/assets/ui/destiny-board-specialization-guide.gif"
-                alt="Guía animada con capturas reales del Destiny Board: acceso con B, nodo general, especialización individual y progreso del nivel"
-                width={260}
-                height={234}
-                className="block h-auto w-full"
+            <Suspense
+              fallback={
+                <div className="flex min-h-52 items-center justify-center rounded-xl border border-border bg-surface px-4 text-xs text-text-faint">
+                  Preparando recorrido visual…
+                </div>
+              }
+            >
+              <ScreenshotWalkthrough
+                steps={DESTINY_BOARD_STEPS}
+                intervalMs={7000}
               />
-            </div>
-
-            <ol className="mt-3 grid gap-2 text-[11px] leading-relaxed text-text-muted sm:grid-cols-2">
-              <li className="rounded-md border border-border bg-surface px-2.5 py-2">
-                <strong className="text-text">1. Abre el Destiny Board.</strong>{' '}
-                Presiona B y busca la rama del objeto que fabricarás.
-              </li>
-              <li className="rounded-md border border-border bg-surface px-2.5 py-2">
-                <strong className="text-text">2. Revisa el nodo general.</strong>{' '}
-                Sus bonos afectan a todas las armas o piezas de esa familia.
-              </li>
-              <li className="rounded-md border border-border bg-surface px-2.5 py-2">
-                <strong className="text-text">3. Revisa el nodo específico.</strong>{' '}
-                Es el que lleva el nombre exacto del objeto que fabricarás.
-              </li>
-              <li className="rounded-md border border-accent-border bg-accent-muted px-2.5 py-2">
-                <strong className="text-text">4. Introduce el total.</strong>{' '}
-                Suma ambos bonos; no escribas el nivel del nodo.
-              </li>
-            </ol>
+            </Suspense>
 
             <p className="mt-2 rounded-md border border-warning/35 bg-warning-muted px-2.5 py-2 text-[11px] text-warning">
               «Focus Cost Efficiency» reduce el foco consumido. «Increase in
