@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/refining-icon-loading-perception
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -293,27 +296,6 @@ jobs:
                         priority="high"
                         className="rounded-lg border-border bg-bg/70"
                       />
-""",
-            ),
-            (
-              """                  <img
-                    src={buildItemIconUrl(
-                      recipe.outputItemId,
-                      recipe.outputEnchantment,
-                      96,
-                    )}
-                    alt=""
-                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
-                  />
-""",
-              """                  <ItemIcon
-                    itemId={recipe.outputItemId}
-                    enchantment={recipe.outputEnchantment}
-                    name={outputName}
-                    size={64}
-                    priority="high"
-                    className="rounded-lg bg-bg/45"
-                  />
 """,
             ),
             (
