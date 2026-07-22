@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import tutorialSource from './guidedTutorial.ts?raw'
 import { describe, expect, it } from 'vitest'
 import {
   computeTutorialPanelPosition,
@@ -6,10 +6,6 @@ import {
   type RectLike,
 } from './tutorialPanelCollisionGuard'
 
-const tutorialSource = readFileSync(
-  new URL('./guidedTutorial.ts', import.meta.url),
-  'utf8',
-)
 const declaredSteps = [...tutorialSource.matchAll(/target: '([^']+)'/g)].map(
   ([, target], index) => `${index + 1}:${target ?? 'unknown'}`,
 )
