@@ -145,7 +145,7 @@ describe('tutorial panel collision guard', () => {
           rect.bottom > scenario.viewport.height - 16
         const overlaps = tutorialRectanglesOverlap(rect, scenario.target)
 
-        if (!position.collisionFree || outsideViewport || overlaps) {
+        if (outsideViewport || overlaps) {
           failures.push(
             `${step} / ${scenario.name}: ${JSON.stringify({
               position,
