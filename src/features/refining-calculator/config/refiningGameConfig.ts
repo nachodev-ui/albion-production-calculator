@@ -201,8 +201,19 @@ export function normalizeRefiningEnchantment(
   ) as RefiningEnchantment
 }
 
-function buildItemId(tier: RefiningTier, suffix: string): BaseItemId {
-  return asBaseItemId(`T${tier}_${suffix}`)
+/**
+ * Los recursos encantados usan un identificador base específico por nivel
+ * (`T5_ORE_LEVEL1`) y además el sufijo de mercado/render (`@1`). Mantener el
+ * `_LEVELn` aquí permite que iconos, precios y nombres apunten a la variante
+ * real en lugar de reutilizar visualmente el recurso plano.
+ */
+function buildItemId(
+  tier: RefiningTier,
+  suffix: string,
+  enchantment: RefiningEnchantment = 0,
+): BaseItemId {
+  const levelSuffix = enchantment > 0 ? `_LEVEL${enchantment}` : ''
+  return asBaseItemId(`T${tier}_${suffix}${levelSuffix}`)
 }
 
 export function getRefiningRecipe(params: {
@@ -234,14 +245,22 @@ export function getRefiningRecipe(params: {
   return {
     tier: params.tier,
     enchantment,
-    rawItemId: buildItemId(params.tier, resource.rawItemSuffix),
+    rawItemId: buildItemId(params.tier, resource.rawItemSuffix, enchantment),
     rawEnchantment: enchantment,
     previousRefinedItemId:
       params.tier === 2
         ? null
-        : buildItemId(previousTier, resource.refinedItemSuffix),
+        : buildItemId(
+            previousTier,
+            resource.refinedItemSuffix,
+            previousRefinedEnchantment,
+          ),
     previousRefinedEnchantment,
-    outputItemId: buildItemId(params.tier, resource.refinedItemSuffix),
+    outputItemId: buildItemId(
+      params.tier,
+      resource.refinedItemSuffix,
+      outputEnchantment,
+    ),
     outputEnchantment,
     rawPerCraft: RAW_RESOURCE_PER_CRAFT[params.tier],
     previousRefinedPerCraft,

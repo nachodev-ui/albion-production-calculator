@@ -7,23 +7,38 @@ import {
 import { calculateRefiningEconomics } from './refiningEconomics'
 
 describe('refining game configuration', () => {
-  it('models a standard enchanted recipe with the previous tier at the same enchantment', () => {
+  it('models T5.1 ore with enchanted raw, previous and output variants', () => {
     const recipe = getRefiningRecipe({
       resourceKind: 'ore',
       tier: 5,
-      enchantment: 2,
+      enchantment: 1,
     })
 
-    expect(recipe.rawItemId).toBe('T5_ORE')
-    expect(recipe.rawEnchantment).toBe(2)
-    expect(recipe.previousRefinedItemId).toBe('T4_METALBAR')
-    expect(recipe.previousRefinedEnchantment).toBe(2)
-    expect(recipe.outputItemId).toBe('T5_METALBAR')
-    expect(recipe.outputEnchantment).toBe(2)
+    expect(recipe.rawItemId).toBe('T5_ORE_LEVEL1')
+    expect(recipe.rawEnchantment).toBe(1)
+    expect(recipe.previousRefinedItemId).toBe('T4_METALBAR_LEVEL1')
+    expect(recipe.previousRefinedEnchantment).toBe(1)
+    expect(recipe.outputItemId).toBe('T5_METALBAR_LEVEL1')
+    expect(recipe.outputEnchantment).toBe(1)
     expect(recipe.rawPerCraft).toBe(3)
     expect(recipe.previousRefinedPerCraft).toBe(1)
     expect(recipe.outputPerCraft).toBe(1)
-    expect(recipe.baseFocusPerCraft).toBe(287)
+    expect(recipe.baseFocusPerCraft).toBe(164)
+  })
+
+  it('keeps the T3 refined ingredient plain for an enchanted T4 recipe', () => {
+    const recipe = getRefiningRecipe({
+      resourceKind: 'ore',
+      tier: 4,
+      enchantment: 1,
+    })
+
+    expect(recipe.rawItemId).toBe('T4_ORE_LEVEL1')
+    expect(recipe.rawEnchantment).toBe(1)
+    expect(recipe.previousRefinedItemId).toBe('T3_METALBAR')
+    expect(recipe.previousRefinedEnchantment).toBe(0)
+    expect(recipe.outputItemId).toBe('T4_METALBAR_LEVEL1')
+    expect(recipe.outputEnchantment).toBe(1)
   })
 
   it('models enchanted stone as multiplied previous blocks and output', () => {
@@ -33,7 +48,7 @@ describe('refining game configuration', () => {
       enchantment: 3,
     })
 
-    expect(recipe.rawItemId).toBe('T5_ROCK')
+    expect(recipe.rawItemId).toBe('T5_ROCK_LEVEL3')
     expect(recipe.rawEnchantment).toBe(3)
     expect(recipe.previousRefinedItemId).toBe('T4_STONEBLOCK')
     expect(recipe.previousRefinedEnchantment).toBe(0)
