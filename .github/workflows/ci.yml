@@ -55,12 +55,24 @@ jobs:
             .github/asset-parts/screenshots.part-00.b64 \
             .github/asset-parts/screenshots.part-01.b64 \
             .github/asset-parts/screenshots.part-02-00.b64 \
-            .github/asset-parts/screenshots.part-02-01.b64 \
+            .github/asset-parts/screenshots.part-02-01-00.b64 \
+            .github/asset-parts/screenshots.part-02-01-01.b64 \
+            .github/asset-parts/screenshots.part-02-01-02.b64 \
+            .github/asset-parts/screenshots.part-02-01-03.b64 \
+            .github/asset-parts/screenshots.part-02-01-04.b64 \
+            .github/asset-parts/screenshots.part-02-01-05.b64 \
+            .github/asset-parts/screenshots.part-02-01-06.b64 \
             .github/asset-parts/screenshots.part-02-02.b64 \
             .github/asset-parts/screenshots.part-02-03.b64 \
             .github/asset-parts/screenshots.part-03-00.b64 \
             .github/asset-parts/screenshots.part-03-01.b64 \
-            .github/asset-parts/screenshots.part-03-02.b64 \
+            .github/asset-parts/screenshots.part-03-02-00.b64 \
+            .github/asset-parts/screenshots.part-03-02-01.b64 \
+            .github/asset-parts/screenshots.part-03-02-02.b64 \
+            .github/asset-parts/screenshots.part-03-02-03.b64 \
+            .github/asset-parts/screenshots.part-03-02-04.b64 \
+            .github/asset-parts/screenshots.part-03-02-05.b64 \
+            .github/asset-parts/screenshots.part-03-02-06.b64 \
             .github/asset-parts/screenshots.part-03-03.b64 \
             .github/asset-parts/screenshots.part-04.b64 \
             .github/asset-parts/screenshots.part-05.b64 \
