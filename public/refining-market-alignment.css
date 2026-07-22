@@ -1,0 +1,60 @@
+/*
+ * Alineación visual del bloque 3 · Mercado del refinador.
+ * Se aplica solo cuando las tarjetas de compra y venta están lado a lado.
+ */
+
+@media (min-width: 1024px) {
+  section:has(> div > .mt-6 > section.border-accent-border)
+    > div
+    > .grid:first-child
+    > label {
+    min-height: 5.5rem;
+  }
+
+  section:has(> div > .mt-6 > section.border-accent-border) > div > .mt-6 {
+    align-items: stretch;
+  }
+
+  section:has(> div > .mt-6 > section.border-accent-border)
+    > div
+    > .mt-6
+    > section {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+  }
+
+  section:has(> div > .mt-6 > section.border-accent-border)
+    > div
+    > .mt-6
+    > section
+    > div:first-child {
+    min-height: 5rem;
+  }
+
+  section:has(> div > .mt-6 > section.border-accent-border)
+    > div
+    > .mt-6
+    > section
+    > div:nth-child(2) {
+    min-height: 8rem;
+  }
+
+  section:has(> div > .mt-6 > section.border-accent-border)
+    > div
+    > .mt-6
+    > section
+    > div:nth-child(2)
+    > label
+    > span:last-child {
+    min-height: 2.5rem;
+  }
+}
+
+section:has(> div > .mt-6 > section.border-accent-border)
+  > div
+  > .mt-5.flex
+  > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
