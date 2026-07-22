@@ -36,6 +36,14 @@ describe("routeFromPathname", () => {
       "/guias/black-market-caerleon-rentable/",
       "guide-black-market-profit",
     ],
+    [
+      "/guias/planificador-batch-lista-compra-albion-online",
+      "guide-batch-planner",
+    ],
+    [
+      "/guias/planificador-batch-lista-compra-albion-online/",
+      "guide-batch-planner",
+    ],
   ] as const)("maps %s to %s", (pathname, expected) => {
     expect(routeFromPathname(pathname)).toBe(expected);
   });
