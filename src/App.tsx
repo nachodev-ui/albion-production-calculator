@@ -52,9 +52,9 @@ const PresetLibraryPage = lazy(() =>
     default: module.PresetLibraryPage,
   })),
 );
-const RefiningComingSoonPage = lazy(() =>
-  import("@features/refining-calculator/components/RefiningComingSoonPage").then(
-    (module) => ({ default: module.RefiningComingSoonPage }),
+const RefiningCalculatorPage = lazy(() =>
+  import("@features/refining-calculator/components/RefiningCalculatorPage").then(
+    (module) => ({ default: module.RefiningCalculatorPage }),
   ),
 );
 const PlansPage = lazy(() =>
@@ -405,14 +405,17 @@ function App() {
             <ModuleHeader
               eyebrow="Módulo de refinamiento"
               title="Calculadora de refinamiento"
-              description="Un espacio dedicado a convertir recursos, retornos y tarifas de estación en costos netos y decisiones de venta claras."
-              badge="Próximamente"
+              description="Selecciona un recurso T2–T8 y compara materiales, retorno, foco, tarifa de estación, beneficio, ROI y precio de equilibrio."
             />
-            <Suspense fallback={<ModuleFallback label="refinamiento" />}>
-              <RefiningComingSoonPage
-                onOpenCrafting={() => navigateModule("crafting")}
-              />
-            </Suspense>
+            {repositoryError ? (
+              <RepositoryError message={repositoryError} />
+            ) : repository ? (
+              <Suspense fallback={<ModuleFallback label="refinamiento" />}>
+                <RefiningCalculatorPage repository={repository} />
+              </Suspense>
+            ) : (
+              <ModuleFallback label="refinamiento" />
+            )}
           </>
         )}
         {route === "black-market" && (
