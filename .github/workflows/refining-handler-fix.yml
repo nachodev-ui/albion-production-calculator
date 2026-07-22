@@ -1,6 +1,9 @@
 name: Refining handler repair
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - feat/refining-calculator-mvp
@@ -20,17 +23,21 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
           path = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
           text = path.read_text()
-          bad = """  function changeEnchantment(nextEnchantment: RefiningEnchantment) {
-            resetManualPrices()
-            setEnchantment(nextEnchantment)
-          }
 
-          """
-          if bad not in text:
-              raise SystemExit('misplaced handler not found')
-          text = text.replace(bad, '', 1)
+          misplaced = re.compile(
+              r"\n  function changeEnchantment\(nextEnchantment: RefiningEnchantment\) \{\n"
+              r"    resetManualPrices\(\)\n"
+              r"    setEnchantment\(nextEnchantment\)\n"
+              r"  \}\n",
+          )
+          text, removed = misplaced.subn('\n', text, count=1)
+          if removed != 1:
+              raise SystemExit('misplaced handler was not found exactly once')
+
           marker = """  function changeTier(nextTier: RefiningTier) {
             resetManualPrices()
             setTier(nextTier)
@@ -50,13 +57,17 @@ jobs:
           }
 
           """
-          if marker not in text:
-              raise SystemExit('tier handler marker not found')
+          if text.count(marker) != 1:
+              raise SystemExit(f'expected one tier handler marker, found {text.count(marker)}')
+
           path.write_text(text.replace(marker, handler, 1))
           PY
       - name: Commit repair
         shell: bash
         run: |
+          if git diff --quiet; then
+            exit 0
+          fi
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add src/features/refining-calculator/components/RefiningCalculatorPage.tsx
