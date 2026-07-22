@@ -914,7 +914,7 @@ export function RefiningCalculatorPage({
           </div>
 
           <Panel eyebrow="3 · Mercado" title="Dónde comprar y dónde vender">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Servidor">
                 <select
                   value={market.config.server}
@@ -924,78 +924,6 @@ export function RefiningCalculatorPage({
                   className={INPUT_CLASS}
                 >
                   {Object.entries(MARKET_SERVER_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="Ciudad de compra"
-                hint="Mercado donde buscarás el recurso crudo y el refinado previo."
-              >
-                <select
-                  value={market.config.purchaseCity}
-                  onChange={(event) =>
-                    market.setConfig({
-                      purchaseCity: event.target.value as RefiningCityId,
-                    })
-                  }
-                  className={INPUT_CLASS}
-                >
-                  {REFINING_CITIES.map((candidate) => (
-                    <option key={candidate} value={candidate}>
-                      {REFINING_CITY_LABELS[candidate]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Cómo comprar">
-                <select
-                  value={market.config.purchaseStrategy}
-                  onChange={(event) =>
-                    market.setConfig({
-                      purchaseStrategy: event.target.value as PurchaseStrategy,
-                    })
-                  }
-                  className={INPUT_CLASS}
-                >
-                  {Object.entries(PURCHASE_STRATEGY_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="Ciudad de venta"
-                hint="Mercado donde venderás el recurso refinado terminado."
-              >
-                <select
-                  value={market.config.saleCity}
-                  onChange={(event) =>
-                    market.setConfig({ saleCity: event.target.value as RefiningCityId })
-                  }
-                  className={INPUT_CLASS}
-                >
-                  {REFINING_CITIES.map((candidate) => (
-                    <option key={candidate} value={candidate}>
-                      {REFINING_CITY_LABELS[candidate]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Cómo vender">
-                <select
-                  value={market.config.saleStrategy}
-                  onChange={(event) =>
-                    market.setConfig({
-                      saleStrategy: event.target.value as SaleStrategy,
-                    })
-                  }
-                  className={INPUT_CLASS}
-                >
-                  {Object.entries(SALE_STRATEGY_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
@@ -1045,14 +973,55 @@ export function RefiningCalculatorPage({
                       Compra de materiales
                     </p>
                     <p className="mt-1 text-sm font-semibold text-text">
-                      {REFINING_CITY_LABELS[market.config.purchaseCity as RefiningCityId]}
+                      Origen de los materiales
                     </p>
                     <p className="text-[11px] text-text-faint">
-                      Busca el costo de entrada más bajo antes de refinar.
+                      Elige la ciudad y el tipo de compra antes de revisar los precios.
                     </p>
                   </div>
                 </div>
+
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Ciudad de compra"
+                    hint="Mercado donde buscarás el recurso crudo y el refinado previo."
+                  >
+                    <select
+                      value={market.config.purchaseCity}
+                      onChange={(event) =>
+                        market.setConfig({
+                          purchaseCity: event.target.value as RefiningCityId,
+                        })
+                      }
+                      className={INPUT_CLASS}
+                    >
+                      {REFINING_CITIES.map((candidate) => (
+                        <option key={candidate} value={candidate}>
+                          {REFINING_CITY_LABELS[candidate]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Cómo comprar">
+                    <select
+                      value={market.config.purchaseStrategy}
+                      onChange={(event) =>
+                        market.setConfig({
+                          purchaseStrategy: event.target.value as PurchaseStrategy,
+                        })
+                      }
+                      className={INPUT_CLASS}
+                    >
+                      {Object.entries(PURCHASE_STRATEGY_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
                   <PriceField
                     label={`Compra: ${rawName}`}
                     manualValue={manualRawPrice}
@@ -1087,14 +1056,55 @@ export function RefiningCalculatorPage({
                       Venta del refinado
                     </p>
                     <p className="mt-1 text-sm font-semibold text-text">
-                      {REFINING_CITY_LABELS[market.config.saleCity as RefiningCityId]}
+                      Destino del refinado
                     </p>
                     <p className="text-[11px] text-text-faint">
-                      Compara el precio final con todos los costos de la operación.
+                      Elige la ciudad y la estrategia de venta del producto terminado.
                     </p>
                   </div>
                 </div>
-                <div className="mt-4">
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <Field
+                    label="Ciudad de venta"
+                    hint="Mercado donde venderás el recurso refinado terminado."
+                  >
+                    <select
+                      value={market.config.saleCity}
+                      onChange={(event) =>
+                        market.setConfig({
+                          saleCity: event.target.value as RefiningCityId,
+                        })
+                      }
+                      className={INPUT_CLASS}
+                    >
+                      {REFINING_CITIES.map((candidate) => (
+                        <option key={candidate} value={candidate}>
+                          {REFINING_CITY_LABELS[candidate]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Cómo vender">
+                    <select
+                      value={market.config.saleStrategy}
+                      onChange={(event) =>
+                        market.setConfig({
+                          saleStrategy: event.target.value as SaleStrategy,
+                        })
+                      }
+                      className={INPUT_CLASS}
+                    >
+                      {Object.entries(SALE_STRATEGY_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                <div className="mt-5 border-t border-accent-border/50 pt-5">
                   <PriceField
                     label={`Venta: ${outputName}`}
                     manualValue={manualOutputPrice}

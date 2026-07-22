@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -34,23 +34,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: ux/refining-market-card-controls
-
-      - name: Move market controls into their cards
-        run: python scripts/patch-refining-market-layout.py
-
-      - name: Commit finalized layout
-        shell: bash
-        run: |
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ci.yml
-          rm scripts/patch-refining-market-layout.py
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A
-          git commit -m "ux: group refining market controls by transaction"
-          git push origin HEAD:ux/refining-market-card-controls
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
