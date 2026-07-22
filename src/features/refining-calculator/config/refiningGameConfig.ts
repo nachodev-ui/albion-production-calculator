@@ -107,6 +107,8 @@ export const REFINING_RESOURCES: readonly RefiningResourceDefinition[] = [
   },
 ] as const
 
+const DEFAULT_REFINING_RESOURCE = REFINING_RESOURCES[0]!
+
 export const REFINING_TIERS: readonly RefiningTier[] = [2, 3, 4, 5, 6, 7, 8]
 export const REFINING_ENCHANTMENTS: readonly RefiningEnchantment[] = [0, 1, 2, 3, 4]
 
@@ -174,7 +176,10 @@ export const REFINING_CITIES = Object.keys(
 export function getRefiningResource(
   kind: RefiningResourceKind,
 ): RefiningResourceDefinition {
-  return REFINING_RESOURCES.find((resource) => resource.kind === kind) ?? REFINING_RESOURCES[0]
+  return (
+    REFINING_RESOURCES.find((resource) => resource.kind === kind) ??
+    DEFAULT_REFINING_RESOURCE
+  )
 }
 
 export function getMaximumRefiningEnchantment(
@@ -190,7 +195,10 @@ export function normalizeRefiningEnchantment(
   enchantment: number,
 ): RefiningEnchantment {
   const maximum = getMaximumRefiningEnchantment(resource, tier)
-  return Math.min(maximum, Math.max(0, Math.floor(enchantment))) as RefiningEnchantment
+  return Math.min(
+    maximum,
+    Math.max(0, Math.floor(enchantment)),
+  ) as RefiningEnchantment
 }
 
 function buildItemId(tier: RefiningTier, suffix: string): BaseItemId {
@@ -219,7 +227,8 @@ export function getRefiningRecipe(params: {
   const focusTable = isStone
     ? STONE_REFINING_FOCUS_COST
     : STANDARD_REFINING_FOCUS_COST
-  const baseFocusPerCraft = focusTable[params.tier][enchantment] ?? focusTable[params.tier][0]
+  const focusCosts = focusTable[params.tier]
+  const baseFocusPerCraft = focusCosts[enchantment] ?? focusCosts[0]!
   const itemValueMultiplier = isStone ? stoneMultiplier : 2 ** enchantment
 
   return {
@@ -251,7 +260,10 @@ export function calculateRefiningFocusCostEfficiency(params: {
   readonly selectedTierLevel: number
   readonly otherTierLevelsTotal: number
 }): number {
-  const selectedTierLevel = Math.min(100, Math.max(0, Math.floor(params.selectedTierLevel)))
+  const selectedTierLevel = Math.min(
+    100,
+    Math.max(0, Math.floor(params.selectedTierLevel)),
+  )
   const otherTierLevelsTotal = Math.min(
     400,
     Math.max(0, Math.floor(params.otherTierLevelsTotal)),
