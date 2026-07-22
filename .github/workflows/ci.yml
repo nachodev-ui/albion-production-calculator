@@ -52,6 +52,22 @@ jobs:
               line[10:] if line.startswith('          ') else line
               for line in embedded.splitlines()
           )
+          strict_loop = """for old, new in replacements:
+  count = source.count(old)
+  if count != 1:
+    raise SystemExit(f'Expected exactly one match, found {count}: {old[:100]!r}')
+  source = source.replace(old, new, 1)
+"""
+          tolerant_loop = """for old, new in replacements:
+  count = source.count(old)
+  if count < 1:
+    raise SystemExit(f'Expected at least one match, found {count}: {old[:100]!r}')
+  replace_count = 1 if old.startswith('              <p className=') else count
+  source = source.replace(old, new, replace_count)
+"""
+          if strict_loop not in code:
+              raise SystemExit('Could not locate the strict replacement loop')
+          code = code.replace(strict_loop, tolerant_loop, 1)
           exec(compile(code, str(workflow), 'exec'))
           PY
 
