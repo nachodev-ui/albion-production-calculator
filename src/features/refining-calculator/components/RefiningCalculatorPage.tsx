@@ -91,11 +91,6 @@ function Panel({
   readonly title: string
   readonly children: ReactNode
 }) {
-  function changeEnchantment(nextEnchantment: RefiningEnchantment) {
-    resetManualPrices()
-    setEnchantment(nextEnchantment)
-  }
-
   return (
     <section className="rounded-2xl border border-border bg-surface/86 p-5 sm:p-6">
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-accent">
@@ -476,6 +471,11 @@ export function RefiningCalculatorPage({
       setSelectedTierLevel(0)
       setOtherTierLevelsTotal(0)
     }
+  }
+
+  function changeEnchantment(nextEnchantment: RefiningEnchantment) {
+    resetManualPrices()
+    setEnchantment(nextEnchantment)
   }
 
   return (
