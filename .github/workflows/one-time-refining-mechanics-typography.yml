@@ -1,0 +1,93 @@
+name: One-time refining mechanics typography
+
+on:
+  push:
+    branches:
+      - style/refining-mechanics-typography
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: style/refining-mechanics-typography
+
+      - name: Apply section typography
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one match, found {count}: {old[:120]!r}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          index_html = Path('index.html')
+          replace_once(
+              index_html,
+              'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap',
+              'https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&family=Spectral:wght@400;500;600;700&display=swap',
+          )
+
+          css = Path('src/index.css')
+          marker = """.tabular {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+          }
+          """
+          addition = marker + """
+
+          /* Tipografía editorial exclusiva del bloque 2 · Mecánica del refinador. */
+          .refining-mechanics-section > section > p:first-child {
+            font-family: 'IBM Plex Sans', 'Inter', system-ui, sans-serif;
+          }
+
+          .refining-mechanics-section > section > h2 {
+            font-family: 'Spectral', Georgia, serif;
+            letter-spacing: -0.01em;
+          }
+
+          .refining-mechanics-section article > p:first-child {
+            font-family: 'Inter', system-ui, sans-serif;
+            font-weight: 600;
+          }
+
+          .refining-mechanics-section article > p:nth-child(2).tabular {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-variant-numeric: lining-nums tabular-nums;
+            letter-spacing: -0.01em;
+          }
+
+          .refining-mechanics-section article > p:nth-child(3),
+          .refining-mechanics-section > section > div > p:last-child {
+            font-family: 'Inter', system-ui, sans-serif;
+          }
+          """
+          replace_once(css, marker, addition)
+
+          page = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
+          replace_once(
+              page,
+              '<Panel eyebrow="2 · Mecánica" title="Materiales y retorno esperado">',
+              '<div className="refining-mechanics-section">\n            <Panel eyebrow="2 · Mecánica" title="Materiales y retorno esperado">',
+          )
+          replace_once(
+              page,
+              '          </Panel>\n\n          <Panel eyebrow="3 · Mercado" title="Dónde comprar y dónde vender">',
+              '            </Panel>\n          </div>\n\n          <Panel eyebrow="3 · Mercado" title="Dónde comprar y dónde vender">',
+          )
+          PY
+
+          rm .github/workflows/one-time-refining-mechanics-typography.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "style: refine mechanics card typography"
+          git push origin HEAD:style/refining-mechanics-typography
