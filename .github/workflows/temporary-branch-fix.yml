@@ -1,0 +1,37 @@
+name: Temporary branch fix
+
+on:
+  push:
+    branches:
+      - feat/player-economic-profile
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/player-economic-profile
+      - name: Apply strict index guard
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/features/player-profile/components/EconomicProfilePanel.tsx')
+          content = path.read_text()
+          original = 'setDraftBranchKey(unusedBranches[0].key)'
+          replacement = "setDraftBranchKey(unusedBranches[0]?.key ?? '')"
+          if original not in content:
+              raise SystemExit('target expression not found')
+          path.write_text(content.replace(original, replacement, 1))
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/player-profile/components/EconomicProfilePanel.tsx
+          git commit -m "fix: guard the first unused specialization"
+          git push origin HEAD:feat/player-economic-profile
