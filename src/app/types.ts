@@ -7,8 +7,7 @@ export type AppModule =
 export type SeoGuideRoute =
   | "guide-crafting-profit"
   | "guide-resource-return-rate"
-  | "guide-black-market-profit"
-  | "guide-batch-planner";
+  | "guide-black-market-profit";
 
 export type AppRoute =
   | AppModule
