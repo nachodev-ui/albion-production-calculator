@@ -133,9 +133,9 @@ export function BlackMarketBatchPlannerLearningCard() {
                 <div>
                   <dt className="font-semibold text-text">Comprar terminado</dt>
                   <dd>
-                    Compra el objeto en una ciudad y lo vende a la orden de compra del
-                    Black Market. El capital es el costo del objeto y la logística
-                    configurada.
+                    Compra el objeto en una ciudad y lo vende a la orden del Black
+                    Market. El capital parte del costo del objeto; transporte y riesgo
+                    deben descontarse aparte en la versión actual.
                   </dd>
                 </div>
                 <div>
@@ -171,6 +171,13 @@ export function BlackMarketBatchPlannerLearningCard() {
           </div>
 
           <aside className="mt-4 rounded-xl border border-warning/35 bg-warning-muted px-4 py-3 text-xs leading-relaxed text-text-muted">
+            <strong className="text-warning">Alcance del resumen: </strong>
+            incluye precios, impuesto, materiales, retorno y puesto. Transporte,
+            escolta, pérdida por muerte y valor del tiempo no se añaden automáticamente
+            en este planificador; descuéntalos antes de ejecutar.
+          </aside>
+
+          <aside className="mt-3 rounded-xl border border-warning/35 bg-warning-muted px-4 py-3 text-xs leading-relaxed text-text-muted">
             <strong className="text-warning">Cuando aparece “Sin cobertura”: </strong>
             no se encontró una combinación compatible de objeto, encantamiento y
             calidad en los datos consultados. Prueba otra calidad, revisa el servidor,
