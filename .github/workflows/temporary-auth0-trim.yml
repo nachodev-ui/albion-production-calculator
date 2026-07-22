@@ -1,0 +1,57 @@
+name: Temporary Auth0 bundle trim
+
+on:
+  push:
+    branches:
+      - feat/player-economic-profile
+
+permissions:
+  contents: write
+
+jobs:
+  trim:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/player-economic-profile
+      - name: Trim duplicated profile help
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          economic = Path('src/features/player-profile/components/EconomicProfilePanel.tsx')
+          content = economic.read_text()
+          substitutions = [
+              (r"\nconst numberFormatter = new Intl\.NumberFormat\('es-CL', \{\s+maximumFractionDigits: 1,\s+\}\)\n", "\n"),
+              (r'Se recalcula desde tus capturas guardadas, usando el precio de venta,\s+el costo neto, tu eficiencia actual, \{numberFormatter\.format\(form\.salesTaxRate\)\}%\s+de impuesto y \{silverFormatter\.format\(form\.transportCost\)\} de transporte por lote\.', 'Usa tus cálculos guardados, impuesto y transporte.'),
+              (r'\s*<p className="mt-1 text-\[11px\] text-text-faint">\s*Datos declarados por ti; no verificados por el personaje público\.\s*</p>', ''),
+              (r'No hay cálculos compatibles todavía\. Guarda cálculos completos con\s+foco y precio de venta para las ramas configuradas\.', 'Guarda un cálculo completo con foco y precio de venta.'),
+          ]
+          for pattern, replacement in substitutions:
+              content, count = re.subn(pattern, replacement, content, count=1)
+              if count != 1:
+                  raise SystemExit(f'economic replacement failed: {pattern!r} -> {count}')
+          economic.write_text(content)
+
+          public = Path('src/features/player-profile/components/PlayerProfilePage.tsx')
+          content = public.read_text()
+          substitutions = [
+              (r'Busca tu personaje para mostrar su avatar, estadísticas PvP,\s+equipamiento reciente y el detalle visual de sus enfrentamientos\.', 'Busca tu personaje para ver su actividad pública.'),
+              (r'La vinculación usa información pública y no demuestra propiedad del\s+personaje\. No modifica ni valida tu perfil económico privado\.', 'La vinculación pública no verifica propiedad ni modifica tu perfil económico.'),
+          ]
+          for pattern, replacement in substitutions:
+              content, count = re.subn(pattern, replacement, content, count=1)
+              if count != 1:
+                  raise SystemExit(f'public replacement failed: {pattern!r} -> {count}')
+          public.write_text(content)
+          PY
+      - name: Commit trim
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/player-profile/components/EconomicProfilePanel.tsx src/features/player-profile/components/PlayerProfilePage.tsx
+          git commit -m "perf: trim duplicate player profile copy"
+          git push origin HEAD:feat/player-economic-profile
