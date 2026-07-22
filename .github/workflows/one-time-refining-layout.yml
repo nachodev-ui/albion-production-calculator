@@ -1,0 +1,68 @@
+name: One-time refining layout patch
+
+on:
+  push:
+    branches:
+      - fix/refining-enchantment-visuals
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: fix/refining-enchantment-visuals
+
+      - name: Apply source-level layout fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          component = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
+          source = component.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  'className="mt-6 grid gap-6 lg:grid-cols-2"',
+                  'className="mt-6 space-y-6"',
+              ),
+              (
+                  'className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7"',
+                  'className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"',
+              ),
+              (
+                  '                        detail={`.${candidateEnchantment}`}\n',
+                  '',
+              ),
+          ]
+
+          for old, new in replacements:
+              if source.count(old) != 1:
+                  raise SystemExit(f'Expected exactly one match for: {old!r}')
+              source = source.replace(old, new, 1)
+
+          component.write_text(source, encoding='utf-8')
+
+          main = Path('src/main.tsx')
+          main_source = main.read_text(encoding='utf-8')
+          css_import = 'import "@features/refining-calculator/refiningCalculator.css";\n'
+          if main_source.count(css_import) != 1:
+              raise SystemExit('Expected the refining CSS import exactly once')
+          main.write_text(main_source.replace(css_import, '', 1), encoding='utf-8')
+
+          Path('src/features/refining-calculator/refiningCalculator.css').unlink()
+          Path('.github/workflows/one-time-refining-layout.yml').unlink()
+          PY
+
+      - name: Commit finalized source changes
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "fix: finalize refining selector layout"
+          git push origin HEAD:fix/refining-enchantment-visuals
