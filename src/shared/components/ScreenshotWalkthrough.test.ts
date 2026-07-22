@@ -1,16 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   calculateScreenshotCamera,
-  type ScreenshotWalkthroughStep,
-} from './ScreenshotWalkthrough'
+  type ScreenshotCameraInput,
+} from './screenshotWalkthroughCamera'
 
 function step(
-  highlightArea: ScreenshotWalkthroughStep['highlightArea'],
+  highlightArea: ScreenshotCameraInput['highlightArea'],
   zoom: number,
-): ScreenshotWalkthroughStep {
+): ScreenshotCameraInput {
   return {
-    image: '/example.png',
-    caption: 'Example',
     highlightArea,
     zoom,
   }
