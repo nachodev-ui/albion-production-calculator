@@ -1,0 +1,76 @@
+name: Materialize walkthrough assets
+
+on:
+  push:
+    branches:
+      - feat/screenshot-walkthrough
+    paths:
+      - .github/workflows/materialize-walkthrough-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v6
+        with:
+          ref: feat/screenshot-walkthrough
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Restore original PNG screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$(mktemp --suffix=.tar.gz)"
+          cat .github/asset-parts/screenshots.part-*.b64 | base64 --decode > "$archive"
+          tar -tzf "$archive" | sort > /tmp/walkthrough-assets.txt
+          diff -u <(printf '%s\n' \
+            destiny-board-general-node.png \
+            destiny-board-open.png \
+            destiny-board-progress.png \
+            destiny-board-specific-node.png | sort) /tmp/walkthrough-assets.txt
+          mkdir -p public/assets/ui/destiny-board
+          tar -xzf "$archive" -C public/assets/ui/destiny-board
+          file public/assets/ui/destiny-board/*.png
+          for asset in public/assets/ui/destiny-board/*.png; do
+            test "$(head -c 8 "$asset" | xxd -p)" = "89504e470d0a1a0a"
+          done
+          rm -f public/assets/ui/destiny-board-specialization-guide.gif
+
+      - name: Refresh dependency lockfile
+        run: pnpm install --lockfile-only
+
+      - name: Remove temporary materialization files
+        shell: bash
+        run: |
+          rm -rf .github/asset-parts
+          rm -f .github/workflows/materialize-walkthrough-assets.yml
+
+      - name: Commit binary assets and lockfile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add --all
+          git diff --cached --stat
+          git commit -m "build: add original Destiny Board screenshots"
+          git push origin HEAD:feat/screenshot-walkthrough
