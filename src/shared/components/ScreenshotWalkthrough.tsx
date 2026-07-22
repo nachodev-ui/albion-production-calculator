@@ -6,6 +6,7 @@ import {
   m,
   useReducedMotion,
 } from 'framer-motion'
+import { calculateScreenshotCamera } from './screenshotWalkthroughCamera'
 
 export interface ScreenshotHighlightArea {
   readonly x: number
@@ -22,6 +23,7 @@ export interface ScreenshotWalkthroughStep {
   readonly alt?: string
   readonly aspectRatio?: number
   readonly zoom?: number
+  readonly maxWidth?: number
 }
 
 interface ScreenshotWalkthroughProps {
@@ -35,17 +37,6 @@ const DEFAULT_INTERVAL_MS = 6500
 
 function wrapIndex(index: number, length: number): number {
   return ((index % length) + length) % length
-}
-
-function getZoom(step: ScreenshotWalkthroughStep): number {
-  if (step.zoom) return step.zoom
-
-  const largestDimension = Math.max(
-    step.highlightArea.width,
-    step.highlightArea.height,
-  )
-
-  return Math.min(2.9, Math.max(1.18, 74 / largestDimension))
 }
 
 export function ScreenshotWalkthrough({
@@ -88,26 +79,32 @@ export function ScreenshotWalkthrough({
     const interval = window.setInterval(() => {
       setDirection(1)
       setActiveIndex((current) => wrapIndex(current + 1, steps.length))
-    }, Math.max(2500, intervalMs))
+    }, Math.max(3000, intervalMs))
 
     return () => window.clearInterval(interval)
   }, [cycleVersion, intervalMs, isPlaying, steps.length])
 
-  const camera = useMemo(() => {
-    if (!activeStep) return { originX: 50, originY: 50, zoom: 1 }
-
-    return {
-      originX:
-        activeStep.highlightArea.x + activeStep.highlightArea.width / 2,
-      originY:
-        activeStep.highlightArea.y + activeStep.highlightArea.height / 2,
-      zoom: getZoom(activeStep),
+  useEffect(() => {
+    for (const step of steps) {
+      const image = new Image()
+      image.src = step.image
     }
-  }, [activeStep])
+  }, [steps])
 
-  if (!activeStep) return null
+  const camera = useMemo(
+    () => (activeStep ? calculateScreenshotCamera(activeStep) : null),
+    [activeStep],
+  )
+
+  if (!activeStep || !camera) return null
 
   const aspectRatio = activeStep.aspectRatio ?? 16 / 9
+  const maxWidth = activeStep.maxWidth ?? 520
+  const cameraTarget = {
+    x: `${camera.x}%`,
+    y: `${camera.y}%`,
+    scale: camera.zoom,
+  }
 
   return (
     <LazyMotion features={domAnimation} strict>
@@ -142,36 +139,46 @@ export function ScreenshotWalkthrough({
 
         <m.div
           layout
-          transition={{ duration: reduceMotion ? 0 : 0.35, ease: 'easeOut' }}
-          className="relative mx-auto w-full max-w-[480px] overflow-hidden rounded-lg border border-border bg-black/30"
-          style={{ aspectRatio }}
+          transition={{ duration: reduceMotion ? 0 : 0.3, ease: 'easeOut' }}
+          className="relative mx-auto w-full overflow-hidden rounded-lg border border-border bg-black/40"
+          style={{ aspectRatio, maxWidth }}
         >
           <AnimatePresence initial={false} mode="wait" custom={direction}>
             <m.div
               key={`${activeIndex}-${activeStep.image}`}
               custom={direction}
-              initial={{ opacity: 0, x: direction > 0 ? 26 : -26 }}
+              initial={{ opacity: 0, x: direction > 0 ? 20 : -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? -26 : 26 }}
-              transition={{ duration: reduceMotion ? 0 : 0.28, ease: 'easeOut' }}
+              exit={{ opacity: 0, x: direction > 0 ? -20 : 20 }}
+              transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
               className="absolute inset-0"
             >
+              <img
+                src={activeStep.image}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-md"
+                draggable={false}
+              />
+
               <m.div
-                initial={{ scale: reduceMotion ? 1 : 1.02 }}
-                animate={{ scale: reduceMotion ? 1 : camera.zoom }}
+                initial={
+                  reduceMotion
+                    ? cameraTarget
+                    : { x: '0%', y: '0%', scale: 1, opacity: 0.88 }
+                }
+                animate={{ ...cameraTarget, opacity: 1 }}
                 transition={{
-                  duration: reduceMotion ? 0 : 0.9,
+                  duration: reduceMotion ? 0 : 0.8,
                   ease: [0.22, 1, 0.36, 1],
                 }}
-                className="absolute inset-0"
-                style={{
-                  transformOrigin: `${camera.originX}% ${camera.originY}%`,
-                }}
+                className="absolute inset-0 will-change-transform"
+                style={{ transformOrigin: '0 0' }}
               >
                 <img
                   src={activeStep.image}
                   alt={activeStep.alt ?? activeStep.caption}
-                  className="block h-full w-full object-cover"
+                  className="block h-full w-full object-contain"
                   draggable={false}
                 />
 
@@ -184,7 +191,7 @@ export function ScreenshotWalkthrough({
                     width: `${activeStep.highlightArea.width}%`,
                     height: `${activeStep.highlightArea.height}%`,
                     boxShadow:
-                      '0 0 0 9999px rgb(20 14 8 / 0.58), 0 0 0 2px rgb(245 190 64 / 0.75)',
+                      '0 0 0 9999px rgb(20 14 8 / 0.58), 0 0 0 2px rgb(245 190 64 / 0.8)',
                   }}
                 >
                   <m.span
@@ -193,8 +200,8 @@ export function ScreenshotWalkthrough({
                       reduceMotion
                         ? { opacity: 1 }
                         : {
-                            opacity: [0.45, 1, 0.45],
-                            scale: [1, 1.045, 1],
+                            opacity: [0.4, 1, 0.4],
+                            scale: [1, 1.035, 1],
                           }
                     }
                     transition={{
@@ -209,7 +216,7 @@ export function ScreenshotWalkthrough({
           </AnimatePresence>
         </m.div>
 
-        <div className="mt-3 min-h-[86px]">
+        <div className="mt-3 min-h-[92px]">
           <AnimatePresence initial={false} mode="wait">
             <m.div
               key={`caption-${activeIndex}`}
