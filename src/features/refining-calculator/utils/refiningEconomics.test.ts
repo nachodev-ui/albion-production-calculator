@@ -42,12 +42,14 @@ describe('refining game configuration', () => {
   })
 
   it('normalizes stone to the flat .0 refining recipe', () => {
+    const resource = getRefiningResource('rock')
     const recipe = getRefiningRecipe({
       resourceKind: 'rock',
       tier: 5,
       enchantment: 3,
     })
 
+    expect(resource.maximumEnchantment).toBe(0)
     expect(recipe.enchantment).toBe(0)
     expect(recipe.rawItemId).toBe('T5_ROCK')
     expect(recipe.rawEnchantment).toBe(0)
