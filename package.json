@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.21.0",
+    "framer-motion": "^12.42.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "zustand": "^5.0.14"
