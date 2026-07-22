@@ -1,5 +1,6 @@
 import type { AppRoute } from "../../../app/types";
 import { useAccountSession } from "../hooks/useAccountSession";
+import { isComingSoonEntitlement } from "../planCapabilities";
 import {
   accountAccessRequestIsActive,
   currentPlan,
@@ -25,7 +26,7 @@ const ENTITLEMENT_LABELS: Readonly<Record<string, string>> = {
   [ENTITLEMENT_KEYS.optimizerBatchLimit]: "Límite del optimizador",
   [ENTITLEMENT_KEYS.savedConfigurationsMax]: "Presets guardados",
   [ENTITLEMENT_KEYS.exportsCsv]: "Exportación CSV",
-  [ENTITLEMENT_KEYS.marketAlertsMax]: "Alertas de mercado",
+  [ENTITLEMENT_KEYS.marketAlertsMax]: "Cupo de alertas de mercado",
 };
 
 function formatValue(value: boolean | number | string | null): string {
@@ -269,25 +270,36 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {Object.entries(entitlements).map(([key, value]) => (
-              <article
-                key={key}
-                className="rounded-xl border border-border bg-surface-raised p-4"
-              >
-                <p className="text-xs text-text-faint">
-                  {ENTITLEMENT_LABELS[key] ?? key}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-text">
-                  {formatValue(value)}
-                </p>
-              </article>
-            ))}
+            {Object.entries(entitlements).map(([key, value]) => {
+              const comingSoon = isComingSoonEntitlement(key);
+              return (
+                <article
+                  key={key}
+                  className="rounded-xl border border-border bg-surface-raised p-4"
+                >
+                  <p className="text-xs text-text-faint">
+                    {ENTITLEMENT_LABELS[key] ?? key}
+                  </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-text">
+                      {formatValue(value)}
+                    </p>
+                    {comingSoon && (
+                      <span className="rounded-full border border-warning/35 bg-warning-muted px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-warning">
+                        Próximamente
+                      </span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
 
           <p className="mt-5 text-xs leading-relaxed text-text-faint">
             Los permisos se resuelven en la API central. Las asignaciones
             manuales de Pro continúan disponibles para administración y pruebas,
-            aunque no exista una suscripción externa asociada.
+            aunque no exista una suscripción externa asociada. Los cupos marcados
+            como Próximamente todavía no habilitan una herramienta visible.
           </p>
         </section>
       </div>
