@@ -25,56 +25,25 @@ jobs:
           from pathlib import Path
 
           path = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
-          lines = path.read_text().splitlines()
-          component_index = next(
-              index
-              for index, line in enumerate(lines)
-              if line.startswith('export function RefiningCalculatorPage')
+          text = path.read_text()
+          misplaced = (
+              '  function changeEnchantment(nextEnchantment: RefiningEnchantment) {\n'
+              '    resetManualPrices()\n'
+              '    setEnchantment(nextEnchantment)\n'
+              '  }\n\n'
           )
-
-          misplaced_index = next(
-              index
-              for index, line in enumerate(lines[:component_index])
-              if line.strip().startswith('function changeEnchantment(')
+          if misplaced not in text:
+              raise SystemExit('misplaced handler not found')
+          text = text.replace(misplaced, '', 1)
+          tier_start = text.index('  function changeTier(')
+          return_index = text.index('  return (\n', tier_start)
+          handler = (
+              '  function changeEnchantment(nextEnchantment: RefiningEnchantment) {\n'
+              '    resetManualPrices()\n'
+              '    setEnchantment(nextEnchantment)\n'
+              '  }\n\n'
           )
-          end_index = misplaced_index
-          while end_index < len(lines) and lines[end_index].strip() != '}':
-              end_index += 1
-          if end_index >= len(lines):
-              raise SystemExit('misplaced handler has no closing brace')
-          if end_index + 1 < len(lines) and lines[end_index + 1] == '':
-              end_index += 1
-          del lines[misplaced_index : end_index + 1]
-
-          component_index = next(
-              index
-              for index, line in enumerate(lines)
-              if line.startswith('export function RefiningCalculatorPage')
-          )
-          tier_index = next(
-              index
-              for index, line in enumerate(lines[component_index:], component_index)
-              if line.strip().startswith('function changeTier(')
-          )
-          brace_depth = 0
-          tier_end = None
-          for index in range(tier_index, len(lines)):
-              brace_depth += lines[index].count('{') - lines[index].count('}')
-              if index > tier_index and brace_depth == 0:
-                  tier_end = index
-                  break
-          if tier_end is None:
-              raise SystemExit('changeTier has no closing brace')
-
-          handler = [
-              '',
-              '  function changeEnchantment(nextEnchantment: RefiningEnchantment) {',
-              '    resetManualPrices()',
-              '    setEnchantment(nextEnchantment)',
-              '  }',
-          ]
-          lines[tier_end + 1 : tier_end + 1] = handler
-          path.write_text('\n'.join(lines) + '\n')
+          path.write_text(text[:return_index] + handler + text[return_index:])
           PY
       - name: Commit repair
         shell: bash
