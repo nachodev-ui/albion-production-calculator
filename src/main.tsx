@@ -5,6 +5,7 @@ import { CalculationPrintPage } from "@features/craft-calculator/components/summ
 import { CloudPresetSync } from "@features/presets/components/CloudPresetSync";
 import "./index.css";
 import "./print.css";
+import "@features/refining-calculator/refiningCalculator.css";
 import App from "./App.tsx";
 
 const searchParams = new URLSearchParams(window.location.search);
