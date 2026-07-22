@@ -1,6 +1,9 @@
 name: Refining diagnostics
 
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - feat/refining-calculator-mvp
