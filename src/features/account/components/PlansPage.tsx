@@ -1,6 +1,11 @@
 import type { AppRoute } from "../../../app/types";
 import { useAccountSession } from "../hooks/useAccountSession";
 import {
+  FREE_PLAN_CAPABILITIES,
+  PRO_PLAN_CAPABILITIES,
+  type PlanCapability,
+} from "../planCapabilities";
+import {
   currentPlan,
   useAccountAccessStore,
 } from "../store/accountAccessStore";
@@ -11,33 +16,35 @@ interface PlansPageProps {
   readonly onNavigate: (route: AppRoute) => void;
 }
 
-const FREE_FEATURES = [
-  "Hasta 7 días de historial de mercado",
-  "Hasta 3 presets guardados por navegador",
-  "Comparación de precios y rentabilidad base",
-  "Cálculo de retorno, tarifas, fama y progreso",
-] as const;
-
-const PRO_FEATURES = [
-  "Black Market Analytics con rentabilidad, ROI e historial",
-  "Hasta 28 días de historial de mercado",
-  "Optimizador con análisis de liquidez",
-  "Hasta 100 presets guardados",
-  "Exportación CSV habilitada",
-  "Hasta 10 alertas de mercado",
-  "Límites ampliados para análisis en batch",
-] as const;
-
 interface PlanCardProps {
   readonly title: string;
   readonly eyebrow: string;
   readonly description: string;
-  readonly features: readonly string[];
+  readonly features: readonly PlanCapability[];
   readonly active: boolean;
   readonly highlighted?: boolean;
   readonly actionLabel: string;
   readonly disabled?: boolean;
   readonly onAction: () => void;
+}
+
+function AvailabilityBadge({
+  availability,
+}: {
+  readonly availability: PlanCapability["availability"];
+}) {
+  const available = availability === "available";
+  return (
+    <span
+      className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] ${
+        available
+          ? "border-positive/35 bg-positive-muted text-positive"
+          : "border-warning/35 bg-warning-muted text-warning"
+      }`}
+    >
+      {available ? "Disponible" : "Próximamente"}
+    </span>
+  );
 }
 
 function PlanCard({
@@ -81,18 +88,40 @@ function PlanCard({
           {description}
         </p>
 
-        <ul className="mt-6 space-y-3">
-          {features.map((feature) => (
-            <li
-              key={feature}
-              className="flex items-start gap-2.5 text-sm text-text-muted"
-            >
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-positive-muted text-positive">
-                <CheckIcon className="h-3.5 w-3.5" />
-              </span>
-              {feature}
-            </li>
-          ))}
+        <ul className="mt-6 space-y-4">
+          {features.map((feature) => {
+            const available = feature.availability === "available";
+            return (
+              <li key={feature.id} className="flex items-start gap-3">
+                <span
+                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                    available
+                      ? "bg-positive-muted text-positive"
+                      : "border border-warning/35 bg-warning-muted text-warning"
+                  }`}
+                >
+                  {available ? (
+                    <CheckIcon className="h-3.5 w-3.5" />
+                  ) : (
+                    <span className="text-xs font-semibold" aria-hidden="true">
+                      …
+                    </span>
+                  )}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-text">
+                      {feature.label}
+                    </span>
+                    <AvailabilityBadge availability={feature.availability} />
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-text-faint">
+                    {feature.description}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         <button
@@ -177,15 +206,15 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
       <section className="mb-6 rounded-2xl border border-border bg-surface/75 px-6 py-7 text-center sm:px-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-accent-border bg-accent-muted px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
           <SparklesIcon className="h-3.5 w-3.5" />
-          Acceso por entitlements
+          Funciones verificadas
         </span>
         <h2 className="mt-4 font-display text-3xl text-text sm:text-4xl">
-          Compara el acceso Free y Pro
+          Compara lo que puedes usar hoy
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-text-muted">
-          La API central autoriza cada capacidad y Lemon Squeezy administra la
-          suscripción sin almacenar información bancaria en Albion Production
-          Calculator.
+          Cada capacidad indica si ya está disponible o si todavía sigue en
+          desarrollo. Las herramientas marcadas como Próximamente no se presentan
+          como parte utilizable del producto actual.
         </p>
       </section>
 
@@ -208,8 +237,8 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           <PlanCard
             eyebrow="Acceso base"
             title="Free"
-            description="Todas las herramientas esenciales para calcular producción, consultar mercado y guardar una configuración básica."
-            features={FREE_FEATURES}
+            description="Herramientas esenciales para calcular producción, consultar mercado y sincronizar una biblioteca pequeña de configuraciones."
+            features={FREE_PLAN_CAPABILITIES}
             active={plan === "free"}
             actionLabel={
               session.isAuthenticated ? "Ver mi cuenta" : "Comenzar con Free"
@@ -219,8 +248,8 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           <PlanCard
             eyebrow="USD 4,99 al mes"
             title="Pro"
-            description="Mayor profundidad histórica y herramientas avanzadas para analizar liquidez, rutas hacia el Black Market y administrar más configuraciones."
-            features={PRO_FEATURES}
+            description="Análisis avanzado del Black Market, mayor profundidad histórica, biblioteca ampliada y planificación de lotes. Las alertas se mantienen separadas hasta que estén operativas."
+            features={PRO_PLAN_CAPABILITIES}
             active={isPro}
             highlighted
             actionLabel={proActionLabel()}
@@ -229,17 +258,6 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
           />
         </div>
       )}
-
-      <section className="mt-6 rounded-xl border border-border bg-surface p-5">
-        <h3 className="text-sm font-semibold text-text">
-          Facturación sandbox protegida
-        </h3>
-        <p className="mt-2 text-xs leading-relaxed text-text-faint">
-          El checkout permanece oculto en producción hasta activar la bandera de
-          facturación y configurar las credenciales externas. Las cuentas con Pro
-          manual continúan funcionando sin depender del proveedor de pago.
-        </p>
-      </section>
     </div>
   );
 }
