@@ -35,7 +35,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          ref: fix/refining-icon-loading-perception
+          ref: fix/refining-icon-loading-perception-v2
 
       - name: Apply one-time refining loading UX patch
         shell: bash
@@ -77,7 +77,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "fix: decouple refining icons from market loading"
-          git push origin HEAD:fix/refining-icon-loading-perception
+          git push origin HEAD:fix/refining-icon-loading-perception-v2
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
