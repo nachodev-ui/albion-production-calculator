@@ -14,107 +14,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  materialize-walkthrough:
-    name: Finalize walkthrough assets
-    if: github.event_name == 'pull_request' && github.head_ref == 'feat/screenshot-walkthrough'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Checkout feature branch
-        uses: actions/checkout@v6
-        with:
-          ref: feat/screenshot-walkthrough
-          fetch-depth: 0
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-          run_install: false
-
-      - name: Configure Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Restore original PNG screenshots
-        shell: bash
-        run: |
-          set -euo pipefail
-          archive="$(mktemp --suffix=.tar.gz)"
-          cat \
-            .github/asset-parts/screenshots.part-00.b64 \
-            .github/asset-parts/screenshots.part-01.b64 \
-            .github/asset-parts/screenshots.part-02-00.b64 \
-            .github/asset-parts/screenshots.part-02-01-00.b64 \
-            .github/asset-parts/screenshots.part-02-01-01.b64 \
-            .github/asset-parts/screenshots.part-02-01-02.b64 \
-            .github/asset-parts/screenshots.part-02-01-03.b64 \
-            .github/asset-parts/screenshots.part-02-01-04.b64 \
-            .github/asset-parts/screenshots.part-02-01-05.b64 \
-            .github/asset-parts/screenshots.part-02-01-06.b64 \
-            .github/asset-parts/screenshots.part-02-02.b64 \
-            .github/asset-parts/screenshots.part-02-03.b64 \
-            .github/asset-parts/screenshots.part-03-00.b64 \
-            .github/asset-parts/screenshots.part-03-01.b64 \
-            .github/asset-parts/screenshots.part-03-02-00.b64 \
-            .github/asset-parts/screenshots.part-03-02-01.b64 \
-            .github/asset-parts/screenshots.part-03-02-02.b64 \
-            .github/asset-parts/screenshots.part-03-02-03.b64 \
-            .github/asset-parts/screenshots.part-03-02-04.b64 \
-            .github/asset-parts/screenshots.part-03-02-05.b64 \
-            .github/asset-parts/screenshots.part-03-02-06.b64 \
-            .github/asset-parts/screenshots.part-03-03.b64 \
-            .github/asset-parts/screenshots.part-04.b64 \
-            .github/asset-parts/screenshots.part-05.b64 \
-            | base64 --decode > "$archive"
-          tar -tzf "$archive" | sort > /tmp/walkthrough-assets.txt
-          diff -u <(printf '%s\n' \
-            destiny-board-general-node.png \
-            destiny-board-open.png \
-            destiny-board-progress.png \
-            destiny-board-specific-node.png | sort) /tmp/walkthrough-assets.txt
-          mkdir -p public/assets/ui/destiny-board
-          tar -xzf "$archive" -C public/assets/ui/destiny-board
-          for asset in public/assets/ui/destiny-board/*.png; do
-            test "$(head -c 8 "$asset" | xxd -p)" = "89504e470d0a1a0a"
-          done
-          rm -f public/assets/ui/destiny-board-specialization-guide.gif
-
-      - name: Refresh dependency lockfile
-        run: pnpm install --lockfile-only
-
-      - name: Remove temporary files and restore CI
-        shell: bash
-        run: |
-          rm -rf .github/asset-parts
-          rm -f .github/workflows/materialize-walkthrough-assets.yml
-          git fetch origin develop
-          git checkout origin/develop -- .github/workflows/ci.yml
-
-      - name: Commit finalized feature
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add --all
-          git diff --cached --stat
-          git commit -m "build: add original Destiny Board screenshots"
-          git push origin HEAD:feat/screenshot-walkthrough
-
   quality:
     name: Quality checks
-    needs: materialize-walkthrough
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -126,8 +34,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: feat/screenshot-walkthrough
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
