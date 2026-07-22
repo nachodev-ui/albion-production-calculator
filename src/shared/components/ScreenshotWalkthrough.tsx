@@ -6,6 +6,7 @@ import {
   m,
   useReducedMotion,
 } from 'framer-motion'
+import { calculateScreenshotCamera } from './screenshotWalkthroughCamera'
 
 export interface ScreenshotHighlightArea {
   readonly x: number
@@ -32,48 +33,10 @@ interface ScreenshotWalkthroughProps {
   readonly className?: string
 }
 
-export interface ScreenshotCameraTransform {
-  readonly x: number
-  readonly y: number
-  readonly zoom: number
-}
-
 const DEFAULT_INTERVAL_MS = 6500
-const MIN_FOREGROUND_COVERAGE = 80
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(maximum, Math.max(minimum, value))
-}
 
 function wrapIndex(index: number, length: number): number {
   return ((index % length) + length) % length
-}
-
-function getZoom(step: ScreenshotWalkthroughStep): number {
-  if (step.zoom) return step.zoom
-
-  const largestDimension = Math.max(
-    step.highlightArea.width,
-    step.highlightArea.height,
-  )
-
-  return Math.min(1.7, Math.max(1.08, 56 / largestDimension))
-}
-
-export function calculateScreenshotCamera(
-  step: ScreenshotWalkthroughStep,
-): ScreenshotCameraTransform {
-  const zoom = getZoom(step)
-  const centerX = step.highlightArea.x + step.highlightArea.width / 2
-  const centerY = step.highlightArea.y + step.highlightArea.height / 2
-  const minimumTranslation = MIN_FOREGROUND_COVERAGE - 100 * zoom
-  const maximumTranslation = 100 - MIN_FOREGROUND_COVERAGE
-
-  return {
-    x: clamp(50 - centerX * zoom, minimumTranslation, maximumTranslation),
-    y: clamp(50 - centerY * zoom, minimumTranslation, maximumTranslation),
-    zoom,
-  }
 }
 
 export function ScreenshotWalkthrough({
