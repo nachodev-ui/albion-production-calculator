@@ -1,8 +1,6 @@
 import { calculateEffectiveFocusCost } from '@core/domain/entities/ProductionEconomy'
 import type { SavedCalculation } from '@features/account/api/savedDataApi'
 
-const SETUP_FEE_RATE = 0.025
-
 export type EconomicServer = 'americas' | 'europe' | 'asia'
 
 export type EconomicCity =
@@ -85,7 +83,7 @@ export const SPECIALIZATION_BRANCHES: readonly SpecializationBranchOption[] = [
 ]
 
 const SPECIALIZATION_MATCHER =
-  /(bolsa)|(capa)|(merc|caz|ases|acech|espect|demonio|tenac)|(sold|caball|guardian|tumba|demoniaco|juram|valor)|(erud|cler|mago|druid|infer|sect|pureza)|(pico|hacha de lenador|hoz|desuello|piedra)|(espada|claymore)|(hacha)|(maza)|(martillo)|(lanza|pica)|(arco)|(ballesta)|(daga|garras)|(baston doble|grailseeker)|(fuego)|(escarcha)|(arcano)|(sagrado)|(naturaleza)|(maldito)|(cambiaformas|prowling|primal)|(escudo|libro|tomo|orbe|antorcha)/
+  /(bolsa)|(capa)|(merc|caz|ases|acech|espect|demonio|tenac)|(sold|caball|guard|tumba|demoniac|juram|valor)|(erud|cler|mago|druid|infer|sect|pure)|(pico|hacha de lenador|hoz|desuello|martillo de piedra)|(espada|mandoble)|(hacha)|(maza)|(martillo)|(lanza|pica)|(arco)|(ballesta)|(daga|garras)|(baston doble)|(fuego)|(escarcha)|(arcano)|(sagrado)|(naturaleza)|(maldito)|(cambiaformas)|(escudo|libro|tomo|orbe|antorcha)/
 
 export const DEFAULT_ECONOMIC_PROFILE: EconomicProfileInput = {
   server: 'americas',
@@ -136,11 +134,8 @@ export function buildFocusRecommendations(
       specialization,
     ]),
   )
-  const taxRate = Math.min(0.99, Math.max(0, profile.salesTaxRate / 100))
-  const transportCost =
-    Number.isFinite(profile.transportCost) && profile.transportCost > 0
-      ? profile.transportCost
-      : 0
+  const feeRate = Math.min(0.99, profile.salesTaxRate / 100 + 0.025)
+  const transportCost = Math.max(0, profile.transportCost)
 
   return calculations
     .flatMap((calculation): readonly FocusRecommendation[] => {
@@ -177,7 +172,6 @@ export function buildFocusRecommendations(
       if (totalFocusRequired <= 0) return []
 
       const grossRevenue = snapshot.unitSellPrice * snapshot.quantity
-      const feeRate = Math.min(0.99, taxRate + SETUP_FEE_RATE)
       const netRevenue = grossRevenue * (1 - feeRate)
       const estimatedProfit = netRevenue - snapshot.totalCost - transportCost
       const profitPer10kFocus = (estimatedProfit / totalFocusRequired) * 10_000
