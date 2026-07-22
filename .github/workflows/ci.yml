@@ -390,3 +390,5 @@ jobs:
           name: production-bundle-report
           path: artifacts/performance/production-bundle-report.json
           if-no-files-found: ignore
+
+# one-time workflow trigger
