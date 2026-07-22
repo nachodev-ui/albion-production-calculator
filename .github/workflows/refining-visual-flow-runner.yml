@@ -1,0 +1,37 @@
+name: Refining visual flow runner
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  run-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/refining-visual-flow
+      - name: Extract and execute visual patch
+        shell: bash
+        run: |
+          awk '
+            /^        run: \|$/ && !found { found=1; capture=1; next }
+            /^      - name: Commit visual flow$/ { capture=0 }
+            capture { sub(/^          /, ""); print }
+          ' .github/workflows/refining-visual-flow-patch.yml > /tmp/refining-visual-patch.sh
+          bash /tmp/refining-visual-patch.sh
+      - name: Commit visual flow
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/features/refining-calculator/components/RefiningCalculatorPage.tsx
+          git commit -m 'feat(refining): add visual sequential workflow'
+          git push origin HEAD:feat/refining-visual-flow
