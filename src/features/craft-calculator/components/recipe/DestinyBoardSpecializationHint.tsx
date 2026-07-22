@@ -14,9 +14,9 @@ const ScreenshotWalkthrough = lazy(async () => {
 const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   {
     image: '/assets/ui/destiny-board/destiny-board-open.png',
-    aspectRatio: 720 / 300,
-    zoom: 2.9,
-    highlightArea: { x: 97.5, y: 17.7, width: 2.3, height: 6.2 },
+    aspectRatio: 400 / 200,
+    zoom: 2.5,
+    highlightArea: { x: 93, y: 28, width: 6, height: 15 },
     title: '1. Abre el Destiny Board',
     caption:
       'Presiona B dentro del juego. También puedes usar el icono resaltado del menú derecho para abrir la misma tabla.',
@@ -24,7 +24,7 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-general-node.png',
-    aspectRatio: 420 / 467,
+    aspectRatio: 280 / 311,
     zoom: 1.75,
     highlightArea: { x: 58, y: 8, width: 39.5, height: 23.5 },
     title: '2. Revisa el nodo general de la familia',
@@ -34,7 +34,7 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
-    aspectRatio: 420 / 466,
+    aspectRatio: 280 / 311,
     zoom: 1.65,
     highlightArea: { x: 2.8, y: 1.5, width: 53.5, height: 18 },
     title: '3. Abre el nodo específico del objeto',
@@ -44,7 +44,7 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-specific-node.png',
-    aspectRatio: 420 / 466,
+    aspectRatio: 280 / 311,
     zoom: 1.75,
     highlightArea: { x: 57.8, y: 8.5, width: 40, height: 27 },
     title: '4. Suma los bonos general y específico',
@@ -54,7 +54,7 @@ const DESTINY_BOARD_STEPS: readonly ScreenshotWalkthroughStep[] = [
   },
   {
     image: '/assets/ui/destiny-board/destiny-board-progress.png',
-    aspectRatio: 283 / 106,
+    aspectRatio: 240 / 90,
     zoom: 1.65,
     highlightArea: { x: 2, y: 39, width: 95, height: 40 },
     title: '5. Completa la proyección de especialización',
