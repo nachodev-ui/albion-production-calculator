@@ -79,12 +79,10 @@ function PublicProfileLinker({
             Vincula tu personaje
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-text-muted">
-            Busca tu personaje para mostrar su avatar, estadísticas PvP,
-            equipamiento reciente y el detalle visual de sus enfrentamientos.
+            Busca tu personaje para ver su actividad pública.
           </p>
           <p className="mt-2 text-xs text-text-faint">
-            La vinculación usa información pública y no demuestra propiedad del
-            personaje. No modifica ni valida tu perfil económico privado.
+            La vinculación pública no verifica propiedad ni modifica tu perfil económico.
           </p>
           <form
             className="mt-6 grid gap-3 sm:grid-cols-[180px_minmax(0,1fr)_auto]"

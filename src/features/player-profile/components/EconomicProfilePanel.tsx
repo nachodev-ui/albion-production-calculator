@@ -35,9 +35,6 @@ const silverFormatter = new Intl.NumberFormat('es-CL', {
   maximumFractionDigits: 0,
 })
 
-const numberFormatter = new Intl.NumberFormat('es-CL', {
-  maximumFractionDigits: 1,
-})
 
 function formatSilver(value: number): string {
   const sign = value > 0 ? '+' : value < 0 ? '-' : ''
@@ -503,9 +500,6 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
                         <p className="text-sm font-semibold text-text">
                           {specialization.branchName}
                         </p>
-                        <p className="mt-1 text-[11px] text-text-faint">
-                          Datos declarados por ti; no verificados por el personaje público.
-                        </p>
                       </div>
                       <label className="space-y-1 text-[11px] font-medium text-text-muted">
                         Nivel
@@ -564,16 +558,13 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
               Beneficio por 10.000 de foco
             </h3>
             <p className="mt-2 text-xs leading-relaxed text-text-faint">
-              Se recalcula desde tus capturas guardadas, usando el precio de venta,
-              el costo neto, tu eficiencia actual, {numberFormatter.format(form.salesTaxRate)}%
-              de impuesto y {silverFormatter.format(form.transportCost)} de transporte por lote.
+              Usa tus cálculos guardados, impuesto y transporte.
             </p>
 
             {recommendations.length === 0 ? (
               <div className="mt-5 rounded-xl border border-dashed border-border p-4 text-sm text-text-muted">
                 <p>
-                  No hay cálculos compatibles todavía. Guarda cálculos completos con
-                  foco y precio de venta para las ramas configuradas.
+                  Guarda un cálculo completo con foco y precio de venta.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
