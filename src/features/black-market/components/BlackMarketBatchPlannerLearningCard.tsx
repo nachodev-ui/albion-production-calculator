@@ -1,6 +1,4 @@
-interface BlackMarketBatchPlannerLearningCardProps {
-  readonly onStartTutorial: () => void;
-}
+import { useRef } from "react";
 
 const QUICK_STEPS = [
   {
@@ -44,12 +42,17 @@ const GLOSSARY = [
   },
 ] as const;
 
-export function BlackMarketBatchPlannerLearningCard({
-  onStartTutorial,
-}: BlackMarketBatchPlannerLearningCardProps) {
+export function BlackMarketBatchPlannerLearningCard() {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  function openQuickGuide() {
+    if (!detailsRef.current) return;
+    detailsRef.current.open = true;
+    detailsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <section
-      data-tutorial="batch-intro"
       className="mt-5 overflow-hidden rounded-2xl border border-accent-border/55 bg-accent-muted/20"
       aria-labelledby="batch-learning-title"
     >
@@ -74,10 +77,10 @@ export function BlackMarketBatchPlannerLearningCard({
         <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
           <button
             type="button"
-            onClick={onStartTutorial}
+            onClick={openQuickGuide}
             className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border"
           >
-            Iniciar tutorial interactivo
+            Ver guía paso a paso
           </button>
           <a
             href="/guias/planificador-batch-lista-compra-albion-online"
@@ -88,7 +91,10 @@ export function BlackMarketBatchPlannerLearningCard({
         </div>
       </div>
 
-      <details className="group border-t border-accent-border/35 bg-surface/45">
+      <details
+        ref={detailsRef}
+        className="group scroll-mt-6 border-t border-accent-border/35 bg-surface/45"
+      >
         <summary className="cursor-pointer list-none px-5 py-3 text-sm font-semibold text-text marker:hidden sm:px-6">
           <span className="flex items-center justify-between gap-3">
             Ver explicación rápida de campos y resultados
