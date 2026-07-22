@@ -153,7 +153,7 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
     ) {
       // Mantiene el selector apuntando a una rama disponible.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDraftBranchKey(unusedBranches[0].key)
+      setDraftBranchKey(unusedBranches[0]?.key ?? '')
     }
   }, [draftBranchKey, unusedBranches])
 
