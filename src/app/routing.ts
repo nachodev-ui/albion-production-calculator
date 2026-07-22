@@ -15,8 +15,6 @@ const ROUTE_PATHS: Readonly<Record<AppRoute, string>> = {
   "guide-resource-return-rate":
     "/guias/retorno-materiales-rrr-albion-online",
   "guide-black-market-profit": "/guias/black-market-caerleon-rentable",
-  "guide-batch-planner":
-    "/guias/planificador-batch-lista-compra-albion-online",
 };
 
 function currentPathname(): string {
@@ -33,6 +31,7 @@ export function routeFromPathname(pathname: string): AppRoute {
       return "presets";
     case "/guias":
     case "/estado-datos":
+    case "/guias/planificador-batch-lista-compra-albion-online":
       return "guides";
     case "/plans":
       return "plans";
@@ -48,8 +47,6 @@ export function routeFromPathname(pathname: string): AppRoute {
       return "guide-resource-return-rate";
     case "/guias/black-market-caerleon-rentable":
       return "guide-black-market-profit";
-    case "/guias/planificador-batch-lista-compra-albion-online":
-      return "guide-batch-planner";
     case "/crafting":
     case "/":
     default:
