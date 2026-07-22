@@ -51,7 +51,20 @@ jobs:
         run: |
           set -euo pipefail
           archive="$(mktemp --suffix=.tar.gz)"
-          cat .github/asset-parts/screenshots.part-*.b64 | base64 --decode > "$archive"
+          cat \
+            .github/asset-parts/screenshots.part-00.b64 \
+            .github/asset-parts/screenshots.part-01.b64 \
+            .github/asset-parts/screenshots.part-02-00.b64 \
+            .github/asset-parts/screenshots.part-02-01.b64 \
+            .github/asset-parts/screenshots.part-02-02.b64 \
+            .github/asset-parts/screenshots.part-02-03.b64 \
+            .github/asset-parts/screenshots.part-03-00.b64 \
+            .github/asset-parts/screenshots.part-03-01.b64 \
+            .github/asset-parts/screenshots.part-03-02.b64 \
+            .github/asset-parts/screenshots.part-03-03.b64 \
+            .github/asset-parts/screenshots.part-04.b64 \
+            .github/asset-parts/screenshots.part-05.b64 \
+            | base64 --decode > "$archive"
           tar -tzf "$archive" | sort > /tmp/walkthrough-assets.txt
           diff -u <(printf '%s\n' \
             destiny-board-general-node.png \
