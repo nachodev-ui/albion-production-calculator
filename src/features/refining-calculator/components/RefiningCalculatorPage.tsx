@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { buildItemIconUrl } from '@core/domain/entities/Item'
+import { buildItemIconUrl, type BaseItemId } from '@core/domain/entities/Item'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
 import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
 import {
@@ -192,6 +192,71 @@ function PriceField({
         className={INPUT_CLASS}
       />
     </Field>
+  )
+}
+
+function VisualRecipeChoice({
+  label,
+  detail,
+  rawItemId,
+  rawEnchantment,
+  outputItemId,
+  outputEnchantment,
+  selected,
+  dense = false,
+  onClick,
+}: {
+  readonly label: string
+  readonly detail?: string
+  readonly rawItemId: BaseItemId
+  readonly rawEnchantment: RefiningEnchantment
+  readonly outputItemId: BaseItemId
+  readonly outputEnchantment: RefiningEnchantment
+  readonly selected: boolean
+  readonly dense?: boolean
+  readonly onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`group rounded-xl border text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-border ${
+        selected
+          ? 'border-accent-border bg-accent-muted/40 shadow-[0_0_0_1px_rgba(245,158,11,0.12)]'
+          : 'border-border bg-surface-raised hover:border-border-strong hover:bg-surface'
+      } ${dense ? 'p-2.5' : 'p-3.5'}`}
+    >
+      <span className="flex items-center justify-center gap-1.5">
+        <img
+          src={buildItemIconUrl(rawItemId, rawEnchantment, dense ? 64 : 80)}
+          alt=""
+          className={`${dense ? 'h-10 w-10' : 'h-14 w-14'} rounded-lg bg-bg/45 object-contain transition-transform group-hover:scale-105`}
+        />
+        <span className="text-xs text-text-faint">→</span>
+        <img
+          src={buildItemIconUrl(
+            outputItemId,
+            outputEnchantment,
+            dense ? 64 : 80,
+          )}
+          alt=""
+          className={`${dense ? 'h-10 w-10' : 'h-14 w-14'} rounded-lg bg-bg/45 object-contain transition-transform group-hover:scale-105`}
+        />
+      </span>
+      <span
+        className={`mt-2 block text-center font-semibold ${
+          dense ? 'text-xs' : 'text-sm'
+        } ${selected ? 'text-accent' : 'text-text'}`}
+      >
+        {label}
+      </span>
+      {detail && (
+        <span className="mt-1 block text-center text-[10px] leading-relaxed text-text-faint">
+          {detail}
+        </span>
+      )}
+    </button>
   )
 }
 
@@ -490,10 +555,22 @@ export function RefiningCalculatorPage({
               Convierte retorno, foco y tarifas en una decisión de refinamiento
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted">
-              Calcula ambos escenarios con la misma receta y precios. El bono de
-              ciudad se detecta automáticamente; la especialización personal no
-              aumenta el retorno, sino que reduce el foco necesario.
+              Sigue el flujo de una operación real: define qué refinar, revisa la
+              mecánica, decide dónde comprar y vender, agrega los costos y compara el
+              resultado con o sin foco.
             </p>
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Flujo de cálculo">
+              {['1 · Operación', '2 · Mecánica', '3 · Mercado', '4 · Costos', '5 · Resultado'].map(
+                (step) => (
+                  <span
+                    key={step}
+                    className="rounded-full border border-border bg-surface/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-text-muted"
+                  >
+                    {step}
+                  </span>
+                ),
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-4 rounded-xl border border-border bg-surface/70 p-3">
             <img
@@ -515,77 +592,140 @@ export function RefiningCalculatorPage({
         </div>
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="space-y-5">
         <div className="space-y-5">
-          <Panel eyebrow="Operación" title="Recurso, tier, ciudad y lote">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Tipo de recurso">
-                <select
-                  value={resourceKind}
-                  onChange={(event) =>
-                    changeResource(event.target.value as RefiningResourceKind)
-                  }
-                  className={INPUT_CLASS}
+                    <Panel eyebrow="1 · Operación" title="Elige el recurso y el lote">
+            <div>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-medium text-text-muted">Tipo de recurso</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
+                    Las tarjetas usan los iconos oficiales del tier y encantamiento activos.
+                  </p>
+                </div>
+                <p className="text-[11px] text-text-faint">
+                  Seleccionado: <strong className="text-text">{resource.label}</strong>
+                </p>
+              </div>
+              <div
+                className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
+                role="group"
+                aria-label="Tipo de recurso"
+              >
+                {REFINING_RESOURCES.map((candidate) => {
+                  const candidateEnchantment = normalizeRefiningEnchantment(
+                    candidate,
+                    tier,
+                    enchantment,
+                  )
+                  const candidateRecipe = getRefiningRecipe({
+                    resourceKind: candidate.kind,
+                    tier,
+                    enchantment: candidateEnchantment,
+                  })
+                  return (
+                    <VisualRecipeChoice
+                      key={candidate.kind}
+                      label={candidate.label}
+                      detail={`T${tier}.${candidateEnchantment}`}
+                      rawItemId={candidateRecipe.rawItemId}
+                      rawEnchantment={candidateRecipe.rawEnchantment}
+                      outputItemId={candidateRecipe.outputItemId}
+                      outputEnchantment={candidateRecipe.outputEnchantment}
+                      selected={candidate.kind === resourceKind}
+                      onClick={() => changeResource(candidate.kind)}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+              <div>
+                <p className="text-xs font-medium text-text-muted">Tier</p>
+                <div
+                  className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7"
+                  role="group"
+                  aria-label="Tier del recurso"
                 >
-                  {REFINING_RESOURCES.map((candidate) => (
-                    <option key={candidate.kind} value={candidate.kind}>
-                      {candidate.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label="Tier">
-                <select
-                  value={tier}
-                  onChange={(event) =>
-                    changeTier(Number(event.target.value) as RefiningTier)
-                  }
-                  className={INPUT_CLASS}
-                >
-                  {REFINING_TIERS.map((candidate) => (
-                    <option key={candidate} value={candidate}>
-                      T{candidate}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field
-                label="Encantamiento"
-                hint={
-                  resourceKind === 'rock'
-                    ? 'La roca encantada produce 2×, 4× u 8× bloques normales.'
+                  {REFINING_TIERS.map((candidate) => {
+                    const candidateEnchantment = normalizeRefiningEnchantment(
+                      resource,
+                      candidate,
+                      enchantment,
+                    )
+                    const candidateRecipe = getRefiningRecipe({
+                      resourceKind,
+                      tier: candidate,
+                      enchantment: candidateEnchantment,
+                    })
+                    return (
+                      <VisualRecipeChoice
+                        key={candidate}
+                        label={`T${candidate}`}
+                        detail={`.${candidateEnchantment}`}
+                        rawItemId={candidateRecipe.rawItemId}
+                        rawEnchantment={candidateRecipe.rawEnchantment}
+                        outputItemId={candidateRecipe.outputItemId}
+                        outputEnchantment={candidateRecipe.outputEnchantment}
+                        selected={candidate === tier}
+                        dense
+                        onClick={() => changeTier(candidate)}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-text-muted">Encantamiento</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
+                  {resourceKind === 'rock'
+                    ? 'La roca encantada produce múltiples bloques normales por tirada.'
                     : tier === 4
                       ? 'T4 encantado utiliza refinado T3 normal.'
-                      : 'El refinado previo conserva el encantamiento desde T5.'
-                }
-              >
-                <select
-                  value={enchantment}
-                  onChange={(event) =>
-                    changeEnchantment(
-                      Number(event.target.value) as RefiningEnchantment,
-                    )
-                  }
-                  className={INPUT_CLASS}
+                      : 'Desde T5, el refinado previo conserva el encantamiento.'}
+                </p>
+                <div
+                  className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5"
+                  role="group"
+                  aria-label="Encantamiento del recurso"
                 >
                   {REFINING_ENCHANTMENTS.filter(
                     (candidate) => candidate <= maximumEnchantment,
-                  ).map((candidate) => (
-                    <option key={candidate} value={candidate}>
-                      .{candidate}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+                  ).map((candidate) => {
+                    const candidateRecipe = getRefiningRecipe({
+                      resourceKind,
+                      tier,
+                      enchantment: candidate,
+                    })
+                    return (
+                      <VisualRecipeChoice
+                        key={candidate}
+                        label={`.${candidate}`}
+                        detail={candidate === 0 ? 'Normal' : `Nivel ${candidate}`}
+                        rawItemId={candidateRecipe.rawItemId}
+                        rawEnchantment={candidateRecipe.rawEnchantment}
+                        outputItemId={candidateRecipe.outputItemId}
+                        outputEnchantment={candidateRecipe.outputEnchantment}
+                        selected={candidate === enchantment}
+                        dense
+                        onClick={() => changeEnchantment(candidate)}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
               <Field
                 label="Ciudad de refinamiento"
                 hint={`Especialidad recomendada: ${REFINING_CITY_LABELS[resource.specialtyCity]}`}
               >
                 <select
                   value={city}
-                  onChange={(event) =>
-                    setCity(event.target.value as RefiningCityId)
-                  }
+                  onChange={(event) => setCity(event.target.value as RefiningCityId)}
                   className={INPUT_CLASS}
                 >
                   {REFINING_CITIES.map((candidate) => (
@@ -629,18 +769,125 @@ export function RefiningCalculatorPage({
               </Field>
             </div>
 
-            <div className="mt-5 rounded-xl border border-border bg-surface-raised p-4 text-xs leading-relaxed text-text-muted">
-              <strong className="text-text">Receta por tirada:</strong>{' '}
-              {recipe.rawPerCraft} × {rawName}
-              {recipe.previousRefinedItemId
-                ? ` + ${recipe.previousRefinedPerCraft} × ${previousName}`
-                : ''}{' '}
-              → {recipe.outputPerCraft} × {outputName}.
+            <div className="mt-6 rounded-2xl border border-border bg-surface-raised p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-text-faint">
+                Receta por tirada
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-border bg-surface p-3">
+                  <img
+                    src={buildItemIconUrl(recipe.rawItemId, recipe.rawEnchantment, 96)}
+                    alt=""
+                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  />
+                  <div>
+                    <p className="text-lg font-semibold tabular text-text">{recipe.rawPerCraft}×</p>
+                    <p className="text-xs text-text-muted">{rawName}</p>
+                  </div>
+                </article>
+                {recipe.previousRefinedItemId && (
+                  <>
+                    <span className="text-lg text-text-faint">+</span>
+                    <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-border bg-surface p-3">
+                      <img
+                        src={buildItemIconUrl(
+                          recipe.previousRefinedItemId,
+                          recipe.previousRefinedEnchantment,
+                          96,
+                        )}
+                        alt=""
+                        className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                      />
+                      <div>
+                        <p className="text-lg font-semibold tabular text-text">
+                          {recipe.previousRefinedPerCraft}×
+                        </p>
+                        <p className="text-xs text-text-muted">{previousName}</p>
+                      </div>
+                    </article>
+                  </>
+                )}
+                <span className="text-xl text-text-faint">→</span>
+                <article className="flex min-w-[9rem] items-center gap-3 rounded-xl border border-accent-border bg-accent-muted/25 p-3">
+                  <img
+                    src={buildItemIconUrl(
+                      recipe.outputItemId,
+                      recipe.outputEnchantment,
+                      96,
+                    )}
+                    alt=""
+                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  />
+                  <div>
+                    <p className="text-lg font-semibold tabular text-accent">
+                      {recipe.outputPerCraft}×
+                    </p>
+                    <p className="text-xs text-text-muted">{outputName}</p>
+                  </div>
+                </article>
+              </div>
             </div>
           </Panel>
 
-          <Panel eyebrow="Mercado" title="Precios de compra y venta">
-            <div className="grid gap-4 sm:grid-cols-2">
+                    <Panel eyebrow="2 · Mecánica" title="Materiales y retorno esperado">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <Metric
+                label="Recurso bruto necesario"
+                value={`${formatQuantity(calculation.grossRawRequired)} × ${rawName}`}
+                detail={`${calculation.craftsNeeded} tiradas`}
+              />
+              <Metric
+                label="Refinado previo necesario"
+                value={
+                  recipe.previousRefinedItemId
+                    ? `${formatQuantity(calculation.grossPreviousRefinedRequired)} × ${previousName}`
+                    : 'No aplica'
+                }
+              />
+              <Metric
+                label="Producción obtenida"
+                value={`${formatQuantity(calculation.productionObtained)} × ${outputName}`}
+                detail={
+                  calculation.productionObtained !== quantity
+                    ? `Objetivo solicitado: ${formatQuantity(quantity)}`
+                    : undefined
+                }
+              />
+              <Metric
+                label="Especialidad de ciudad"
+                value={
+                  calculation.hasCitySpecialty
+                    ? `Sí · ${REFINING_CITY_LABELS[city]}`
+                    : 'No aplicada'
+                }
+                detail={
+                  calculation.hasCitySpecialty
+                    ? '+40% de bono de producción local'
+                    : `La especialidad está en ${REFINING_CITY_LABELS[resource.specialtyCity]}`
+                }
+                tone={calculation.hasCitySpecialty ? 'positive' : 'warning'}
+              />
+              <Metric
+                label="Retorno sin foco"
+                value={formatPercent(calculation.withoutFocus.returnRate)}
+                detail={`${formatQuantity(calculation.withoutFocus.returnedRaw)} crudo + ${formatQuantity(calculation.withoutFocus.returnedPreviousRefined)} previo`}
+              />
+              <Metric
+                label="Retorno con foco"
+                value={formatPercent(calculation.withFocus.returnRate)}
+                detail={`${formatQuantity(calculation.withFocus.returnedRaw)} crudo + ${formatQuantity(calculation.withFocus.returnedPreviousRefined)} previo`}
+                tone="accent"
+              />
+            </div>
+            <p className="mt-4 text-xs leading-relaxed text-text-faint">
+              Los retornos fraccionarios son valores esperados. Albion redondea cada
+              tanda para aproximar el promedio, por lo que una operación pequeña puede
+              devolver una unidad más o menos.
+            </p>
+          </Panel>
+
+          <Panel eyebrow="3 · Mercado" title="Dónde comprar y dónde vender">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Servidor">
                 <select
                   value={market.config.server}
@@ -656,7 +903,27 @@ export function RefiningCalculatorPage({
                   ))}
                 </select>
               </Field>
-              <Field label="Compra de materiales">
+              <Field
+                label="Ciudad de compra"
+                hint="Mercado donde buscarás el recurso crudo y el refinado previo."
+              >
+                <select
+                  value={market.config.purchaseCity}
+                  onChange={(event) =>
+                    market.setConfig({
+                      purchaseCity: event.target.value as RefiningCityId,
+                    })
+                  }
+                  className={INPUT_CLASS}
+                >
+                  {REFINING_CITIES.map((candidate) => (
+                    <option key={candidate} value={candidate}>
+                      {REFINING_CITY_LABELS[candidate]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Cómo comprar">
                 <select
                   value={market.config.purchaseStrategy}
                   onChange={(event) =>
@@ -673,7 +940,25 @@ export function RefiningCalculatorPage({
                   ))}
                 </select>
               </Field>
-              <Field label="Venta del refinado">
+              <Field
+                label="Ciudad de venta"
+                hint="Mercado donde venderás el recurso refinado terminado."
+              >
+                <select
+                  value={market.config.saleCity}
+                  onChange={(event) =>
+                    market.setConfig({ saleCity: event.target.value as RefiningCityId })
+                  }
+                  className={INPUT_CLASS}
+                >
+                  {REFINING_CITIES.map((candidate) => (
+                    <option key={candidate} value={candidate}>
+                      {REFINING_CITY_LABELS[candidate]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Cómo vender">
                 <select
                   value={market.config.saleStrategy}
                   onChange={(event) =>
@@ -692,7 +977,7 @@ export function RefiningCalculatorPage({
               </Field>
               <Field
                 label="Estado Premium"
-                hint="Premium no cambia el RRR. Aquí solo ajusta el impuesto del mercado; además permite acumular foco en el juego."
+                hint="Premium no cambia el RRR; aquí solo ajusta el impuesto de venta."
               >
                 <select
                   value={isPremium ? 'premium' : 'standard'}
@@ -703,26 +988,91 @@ export function RefiningCalculatorPage({
                   <option value="standard">Sin Premium · impuesto 8%</option>
                 </select>
               </Field>
-              <PriceField
-                label={`Compra: ${rawName}`}
-                manualValue={manualRawPrice}
-                automaticDetail={automaticRawDetail}
-                onChange={setManualRawPrice}
-              />
-              {recipe.previousRefinedItemId && (
-                <PriceField
-                  label={`Compra: ${previousName}`}
-                  manualValue={manualPreviousPrice}
-                  automaticDetail={automaticPreviousDetail}
-                  onChange={setManualPreviousPrice}
-                />
-              )}
-              <PriceField
-                label={`Venta: ${outputName}`}
-                manualValue={manualOutputPrice}
-                automaticDetail={market.automaticSalePriceDetail}
-                onChange={setManualOutputPrice}
-              />
+            </div>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <section className="rounded-2xl border border-border bg-surface-raised p-4 sm:p-5">
+                <div className="flex items-center gap-3 border-b border-border pb-4">
+                  <div className="flex -space-x-3">
+                    <img
+                      src={buildItemIconUrl(recipe.rawItemId, recipe.rawEnchantment, 80)}
+                      alt=""
+                      className="h-14 w-14 rounded-lg border border-border bg-bg/70 object-contain"
+                    />
+                    {recipe.previousRefinedItemId && (
+                      <img
+                        src={buildItemIconUrl(
+                          recipe.previousRefinedItemId,
+                          recipe.previousRefinedEnchantment,
+                          80,
+                        )}
+                        alt=""
+                        className="h-14 w-14 rounded-lg border border-border bg-bg/70 object-contain"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-text-faint">
+                      Compra de materiales
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-text">
+                      {REFINING_CITY_LABELS[market.config.purchaseCity as RefiningCityId]}
+                    </p>
+                    <p className="text-[11px] text-text-faint">
+                      Busca el costo de entrada más bajo antes de refinar.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <PriceField
+                    label={`Compra: ${rawName}`}
+                    manualValue={manualRawPrice}
+                    automaticDetail={automaticRawDetail}
+                    onChange={setManualRawPrice}
+                  />
+                  {recipe.previousRefinedItemId && (
+                    <PriceField
+                      label={`Compra: ${previousName}`}
+                      manualValue={manualPreviousPrice}
+                      automaticDetail={automaticPreviousDetail}
+                      onChange={setManualPreviousPrice}
+                    />
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-accent-border bg-accent-muted/20 p-4 sm:p-5">
+                <div className="flex items-center gap-3 border-b border-accent-border/50 pb-4">
+                  <img
+                    src={buildItemIconUrl(
+                      recipe.outputItemId,
+                      recipe.outputEnchantment,
+                      96,
+                    )}
+                    alt=""
+                    className="h-16 w-16 rounded-lg bg-bg/45 object-contain"
+                  />
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">
+                      Venta del refinado
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-text">
+                      {REFINING_CITY_LABELS[market.config.saleCity as RefiningCityId]}
+                    </p>
+                    <p className="text-[11px] text-text-faint">
+                      Compara el precio final con todos los costos de la operación.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <PriceField
+                    label={`Venta: ${outputName}`}
+                    manualValue={manualOutputPrice}
+                    automaticDetail={market.automaticSalePriceDetail}
+                    onChange={setManualOutputPrice}
+                  />
+                </div>
+              </section>
             </div>
 
             <div className="mt-5 flex flex-col gap-3 rounded-xl border border-border bg-surface-raised p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -744,7 +1094,7 @@ export function RefiningCalculatorPage({
             </div>
           </Panel>
 
-          <Panel eyebrow="Puesto" title="Tarifa y acceso a la estación">
+          <Panel eyebrow="4 · Costos" title="Tarifa y acceso a la estación">
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="Tipo de acceso">
                 <select
@@ -793,7 +1143,7 @@ export function RefiningCalculatorPage({
             </p>
           </Panel>
 
-          <Panel eyebrow="Foco" title="Especialización y costo de oportunidad">
+          <Panel eyebrow="4 · Foco" title="Especialización y costo de oportunidad">
             <div className="grid gap-4 sm:grid-cols-3">
               <Field
                 label={`Especialización T${tier} (0–100)`}
@@ -880,64 +1230,7 @@ export function RefiningCalculatorPage({
             </div>
           )}
 
-          <Panel eyebrow="Mecánica" title="Materiales y retorno esperado">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              <Metric
-                label="Recurso bruto necesario"
-                value={`${formatQuantity(calculation.grossRawRequired)} × ${rawName}`}
-                detail={`${calculation.craftsNeeded} tiradas`}
-              />
-              <Metric
-                label="Refinado previo necesario"
-                value={
-                  recipe.previousRefinedItemId
-                    ? `${formatQuantity(calculation.grossPreviousRefinedRequired)} × ${previousName}`
-                    : 'No aplica'
-                }
-              />
-              <Metric
-                label="Producción obtenida"
-                value={`${formatQuantity(calculation.productionObtained)} × ${outputName}`}
-                detail={
-                  calculation.productionObtained !== quantity
-                    ? `Objetivo solicitado: ${formatQuantity(quantity)}`
-                    : undefined
-                }
-              />
-              <Metric
-                label="Especialidad de ciudad"
-                value={
-                  calculation.hasCitySpecialty
-                    ? `Sí · ${REFINING_CITY_LABELS[city]}`
-                    : 'No aplicada'
-                }
-                detail={
-                  calculation.hasCitySpecialty
-                    ? '+40% de bono de producción local'
-                    : `La especialidad está en ${REFINING_CITY_LABELS[resource.specialtyCity]}`
-                }
-                tone={calculation.hasCitySpecialty ? 'positive' : 'warning'}
-              />
-              <Metric
-                label="Retorno sin foco"
-                value={formatPercent(calculation.withoutFocus.returnRate)}
-                detail={`${formatQuantity(calculation.withoutFocus.returnedRaw)} crudo + ${formatQuantity(calculation.withoutFocus.returnedPreviousRefined)} previo`}
-              />
-              <Metric
-                label="Retorno con foco"
-                value={formatPercent(calculation.withFocus.returnRate)}
-                detail={`${formatQuantity(calculation.withFocus.returnedRaw)} crudo + ${formatQuantity(calculation.withFocus.returnedPreviousRefined)} previo`}
-                tone="accent"
-              />
-            </div>
-            <p className="mt-4 text-xs leading-relaxed text-text-faint">
-              Los retornos fraccionarios son valores esperados. Albion redondea cada
-              tanda para aproximar el promedio, por lo que una operación pequeña puede
-              devolver una unidad más o menos.
-            </p>
-          </Panel>
-
-          <Panel eyebrow="Resultado principal" title={useFocus ? 'Economía con foco' : 'Economía sin foco'}>
+          <Panel eyebrow="5 · Resultado" title={useFocus ? 'Economía con foco' : 'Economía sin foco'}>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               <Metric
                 label="Precio compra crudo"
@@ -995,7 +1288,7 @@ export function RefiningCalculatorPage({
             </div>
           </Panel>
 
-          <Panel eyebrow="Comparación" title="Sin foco vs. con foco">
+          <Panel eyebrow="6 · Comparación" title="Sin foco vs. con foco">
             <div className="grid gap-4 md:grid-cols-2">
               <ScenarioColumn
                 title="Sin foco"
