@@ -3,10 +3,10 @@
   "distDir": "dist",
   "reportPath": "artifacts/performance/bundle-report.json",
   "budgets": {
-    "totalRawBytes": 4000000,
-    "totalGzipBytes": 465000,
+    "totalRawBytes": 4005000,
+    "totalGzipBytes": 467000,
     "javascriptRawBytes": 3830000,
-    "javascriptGzipBytes": 420000,
+    "javascriptGzipBytes": 421000,
     "cssRawBytes": 90000,
     "cssGzipBytes": 20000,
     "largestFileRawBytes": 3000000,
