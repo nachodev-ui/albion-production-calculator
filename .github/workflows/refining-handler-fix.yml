@@ -23,44 +23,58 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
           path = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
-          text = path.read_text()
-
-          misplaced = re.compile(
-              r"\n  function changeEnchantment\(nextEnchantment: RefiningEnchantment\) \{\n"
-              r"    resetManualPrices\(\)\n"
-              r"    setEnchantment\(nextEnchantment\)\n"
-              r"  \}\n",
+          lines = path.read_text().splitlines()
+          component_index = next(
+              index
+              for index, line in enumerate(lines)
+              if line.startswith('export function RefiningCalculatorPage')
           )
-          text, removed = misplaced.subn('\n', text, count=1)
-          if removed != 1:
-              raise SystemExit('misplaced handler was not found exactly once')
 
-          marker = """  function changeTier(nextTier: RefiningTier) {
-            resetManualPrices()
-            setTier(nextTier)
-            setEnchantment((current) =>
-              normalizeRefiningEnchantment(resource, nextTier, current),
-            )
-            if (nextTier < 4) {
-              setSelectedTierLevel(0)
-              setOtherTierLevelsTotal(0)
-            }
-          }
+          misplaced_index = next(
+              index
+              for index, line in enumerate(lines[:component_index])
+              if line.strip().startswith('function changeEnchantment(')
+          )
+          end_index = misplaced_index
+          while end_index < len(lines) and lines[end_index].strip() != '}':
+              end_index += 1
+          if end_index >= len(lines):
+              raise SystemExit('misplaced handler has no closing brace')
+          if end_index + 1 < len(lines) and lines[end_index + 1] == '':
+              end_index += 1
+          del lines[misplaced_index : end_index + 1]
 
-          """
-          handler = marker + """  function changeEnchantment(nextEnchantment: RefiningEnchantment) {
-            resetManualPrices()
-            setEnchantment(nextEnchantment)
-          }
+          component_index = next(
+              index
+              for index, line in enumerate(lines)
+              if line.startswith('export function RefiningCalculatorPage')
+          )
+          tier_index = next(
+              index
+              for index, line in enumerate(lines[component_index:], component_index)
+              if line.strip().startswith('function changeTier(')
+          )
+          brace_depth = 0
+          tier_end = None
+          for index in range(tier_index, len(lines)):
+              brace_depth += lines[index].count('{') - lines[index].count('}')
+              if index > tier_index and brace_depth == 0:
+                  tier_end = index
+                  break
+          if tier_end is None:
+              raise SystemExit('changeTier has no closing brace')
 
-          """
-          if text.count(marker) != 1:
-              raise SystemExit(f'expected one tier handler marker, found {text.count(marker)}')
-
-          path.write_text(text.replace(marker, handler, 1))
+          handler = [
+              '',
+              '  function changeEnchantment(nextEnchantment: RefiningEnchantment) {',
+              '    resetManualPrices()',
+              '    setEnchantment(nextEnchantment)',
+              '  }',
+          ]
+          lines[tier_end + 1 : tier_end + 1] = handler
+          path.write_text('\n'.join(lines) + '\n')
           PY
       - name: Commit repair
         shell: bash
