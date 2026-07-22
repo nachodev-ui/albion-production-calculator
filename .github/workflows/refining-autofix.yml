@@ -1,0 +1,69 @@
+name: Refining autofix
+
+on:
+  push:
+    branches:
+      - feat/refining-calculator-mvp
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: feat/refining-calculator-mvp
+      - name: Apply targeted refactor
+        shell: python
+        run: |
+          from pathlib import Path
+
+          page_path = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
+          page = page_path.read_text()
+          page = page.replace(
+              "import {\n  buildItemIconUrl,\n  type BaseItemId,\n} from '@core/domain/entities/Item'\n",
+              "import { buildItemIconUrl } from '@core/domain/entities/Item'\n",
+          )
+          page = page.replace(
+              "  const market = useCurrentMarketPrices({\n    rootKey,\n    materialTargets,\n    saleTarget: outputTarget,\n    targetLabels,\n  })\n\n  useEffect(() => {\n    market.setConfig({ purchaseCity: city, saleCity: city, quality: 1 })\n  }, [city, market.setConfig])\n\n  useEffect(() => {\n    setManualRawPrice(null)\n    setManualPreviousPrice(null)\n    setManualOutputPrice(null)\n  }, [recipe.rawItemId, recipe.rawEnchantment, recipe.outputItemId])\n",
+              "  const market = useCurrentMarketPrices({\n    rootKey,\n    materialTargets,\n    saleTarget: outputTarget,\n    targetLabels,\n  })\n  const setMarketConfig = market.setConfig\n\n  useEffect(() => {\n    setMarketConfig({ purchaseCity: city, saleCity: city, quality: 1 })\n  }, [city, setMarketConfig])\n",
+          )
+          page = page.replace(
+              "  function changeResource(nextKind: RefiningResourceKind) {\n",
+              "  function resetManualPrices() {\n    setManualRawPrice(null)\n    setManualPreviousPrice(null)\n    setManualOutputPrice(null)\n  }\n\n  function changeResource(nextKind: RefiningResourceKind) {\n    resetManualPrices()\n",
+          )
+          page = page.replace(
+              "  function changeTier(nextTier: RefiningTier) {\n    setTier(nextTier)\n",
+              "  function changeTier(nextTier: RefiningTier) {\n    resetManualPrices()\n    setTier(nextTier)\n",
+          )
+          page = page.replace(
+              "  return (\n",
+              "  function changeEnchantment(nextEnchantment: RefiningEnchantment) {\n    resetManualPrices()\n    setEnchantment(nextEnchantment)\n  }\n\n  return (\n",
+              1,
+          )
+          page = page.replace(
+              "                  onChange={(event) =>\n                    setEnchantment(Number(event.target.value) as RefiningEnchantment)\n                  }\n",
+              "                  onChange={(event) =>\n                    changeEnchantment(\n                      Number(event.target.value) as RefiningEnchantment,\n                    )\n                  }\n",
+          )
+          page_path.write_text(page)
+
+          wrapper_path = Path('src/features/refining-calculator/components/RefiningComingSoonPage.tsx')
+          wrapper = wrapper_path.read_text()
+          wrapper = wrapper.replace(
+              "  return <RefiningCalculatorPage repository={repository} />\n",
+              "  void onOpenCrafting\n  return <RefiningCalculatorPage repository={repository} />\n",
+          )
+          wrapper_path.write_text(wrapper)
+      - name: Commit targeted changes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/features/refining-calculator/components
+          git commit -m 'fix(refining): satisfy hook and lint rules'
+          git push origin HEAD:feat/refining-calculator-mvp
