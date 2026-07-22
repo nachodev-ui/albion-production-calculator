@@ -266,9 +266,7 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
                 Perfil económico
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted">
-                Define tus condiciones reales de fabricación. Estos datos son
-                manuales, privados y no se deducen del personaje público
-                vinculado.
+                Datos manuales y privados, independientes del personaje público.
               </p>
               <p className="mt-2 text-xs text-text-faint">
                 {hasSavedProfile
@@ -461,8 +459,7 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
                     Especializaciones de fabricación
                   </h3>
                   <p className="mt-1 text-xs leading-relaxed text-text-faint">
-                    Introduce manualmente el nivel y el valor visible de Bonus to
-                    Focus Cost Efficiency para cada rama.
+                    Añade el nivel y la eficiencia de foco visibles para cada rama.
                   </p>
                 </div>
                 {unusedBranches.length > 0 && (
@@ -643,9 +640,7 @@ export function EconomicProfilePanel({ onNavigate }: Props) {
             )}
 
             <p className="mt-4 text-[11px] leading-relaxed text-text-faint">
-              Las recomendaciones son comparaciones de tus propios cálculos guardados,
-              no promesas de rentabilidad ni datos inventados. Los precios pueden quedar
-              obsoletos y deben revisarse antes de fabricar.
+              Compara tus cálculos guardados y revisa los precios antes de fabricar.
             </p>
           </aside>
         </div>
