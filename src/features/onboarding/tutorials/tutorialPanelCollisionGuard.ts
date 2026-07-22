@@ -369,8 +369,8 @@ function positionTutorialPanel(panel: HTMLElement, target: HTMLElement): void {
   panel.style.top = `${Math.round(position.top)}px`
   panel.style.width = `${Math.round(position.width)}px`
   panel.style.maxHeight = `${Math.round(position.height)}px`
-  panel.dataset.tutorialPlacement = position.placement
-  panel.dataset.tutorialCollisionFree = String(position.collisionFree)
+  panel.dataset['tutorialPlacement'] = position.placement
+  panel.dataset['tutorialCollisionFree'] = String(position.collisionFree)
 }
 
 export function installTutorialPanelCollisionGuard(): () => void {
