@@ -1,6 +1,7 @@
 import { calculateEffectiveFocusCost } from '@core/domain/entities/ProductionEconomy'
-import { SETUP_FEE_RATE } from '@features/craft-calculator/utils/profitCalculations'
 import type { SavedCalculation } from '@features/account/api/savedDataApi'
+
+const SETUP_FEE_RATE = 0.025
 
 export type EconomicServer = 'americas' | 'europe' | 'asia'
 
@@ -39,7 +40,7 @@ export interface EconomicProfile extends EconomicProfileInput {
 export interface SpecializationBranchOption {
   readonly key: string
   readonly label: string
-  readonly keywords: readonly string[]
+  readonly pattern: RegExp
 }
 
 export const ECONOMIC_SERVER_LABELS: Readonly<Record<EconomicServer, string>> = {
@@ -59,83 +60,56 @@ export const ECONOMIC_CITY_LABELS: Readonly<Record<EconomicCity, string>> = {
 }
 
 export const SPECIALIZATION_BRANCHES: readonly SpecializationBranchOption[] = [
-  { key: 'bags', label: 'Bolsas', keywords: ['bolsa', 'bag'] },
-  { key: 'capes', label: 'Capas', keywords: ['capa', 'cape'] },
+  { key: 'bags', label: 'Bolsas', pattern: /bolsa/ },
+  { key: 'capes', label: 'Capas', pattern: /capa/ },
   {
     key: 'leather-armor',
     label: 'Armaduras de cuero',
-    keywords: [
-      'mercenario',
-      'cazador',
-      'asesino',
-      'acechador',
-      'espectro',
-      'demonio',
-      'tenacidad',
-      'leather',
-    ],
+    pattern: /mercenario|cazador|asesino|acechador|espectro|demonio|tenacidad/,
   },
   {
     key: 'plate-armor',
     label: 'Armaduras de placas',
-    keywords: [
-      'soldado',
-      'caballero',
-      'guardián',
-      'tumba',
-      'demoníaco',
-      'juramentado',
-      'valor',
-      'plate',
-    ],
+    pattern: /soldado|caballero|guardian|tumba|demoniaco|juramentado|valor/,
   },
   {
     key: 'cloth-armor',
     label: 'Armaduras de tela',
-    keywords: [
-      'erudito',
-      'clérigo',
-      'mago',
-      'druida',
-      'infernal',
-      'sectario',
-      'pureza',
-      'cloth',
-    ],
-  },
-  { key: 'swords', label: 'Espadas', keywords: ['espada', 'sword', 'claymore'] },
-  { key: 'axes', label: 'Hachas', keywords: ['hacha', 'axe'] },
-  { key: 'maces', label: 'Mazas', keywords: ['maza', 'mace'] },
-  { key: 'hammers', label: 'Martillos', keywords: ['martillo', 'hammer'] },
-  { key: 'spears', label: 'Lanzas', keywords: ['lanza', 'spear', 'pica'] },
-  { key: 'bows', label: 'Arcos', keywords: ['arco', 'bow'] },
-  { key: 'crossbows', label: 'Ballestas', keywords: ['ballesta', 'crossbow'] },
-  { key: 'daggers', label: 'Dagas', keywords: ['daga', 'dagger', 'garras'] },
-  {
-    key: 'quarterstaffs',
-    label: 'Bastones de combate',
-    keywords: ['bastón doble', 'baston doble', 'quarterstaff', 'grailseeker'],
-  },
-  { key: 'fire-staffs', label: 'Bastones de fuego', keywords: ['fuego', 'fire staff'] },
-  { key: 'frost-staffs', label: 'Bastones de escarcha', keywords: ['escarcha', 'frost'] },
-  { key: 'arcane-staffs', label: 'Bastones arcanos', keywords: ['arcano', 'arcane'] },
-  { key: 'holy-staffs', label: 'Bastones sagrados', keywords: ['sagrado', 'holy'] },
-  { key: 'nature-staffs', label: 'Bastones naturales', keywords: ['naturaleza', 'nature'] },
-  { key: 'cursed-staffs', label: 'Bastones malditos', keywords: ['maldito', 'cursed'] },
-  {
-    key: 'shapeshifter-staffs',
-    label: 'Bastones cambiaformas',
-    keywords: ['cambiaformas', 'shapeshifter', 'prowling', 'primal'],
-  },
-  {
-    key: 'offhands',
-    label: 'Manos secundarias',
-    keywords: ['escudo', 'libro', 'tomo', 'orbe', 'antorcha', 'off-hand', 'offhand'],
+    pattern: /erudito|clerigo|mago|druida|infernal|sectario|pureza/,
   },
   {
     key: 'tools',
     label: 'Herramientas',
-    keywords: ['pico', 'hacha de leñador', 'hoz', 'cuchillo de desuello', 'martillo de piedra', 'tool'],
+    pattern: /pico|hacha de lenador|hoz|cuchillo de desuello|martillo de piedra/,
+  },
+  { key: 'swords', label: 'Espadas', pattern: /espada|claymore/ },
+  { key: 'axes', label: 'Hachas', pattern: /hacha/ },
+  { key: 'maces', label: 'Mazas', pattern: /maza/ },
+  { key: 'hammers', label: 'Martillos', pattern: /martillo/ },
+  { key: 'spears', label: 'Lanzas', pattern: /lanza|pica/ },
+  { key: 'bows', label: 'Arcos', pattern: /arco/ },
+  { key: 'crossbows', label: 'Ballestas', pattern: /ballesta/ },
+  { key: 'daggers', label: 'Dagas', pattern: /daga|garras/ },
+  {
+    key: 'quarterstaffs',
+    label: 'Bastones de combate',
+    pattern: /baston doble|grailseeker/,
+  },
+  { key: 'fire-staffs', label: 'Bastones de fuego', pattern: /fuego/ },
+  { key: 'frost-staffs', label: 'Bastones de escarcha', pattern: /escarcha/ },
+  { key: 'arcane-staffs', label: 'Bastones arcanos', pattern: /arcano/ },
+  { key: 'holy-staffs', label: 'Bastones sagrados', pattern: /sagrado/ },
+  { key: 'nature-staffs', label: 'Bastones naturales', pattern: /naturaleza/ },
+  { key: 'cursed-staffs', label: 'Bastones malditos', pattern: /maldito/ },
+  {
+    key: 'shapeshifter-staffs',
+    label: 'Bastones cambiaformas',
+    pattern: /cambiaformas|prowling|primal/,
+  },
+  {
+    key: 'offhands',
+    label: 'Manos secundarias',
+    pattern: /escudo|libro|tomo|orbe|antorcha/,
   },
 ] as const
 
@@ -154,7 +128,6 @@ export interface FocusRecommendation {
   readonly calculationId: string
   readonly itemName: string
   readonly tierLabel: string
-  readonly branchKey: string
   readonly branchName: string
   readonly specializationLevel: number
   readonly focusCostEfficiency: number
@@ -174,11 +147,7 @@ export function inferSpecializationBranch(
   itemName: string,
 ): SpecializationBranchOption | null {
   const normalized = normalizeText(itemName)
-  return (
-    SPECIALIZATION_BRANCHES.find((branch) =>
-      branch.keywords.some((keyword) => normalized.includes(normalizeText(keyword))),
-    ) ?? null
-  )
+  return SPECIALIZATION_BRANCHES.find((branch) => branch.pattern.test(normalized)) ?? null
 }
 
 function finiteNonNegative(value: number): number {
@@ -243,7 +212,6 @@ export function buildFocusRecommendations(
           calculationId: calculation.id,
           itemName: snapshot.itemName,
           tierLabel: `T${snapshot.tier}${snapshot.enchantment > 0 ? `.${snapshot.enchantment}` : ''}`,
-          branchKey: branch.key,
           branchName: branch.label,
           specializationLevel: specialization.level,
           focusCostEfficiency: specialization.focusCostEfficiency,
