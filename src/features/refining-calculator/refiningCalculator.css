@@ -1,1 +1,0 @@
-div:has(>[aria-label$=recurso]){grid-column:1/-1}[aria-label^=Tier]>button>span:last-child{display:none}

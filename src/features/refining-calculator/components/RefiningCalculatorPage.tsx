@@ -640,11 +640,11 @@ export function RefiningCalculatorPage({
               </div>
             </div>
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <div className="mt-6 space-y-6">
               <div>
                 <p className="text-xs font-medium text-text-muted">Tier</p>
                 <div
-                  className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-7"
+                  className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7"
                   role="group"
                   aria-label="Tier del recurso"
                 >
@@ -663,7 +663,6 @@ export function RefiningCalculatorPage({
                       <VisualRecipeChoice
                         key={candidate}
                         label={`T${candidate}`}
-                        detail={`.${candidateEnchantment}`}
                         rawItemId={candidateRecipe.rawItemId}
                         rawEnchantment={candidateRecipe.rawEnchantment}
                         outputItemId={candidateRecipe.outputItemId}
