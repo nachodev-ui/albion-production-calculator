@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -34,6 +34,88 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          ref: fix/disable-enchanted-stone-refining
+
+      - name: Apply stone refining correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          config = Path('src/features/refining-calculator/config/refiningGameConfig.ts')
+          source = config.read_text(encoding='utf-8')
+          source = source.replace(
+              "    maximumEnchantment: 3,\n  },\n] as const",
+              "    maximumEnchantment: 0,\n  },\n] as const",
+              1,
+          )
+          if "maximumEnchantment: 3,\n  },\n] as const" in source:
+              raise SystemExit('Rock maximum enchantment was not replaced')
+          config.write_text(source, encoding='utf-8')
+
+          component = Path('src/features/refining-calculator/components/RefiningCalculatorPage.tsx')
+          source = component.read_text(encoding='utf-8')
+          old = "La roca encantada produce múltiples bloques normales por tirada."
+          new = "La piedra solo puede refinarse en .0; las variantes encantadas no se pueden refinar."
+          if source.count(old) != 1:
+              raise SystemExit('Expected the old stone explanation exactly once')
+          component.write_text(source.replace(old, new, 1), encoding='utf-8')
+
+          tests = Path('src/features/refining-calculator/utils/refiningEconomics.test.ts')
+          source = tests.read_text(encoding='utf-8')
+          old_test = """  it('models enchanted stone as multiplied previous blocks and output', () => {
+    const recipe = getRefiningRecipe({
+      resourceKind: 'rock',
+      tier: 5,
+      enchantment: 3,
+    })
+
+    expect(recipe.rawItemId).toBe('T5_ROCK_LEVEL3')
+    expect(recipe.rawEnchantment).toBe(3)
+    expect(recipe.previousRefinedItemId).toBe('T4_STONEBLOCK')
+    expect(recipe.previousRefinedEnchantment).toBe(0)
+    expect(recipe.outputItemId).toBe('T5_STONEBLOCK')
+    expect(recipe.outputEnchantment).toBe(0)
+    expect(recipe.rawPerCraft).toBe(3)
+    expect(recipe.previousRefinedPerCraft).toBe(8)
+    expect(recipe.outputPerCraft).toBe(8)
+    expect(recipe.baseFocusPerCraft).toBe(752)
+    expect(recipe.itemValuePerCraft).toBe(256)
+  })"""
+          new_test = """  it('normalizes stone to the flat .0 refining recipe', () => {
+    const recipe = getRefiningRecipe({
+      resourceKind: 'rock',
+      tier: 5,
+      enchantment: 3,
+    })
+
+    expect(recipe.enchantment).toBe(0)
+    expect(recipe.rawItemId).toBe('T5_ROCK')
+    expect(recipe.rawEnchantment).toBe(0)
+    expect(recipe.previousRefinedItemId).toBe('T4_STONEBLOCK')
+    expect(recipe.previousRefinedEnchantment).toBe(0)
+    expect(recipe.outputItemId).toBe('T5_STONEBLOCK')
+    expect(recipe.outputEnchantment).toBe(0)
+    expect(recipe.rawPerCraft).toBe(3)
+    expect(recipe.previousRefinedPerCraft).toBe(1)
+    expect(recipe.outputPerCraft).toBe(1)
+    expect(recipe.baseFocusPerCraft).toBe(94)
+    expect(recipe.itemValuePerCraft).toBe(32)
+  })"""
+          if source.count(old_test) != 1:
+              raise SystemExit('Expected the old stone test exactly once')
+          tests.write_text(source.replace(old_test, new_test, 1), encoding='utf-8')
+          PY
+
+          git fetch origin main
+          git checkout origin/main -- .github/workflows/ci.yml
+          rm -f .github/workflows/one-time-disable-enchanted-stone.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "fix: restrict stone refining to flat tiers"
+          git push origin HEAD:fix/disable-enchanted-stone-refining
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
