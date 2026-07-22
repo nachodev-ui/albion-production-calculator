@@ -680,7 +680,7 @@ export function RefiningCalculatorPage({
                 <p className="text-xs font-medium text-text-muted">Encantamiento</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
                   {resourceKind === 'rock'
-                    ? 'La roca encantada produce múltiples bloques normales por tirada.'
+                    ? 'La piedra solo puede refinarse en .0; las variantes encantadas no se pueden refinar.'
                     : tier === 4
                       ? 'T4 encantado utiliza refinado T3 normal.'
                       : 'Desde T5, el refinado previo conserva el encantamiento.'}
