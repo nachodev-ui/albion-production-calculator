@@ -63,7 +63,13 @@ describe('buildRefiningMarketCityOptions', () => {
       ],
     })
 
-    expect(options.map(({ city, aggregateValue, badge }) => ({ city, aggregateValue, badge }))).toEqual([
+    expect(
+      options.map(({ city, aggregateValue, badge }) => ({
+        city,
+        aggregateValue,
+        badge,
+      })),
+    ).toEqual([
       { city: 'martlock', aggregateValue: 250, badge: null },
       { city: 'thetford', aggregateValue: 230, badge: 'best' },
       { city: 'lymhurst', aggregateValue: 280, badge: 'worst' },
