@@ -100,6 +100,7 @@ export function MarketPriceFreshnessStatus({
   const confidencePresentation = confidence
     ? CONFIDENCE_PRESENTATION[confidence.level]
     : null
+  const showFreshnessBadge = confidence === null
 
   return (
     <div
@@ -109,11 +110,13 @@ export function MarketPriceFreshnessStatus({
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <span
-            className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${presentation.className}`}
-          >
-            {presentation.label}
-          </span>
+          {showFreshnessBadge && (
+            <span
+              className={`shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${presentation.className}`}
+            >
+              {presentation.label}
+            </span>
+          )}
           {confidence && confidencePresentation && (
             <DataConfidenceHint
               level={confidence.level}
@@ -143,7 +146,7 @@ export function MarketPriceFreshnessStatus({
           {formatMarketPriceExactDate(updatedAt)}
         </time>
 
-        {isStaleAndActive && (
+        {showFreshnessBadge && isStaleAndActive && (
           <span className="shrink-0 font-medium text-negative">⚠ En uso</span>
         )}
       </div>
@@ -176,7 +179,7 @@ export function MarketPriceFreshnessStatus({
         </div>
       )}
 
-      {!compact && isStaleAndActive && (
+      {showFreshnessBadge && !compact && isStaleAndActive && (
         <p className="mt-2 text-[11px] leading-relaxed text-negative">
           Este precio automático está desactualizado y puede cambiar el resultado.
           Actualízalo o utiliza un valor manual.
