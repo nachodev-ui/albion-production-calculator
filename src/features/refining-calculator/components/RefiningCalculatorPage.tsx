@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { BaseItemId } from '@core/domain/entities/Item'
 import { ItemIcon } from '@shared/components/ItemIcon'
 import type { ItemRepository } from '@core/domain/repositories/ItemRepository'
+import { MarketPriceFreshnessStatus } from '@features/market-data/components/MarketPriceFreshnessStatus'
 import { useCurrentMarketPrices } from '@features/market-data/hooks/useCurrentMarketPrices'
 import {
   MARKET_SERVER_LABELS,
@@ -35,6 +36,7 @@ import {
   calculateRefiningEconomics,
   type RefiningScenario,
 } from '../utils/refiningEconomics'
+import { RefiningMarketCitySelect } from './RefiningMarketCitySelect'
 
 interface RefiningCalculatorPageProps {
   readonly repository: ItemRepository
@@ -212,6 +214,22 @@ function PriceField({
         onChange={(event) => onChange(parseManualPrice(event.target.value))}
         className={INPUT_CLASS}
       />
+      {(!loading || automaticDetail?.value != null) && (
+        <div className="mt-2">
+          <MarketPriceFreshnessStatus
+            updatedAt={automaticDetail?.updatedAt ?? null}
+            source={automaticDetail?.source ?? null}
+            isActive={manualValue === null && automaticDetail?.value != null}
+            priceValue={automaticDetail?.value ?? null}
+            snapshot={
+              automaticDetail?.value == null
+                ? undefined
+                : automaticDetail.snapshot
+            }
+            compact
+          />
+        </div>
+      )}
     </Field>
   )
 }
@@ -460,6 +478,35 @@ export function RefiningCalculatorPage({
   const automaticPreviousDetail = previousKey
     ? market.automaticPurchasePriceDetails.get(previousKey)
     : undefined
+  const refiningMarkets = market.markets.filter(
+    (candidate) =>
+      candidate.type === 'regular' &&
+      REFINING_CITIES.includes(candidate.key as RefiningCityId),
+  )
+  const purchasePriceGroups = [
+    {
+      label: rawItem?.name ?? resource.rawLabel,
+      weight: recipe.rawPerCraft,
+      options: market.materialMarketPriceComparisons.get(rawKey) ?? [],
+    },
+    ...(previousKey
+      ? [
+          {
+            label: previousItem?.name ?? `${resource.refinedLabel} T${tier - 1}`,
+            weight: recipe.previousRefinedPerCraft,
+            options:
+              market.materialMarketPriceComparisons.get(previousKey) ?? [],
+          },
+        ]
+      : []),
+  ]
+  const salePriceGroups = [
+    {
+      label: outputItem?.name ?? resource.refinedLabel,
+      weight: 1,
+      options: market.saleMarketPriceOptions,
+    },
+  ]
   const rawUnitPrice = manualRawPrice ?? automaticRawDetail?.value ?? 0
   const previousRefinedUnitPrice =
     recipe.previousRefinedItemId === null
@@ -984,23 +1031,20 @@ export function RefiningCalculatorPage({
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Ciudad de compra"
-                    hint="Mercado donde buscarás el recurso crudo y el refinado previo."
+                    hint="Compara en el mismo control el costo de todos los materiales por ciudad."
                   >
-                    <select
+                    <RefiningMarketCitySelect
                       value={market.config.purchaseCity}
-                      onChange={(event) =>
-                        market.setConfig({
-                          purchaseCity: event.target.value as RefiningCityId,
-                        })
-                      }
-                      className={INPUT_CLASS}
-                    >
-                      {REFINING_CITIES.map((candidate) => (
-                        <option key={candidate} value={candidate}>
-                          {REFINING_CITY_LABELS[candidate]}
-                        </option>
-                      ))}
-                    </select>
+                      markets={refiningMarkets}
+                      groups={purchasePriceGroups}
+                      operation="purchase"
+                      ariaLabel="Ciudad de compra de materiales"
+                      menuLabel="Precios de compra por ciudad"
+                      onChange={(purchaseCity) => {
+                        market.clearMaterialPurchaseCities()
+                        market.setConfig({ purchaseCity })
+                      }}
+                    />
                   </Field>
                   <Field label="Cómo comprar">
                     <select
@@ -1067,23 +1111,17 @@ export function RefiningCalculatorPage({
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <Field
                     label="Ciudad de venta"
-                    hint="Mercado donde venderás el recurso refinado terminado."
+                    hint="Compara el precio del refinado terminado en cada mercado."
                   >
-                    <select
+                    <RefiningMarketCitySelect
                       value={market.config.saleCity}
-                      onChange={(event) =>
-                        market.setConfig({
-                          saleCity: event.target.value as RefiningCityId,
-                        })
-                      }
-                      className={INPUT_CLASS}
-                    >
-                      {REFINING_CITIES.map((candidate) => (
-                        <option key={candidate} value={candidate}>
-                          {REFINING_CITY_LABELS[candidate]}
-                        </option>
-                      ))}
-                    </select>
+                      markets={refiningMarkets}
+                      groups={salePriceGroups}
+                      operation="sale"
+                      ariaLabel="Ciudad de venta del refinado"
+                      menuLabel="Precios de venta por ciudad"
+                      onChange={(saleCity) => market.setConfig({ saleCity })}
+                    />
                   </Field>
                   <Field label="Cómo vender">
                     <select
