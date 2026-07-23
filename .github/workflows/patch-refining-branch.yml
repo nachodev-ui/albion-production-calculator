@@ -1,18 +1,21 @@
 name: Patch refining market branch
 
-# Re-run after the workflow became active on the protected default branch.
 on:
-  push:
+  pull_request_target:
     branches:
       - main
-    paths:
-      - .github/workflows/patch-refining-branch.yml
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.event.pull_request.head.ref == 'fix/refining-city-price-confidence'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
