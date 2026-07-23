@@ -1,5 +1,6 @@
 name: Patch refining market branch
 
+# Re-run after the workflow became active on the protected default branch.
 on:
   push:
     branches:
