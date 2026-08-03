@@ -80,8 +80,8 @@ function buildPriceGeometry(
           `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`,
       )
       .join(' ')
-    const first = group[0]
-    const last = group.at(-1) ?? first
+    const first = group[0]!
+    const last = group.at(-1)!
     const areaPath = `${linePath} L${last.x.toFixed(2)},${PRICE_BOTTOM} L${first.x.toFixed(2)},${PRICE_BOTTOM} Z`
 
     return { linePath, areaPath }
