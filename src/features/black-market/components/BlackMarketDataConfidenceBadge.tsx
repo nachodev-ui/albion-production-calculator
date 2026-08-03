@@ -26,6 +26,12 @@ const PRESENTATION: Record<
   },
 };
 
+const COMPACT_DOT: Record<BlackMarketDataConfidenceLevel, string> = {
+  high: "bg-positive",
+  medium: "bg-accent",
+  low: "bg-negative",
+};
+
 function formatInteger(value: number): string {
   return new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 }).format(
     value,
@@ -52,13 +58,18 @@ export function BlackMarketDataConfidenceBadge({
 
   if (compact) {
     return (
-      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-        <DataConfidenceHint
-          level={confidence.level}
-          label={presentation.label}
-          className={presentation.className}
-        />
-        <span className="text-[9px] tabular text-text-faint">
+      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[9px] text-text-faint">
+        <span className="inline-flex items-center gap-1.5 font-medium text-text-muted">
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-1.5 rounded-full ${COMPACT_DOT[confidence.level]}`}
+          />
+          {presentation.label}
+        </span>
+        <span aria-hidden="true" className="text-border-strong">
+          ·
+        </span>
+        <span className="tabular">
           {formatInteger(evidence.observations7d)} precios ·{" "}
           {formatInteger(evidence.volume7d)} unidades
         </span>
