@@ -126,8 +126,12 @@ function bestEconomics(row: BlackMarketMassAnalysisRow) {
 }
 
 function strategyDescription(row: BlackMarketMassAnalysisRow): string {
-  if (row.status === "incomplete") return "Faltan precios para completar la comparación.";
-  if (row.status === "not-craftable") return "No existe una receta compatible para este objeto.";
+  if (row.status === "incomplete") {
+    return "Faltan precios para completar la comparación.";
+  }
+  if (row.status === "not-craftable") {
+    return "No existe una receta compatible para este objeto.";
+  }
   if (row.recommendation.kind === "craft-with-focus") {
     return "Fabricar con foco entrega el mejor retorno neto.";
   }
@@ -171,7 +175,10 @@ function SalePriceOption({
           {label}
         </p>
         {selected && (
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-label="Modo utilizado" />
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+            aria-label="Modo utilizado"
+          />
         )}
       </div>
       <p
@@ -252,7 +259,7 @@ function OpportunityCard({
                 64,
               )}
               alt=""
-              className="h-13 w-13 shrink-0 rounded-xl border border-border/70 bg-bg/45 object-contain transition-transform group-hover:scale-[1.03]"
+              className="h-14 w-14 shrink-0 rounded-xl border border-border/70 bg-bg/45 object-contain transition-transform group-hover:scale-[1.03]"
             />
             <span className="min-w-0">
               <span className="block line-clamp-2 text-[15px] font-semibold leading-snug text-text transition-colors group-hover:text-accent">
@@ -398,7 +405,12 @@ function OpportunityCard({
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/55 bg-bg/20 px-4 py-2.5 text-[9px] text-text-faint">
         {secondaryFacts.map((fact, index) => (
           <span key={fact} className="inline-flex items-center gap-3">
-            {index > 0 && <span aria-hidden="true" className="h-1 w-1 rounded-full bg-border-strong" />}
+            {index > 0 && (
+              <span
+                aria-hidden="true"
+                className="h-1 w-1 rounded-full bg-border-strong"
+              />
+            )}
             <span>{fact}</span>
           </span>
         ))}
@@ -462,6 +474,11 @@ export function BlackMarketOpportunityResults({
   const hasPrevious = offset > 0;
   const hasNext = offset + response.returned < response.totalMatching;
   const visibleRows = sortAndFilterRows(strategyAnalysis.rows, filters);
+  const dataWarnings = [
+    ...response.warnings,
+    ...strategyAnalysis.warnings,
+    ...(strategyAnalysis.error ? [strategyAnalysis.error] : []),
+  ];
 
   return (
     <section className="mt-6 space-y-5">
@@ -471,17 +488,13 @@ export function BlackMarketOpportunityResults({
         filters={filters}
       />
 
-      {(response.warnings.length > 0 ||
-        strategyAnalysis.warnings.length > 0 ||
-        strategyAnalysis.error) && (
+      {dataWarnings.length > 0 && (
         <div className="rounded-xl border border-warning/40 bg-warning-muted p-4">
           <h3 className="text-sm font-semibold text-warning">Estado de los datos</h3>
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-text-muted">
-            [
-              ...response.warnings,
-              ...strategyAnalysis.warnings,
-              ...(strategyAnalysis.error ? [strategyAnalysis.error] : []),
-            ].map((warning) => <li key={warning}>• {warning}</li>)
+            {dataWarnings.map((warning) => (
+              <li key={warning}>• {warning}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -489,7 +502,9 @@ export function BlackMarketOpportunityResults({
       <div className="overflow-hidden rounded-2xl border border-border bg-surface/80 shadow-[0_18px_55px_rgb(0_0_0/0.16)]">
         <header className="flex flex-col gap-2 border-b border-border/75 bg-surface-raised/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <h3 className="text-base font-semibold text-text">Resultados netos por estrategia</h3>
+            <h3 className="text-base font-semibold text-text">
+              Resultados netos por estrategia
+            </h3>
             <p className="mt-1 text-[11px] leading-relaxed text-text-faint">
               Ordenados por rentabilidad real: {filters.salesTaxPercent}% de impuesto
               {filters.saleMode === "sell-order"
@@ -555,7 +570,9 @@ export function BlackMarketOpportunityResults({
         </button>
       </div>
 
-      <p className="sr-only">Página configurada con {filters.limit} resultados como máximo.</p>
+      <p className="sr-only">
+        Página configurada con {filters.limit} resultados como máximo.
+      </p>
     </section>
   );
 }
