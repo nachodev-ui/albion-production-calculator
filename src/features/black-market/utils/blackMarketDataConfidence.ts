@@ -1,8 +1,8 @@
 export type BlackMarketDataConfidenceLevel = "high" | "medium" | "low";
 
 export interface BlackMarketDataEvidence {
-  readonly ageMinutes: number;
-  readonly unitPrice: number;
+  readonly ageMinutes: number | null;
+  readonly unitPrice: number | null;
   readonly observations7d: number;
   readonly volume7d: number;
   readonly medianPrice7d: number | null;
@@ -43,9 +43,12 @@ export function buildBlackMarketDataConfidence(
 ): BlackMarketDataConfidence {
   const observations7d = Math.max(0, Math.trunc(evidence.observations7d));
   const volume7d = Math.max(0, Math.trunc(evidence.volume7d));
+  const hasCurrentPrice =
+    evidence.unitPrice !== null && evidence.unitPrice > 0;
+  const hasAge = evidence.ageMinutes !== null && evidence.ageMinutes >= 0;
   const deviationFromMedianPercent =
-    evidence.medianPrice7d !== null
-      ? percentDifference(evidence.unitPrice, evidence.medianPrice7d)
+    hasCurrentPrice && evidence.medianPrice7d !== null
+      ? percentDifference(evidence.unitPrice as number, evidence.medianPrice7d)
       : null;
   const currentSpreadPercent = spreadPercent(
     evidence.buyPrice,
@@ -53,9 +56,14 @@ export function buildBlackMarketDataConfidence(
   );
   const reasons: string[] = [];
 
-  if (evidence.ageMinutes > 360) {
+  if (!hasCurrentPrice) {
+    reasons.push("No hay un precio disponible para el modo de venta seleccionado.");
+  }
+  if (!hasAge) {
+    reasons.push("No hay fecha de actualización para este precio.");
+  } else if ((evidence.ageMinutes as number) > 360) {
     reasons.push("El precio se actualizó hace más de 6 horas.");
-  } else if (evidence.ageMinutes > 30) {
+  } else if ((evidence.ageMinutes as number) > 30) {
     reasons.push("El precio se actualizó hace más de 30 minutos.");
   }
   if (observations7d < 3) {
@@ -84,14 +92,19 @@ export function buildBlackMarketDataConfidence(
     );
   }
 
+  const ageMinutes = evidence.ageMinutes ?? Number.POSITIVE_INFINITY;
   const high =
-    evidence.ageMinutes <= 30 &&
+    hasCurrentPrice &&
+    hasAge &&
+    ageMinutes <= 30 &&
     observations7d >= 7 &&
     volume7d >= 100 &&
     (deviationFromMedianPercent === null ||
       Math.abs(deviationFromMedianPercent) <= 15);
   const medium =
-    evidence.ageMinutes <= 360 &&
+    hasCurrentPrice &&
+    hasAge &&
+    ageMinutes <= 360 &&
     observations7d >= 3 &&
     volume7d >= 20 &&
     (deviationFromMedianPercent === null ||
