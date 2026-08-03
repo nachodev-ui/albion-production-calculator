@@ -19,7 +19,7 @@ describe("BlackMarketSaleSettings", () => {
     expect(markup).toContain("Impuesto de venta");
     expect(markup).toContain("Setup fee");
     expect(markup).toContain("Resultado neto");
-    expect(markup).toContain("disabled");
+    expect(markup).toContain('disabled=""');
   });
 
   it("enables setup fee when sell-order mode is selected", () => {
@@ -34,7 +34,7 @@ describe("BlackMarketSaleSettings", () => {
     );
 
     expect(markup).toContain('aria-pressed="true"');
-    expect(markup).not.toContain("disabled");
+    expect(markup).not.toContain('disabled=""');
     expect(markup).toContain("Orden de venta</button>");
   });
 });
