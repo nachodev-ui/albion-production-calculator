@@ -1,0 +1,82 @@
+/*
+ * Tabla de oportunidades del Black Market.
+ * La clase min-w-[92rem] es exclusiva de este resultado masivo y permite
+ * mejorar el scroll sin afectar otras tablas de la aplicación.
+ */
+
+div:has(> table.min-w-\[92rem\]) {
+  position: relative;
+  max-height: min(72vh, 56rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+table.min-w-\[92rem\] {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+table.min-w-\[92rem\] thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--color-surface-raised);
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+table.min-w-\[92rem\] th:last-child,
+table.min-w-\[92rem\] td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  min-width: 8.5rem;
+  background: var(--color-surface);
+  box-shadow: -16px 0 20px -20px rgb(0 0 0 / 0.9);
+}
+
+table.min-w-\[92rem\] thead th:last-child {
+  z-index: 7;
+  background: var(--color-surface-raised);
+}
+
+table.min-w-\[92rem\] tbody tr:hover td:last-child {
+  background: var(--color-surface-raised);
+}
+
+table.min-w-\[92rem\] td:last-child > button {
+  width: 100%;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  table.min-w-\[92rem\] th:first-child,
+  table.min-w-\[92rem\] td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--color-surface);
+    box-shadow: 16px 0 20px -22px rgb(0 0 0 / 0.9);
+  }
+
+  table.min-w-\[92rem\] thead th:first-child {
+    z-index: 6;
+    background: var(--color-surface-raised);
+  }
+
+  table.min-w-\[92rem\] tbody tr:hover td:first-child {
+    background: var(--color-surface-raised);
+  }
+}
+
+@media (max-width: 767px) {
+  div:has(> table.min-w-\[92rem\]) {
+    max-height: min(68vh, 42rem);
+  }
+
+  table.min-w-\[92rem\] th:last-child,
+  table.min-w-\[92rem\] td:last-child {
+    min-width: 7.75rem;
+    padding-inline: 0.625rem;
+  }
+}
