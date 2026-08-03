@@ -2,6 +2,7 @@ export type AlbionServer = "west" | "east" | "europe";
 export type BlackMarketCategory = "weapon" | "armor" | "offhand" | "accessory";
 export type BlackMarketOpportunitySort = "profit" | "roi" | "freshness";
 export type BlackMarketOpportunityRisk = "low" | "medium" | "high";
+export type BlackMarketSaleMode = "direct" | "sell-order";
 export type BlackMarketStrategyFilter =
   | "all"
   | "buy-finished"
@@ -106,7 +107,13 @@ export interface BlackMarketOpportunityFilters {
   readonly minimumReturnOnCostPercent: number;
   readonly maximumCityAgeMinutes: number;
   readonly maximumBlackMarketAgeMinutes: number;
+  /** Venta inmediata a la mejor orden de compra o publicación mediante orden de venta. */
+  readonly saleMode: BlackMarketSaleMode;
+  /** Se usa para aplicar rápidamente el impuesto Premium/no Premium en la UI. */
+  readonly isPremium: boolean;
   readonly salesTaxPercent: number;
+  /** Tarifa de creación de orden; solo se descuenta en modo sell-order. */
+  readonly setupFeePercent: number;
   /** Transporte de la estrategia de comprar el objeto terminado. */
   readonly transportCostPerUnit: number;
   /** Valor económico mínimo exigido por cada punto de foco usado. */
