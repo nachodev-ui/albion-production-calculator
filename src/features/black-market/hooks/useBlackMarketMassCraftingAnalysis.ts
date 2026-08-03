@@ -34,6 +34,7 @@ import type {
   BlackMarketOpportunitiesResponse,
   BlackMarketOpportunity,
   BlackMarketOpportunityFilters,
+  BlackMarketSaleMode,
 } from "../types";
 import {
   calculateBlackMarketCraftingEconomics,
@@ -47,6 +48,11 @@ import {
   buildBlackMarketQualityPriceSchedule,
   type BlackMarketQualityPricePoint,
 } from "../utils/blackMarketQuality";
+import {
+  calculateOpportunitySaleEconomics,
+  selectedBlackMarketUnitPrice,
+  type BlackMarketSaleEconomics,
+} from "../utils/blackMarketSaleEconomics";
 import { baseBlackMarketItemIdentifier } from "../components/blackMarketScannerConfig";
 
 const EMPTY_PRICES: ReadonlyMap<string, number> = new Map();
@@ -56,6 +62,7 @@ const MARKET_SERVER_BY_BLACK_MARKET: Record<AlbionServer, MarketAlbionServer> = 
   east: "asia",
   europe: "europe",
 };
+const UNAVAILABLE_PROFIT = -1_000_000_000_000_000;
 
 interface PreparedMassOpportunity {
   readonly opportunity: BlackMarketOpportunity;
@@ -74,6 +81,7 @@ export type BlackMarketMassAnalysisStatus =
 export interface BlackMarketMassAnalysisRow {
   readonly opportunity: BlackMarketOpportunity;
   readonly status: BlackMarketMassAnalysisStatus;
+  readonly buyFinishedEconomics: BlackMarketSaleEconomics;
   readonly recommendation: BlackMarketStrategyRecommendation;
   readonly withoutFocus: BlackMarketCraftingEconomics | null;
   readonly withFocus: BlackMarketCraftingEconomics | null;
@@ -118,16 +126,24 @@ function dedupeTargets(
 function qualityOrdersForOpportunity(
   response: BlackMarketOpportunitiesResponse,
   opportunity: BlackMarketOpportunity,
+  saleMode: BlackMarketSaleMode,
 ): readonly BlackMarketQualityPricePoint[] {
   return response.data
     .filter((candidate) => candidate.itemIdentifier === opportunity.itemIdentifier)
-    .map((candidate) => ({
-      minimumQuality: Math.min(
-        5,
-        Math.max(1, candidate.blackMarketQuality),
-      ) as 1 | 2 | 3 | 4 | 5,
-      unitPrice: candidate.blackMarketBuyUnitPrice,
-    }));
+    .flatMap((candidate) => {
+      const unitPrice = selectedBlackMarketUnitPrice(candidate, saleMode);
+      return unitPrice === null
+        ? []
+        : [
+            {
+              minimumQuality: Math.min(
+                5,
+                Math.max(1, candidate.blackMarketQuality),
+              ) as 1 | 2 | 3 | 4 | 5,
+              unitPrice,
+            },
+          ];
+    });
 }
 
 export function useBlackMarketMassCraftingAnalysis(params: {
@@ -140,7 +156,6 @@ export function useBlackMarketMassCraftingAnalysis(params: {
 
   const prepared = useMemo<readonly PreparedMassOpportunity[]>(() => {
     if (!response) return [];
-
     const entries: PreparedMassOpportunity[] = [];
     for (const opportunity of response.data) {
       const baseID = baseBlackMarketItemIdentifier(opportunity.itemIdentifier);
@@ -181,7 +196,6 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         repository,
         structureConfig,
       );
-
       entries.push({
         opportunity,
         item,
@@ -191,7 +205,6 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         recipeOptionIndex,
       });
     }
-
     return entries;
   }, [initialStore, repository, response]);
 
@@ -228,7 +241,6 @@ export function useBlackMarketMassCraftingAnalysis(params: {
   const bestAutomaticPrices = useMemo(() => {
     const allowedMarkets = new Set(filters.purchaseMarketKeys);
     const prices = new Map<string, number>();
-
     for (const target of materialTargets) {
       const key = buildItemPriceKey(target.itemId, target.enchantment);
       const options = market.materialMarketPriceComparisons.get(key) ?? [];
@@ -248,25 +260,40 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         );
       if (best !== null) prices.set(key, best);
     }
-
     return prices;
-  }, [
-    filters.purchaseMarketKeys,
-    market.materialMarketPriceComparisons,
-    materialTargets,
-  ]);
+  }, [filters.purchaseMarketKeys, market.materialMarketPriceComparisons, materialTargets]);
 
   const rows = useMemo<readonly BlackMarketMassAnalysisRow[]>(() => {
     if (!response) return [];
     const preparedByID = new Map(
       prepared.map((entry) => [entry.opportunity.id, entry]),
     );
+    const effectiveSaleFeeRate =
+      (filters.salesTaxPercent +
+        (filters.saleMode === "sell-order" ? filters.setupFeePercent : 0)) /
+      100;
 
     return response.data.map((opportunity) => {
-      const entry = preparedByID.get(opportunity.id);
+      const buyFinishedEconomics = calculateOpportunitySaleEconomics(
+        opportunity,
+        {
+          saleMode: filters.saleMode,
+          salesTaxPercent: filters.salesTaxPercent,
+          setupFeePercent: filters.setupFeePercent,
+          transportCostPerUnit: filters.transportCostPerUnit,
+        },
+      );
+      const selectedUnitPrice = selectedBlackMarketUnitPrice(
+        opportunity,
+        filters.saleMode,
+      );
+      const buyProfit =
+        buyFinishedEconomics.profitPerUnit ?? UNAVAILABLE_PROFIT;
+      const buyRoi =
+        buyFinishedEconomics.returnOnCostPercent ?? UNAVAILABLE_PROFIT;
       const emptySchedule = buildBlackMarketQualityPriceSchedule({
         targetQuality: opportunity.blackMarketQuality,
-        targetUnitPrice: opportunity.blackMarketBuyUnitPrice,
+        targetUnitPrice: selectedUnitPrice ?? 0,
         availableOrders: [],
         lowerQualityFallbackPercent: 0,
       });
@@ -277,8 +304,8 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         recoveredMaterialValue: 0,
         stationFees: 0,
         effectiveCraftCost: 0,
-        blackMarketBuyUnitPrice: opportunity.blackMarketBuyUnitPrice,
-        salesTaxRate: filters.salesTaxPercent / 100,
+        blackMarketBuyUnitPrice: selectedUnitPrice ?? 0,
+        salesTaxRate: effectiveSaleFeeRate,
         targetQuality: opportunity.blackMarketQuality,
         qualityIncreasePercent: 0,
         qualityPriceSchedule: emptySchedule,
@@ -289,20 +316,21 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         timeCostTotal: 0,
         focusRequired: 0,
         focusValuePerPoint: 0,
-        buyFinishedProfitPerUnit: opportunity.profit,
+        buyFinishedProfitPerUnit: buyProfit,
       });
       const buyRecommendation = recommendBlackMarketStrategy(
-        opportunity.profit,
-        opportunity.returnOnCostPercent,
+        buyProfit,
+        buyRoi,
         1,
         incompleteEconomics,
         incompleteEconomics,
       );
-
+      const entry = preparedByID.get(opportunity.id);
       if (!entry) {
         return {
           opportunity,
           status: "not-craftable" as const,
+          buyFinishedEconomics,
           recommendation: buyRecommendation,
           withoutFocus: null,
           withFocus: null,
@@ -320,6 +348,7 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         return {
           opportunity,
           status: "not-craftable" as const,
+          buyFinishedEconomics,
           recommendation: buyRecommendation,
           withoutFocus: null,
           withFocus: null,
@@ -357,8 +386,12 @@ export function useBlackMarketMassCraftingAnalysis(params: {
       );
       const qualityPriceSchedule = buildBlackMarketQualityPriceSchedule({
         targetQuality: opportunity.blackMarketQuality,
-        targetUnitPrice: opportunity.blackMarketBuyUnitPrice,
-        availableOrders: qualityOrdersForOpportunity(response, opportunity),
+        targetUnitPrice: selectedUnitPrice ?? 0,
+        availableOrders: qualityOrdersForOpportunity(
+          response,
+          opportunity,
+          filters.saleMode,
+        ),
         lowerQualityFallbackPercent: filters.lowerQualityFallbackPercent,
       });
       const buildEconomics = (
@@ -366,14 +399,14 @@ export function useBlackMarketMassCraftingAnalysis(params: {
         useFocus: boolean,
       ) =>
         calculateBlackMarketCraftingEconomics({
-          isComplete: calculation.isComplete,
+          isComplete: calculation.isComplete && selectedUnitPrice !== null,
           quantity: 1,
           netMaterialCost: calculation.totalMaterialCost,
           recoveredMaterialValue: calculation.totalSilverSavedByReturnRate,
           stationFees: calculation.totalStationFees,
           effectiveCraftCost: calculation.grandTotal,
-          blackMarketBuyUnitPrice: opportunity.blackMarketBuyUnitPrice,
-          salesTaxRate: filters.salesTaxPercent / 100,
+          blackMarketBuyUnitPrice: selectedUnitPrice ?? 0,
+          salesTaxRate: effectiveSaleFeeRate,
           targetQuality: opportunity.blackMarketQuality,
           qualityIncreasePercent:
             initialStore.craftingSpecializationConfig.qualityIncrease,
@@ -387,13 +420,13 @@ export function useBlackMarketMassCraftingAnalysis(params: {
             ? calculation.focusCostBreakdown.totalFocusRequired
             : 0,
           focusValuePerPoint: filters.focusValuePerPoint,
-          buyFinishedProfitPerUnit: opportunity.profit,
+          buyFinishedProfitPerUnit: buyProfit,
         });
       const withoutFocus = buildEconomics(withoutCalculation, false);
       const withFocus = buildEconomics(withCalculation, true);
       const recommendation = recommendBlackMarketStrategy(
-        opportunity.profit,
-        opportunity.returnOnCostPercent,
+        buyProfit,
+        buyRoi,
         1,
         withoutFocus,
         withFocus,
@@ -405,13 +438,11 @@ export function useBlackMarketMassCraftingAnalysis(params: {
           withoutFocus.isComplete || withFocus.isComplete
             ? ("ready" as const)
             : ("incomplete" as const),
+        buyFinishedEconomics,
         recommendation,
         withoutFocus,
         withFocus,
-        focusValuation: calculateBlackMarketFocusValuation(
-          withoutFocus,
-          withFocus,
-        ),
+        focusValuation: calculateBlackMarketFocusValuation(withoutFocus, withFocus),
       };
     });
   }, [
@@ -422,8 +453,11 @@ export function useBlackMarketMassCraftingAnalysis(params: {
     filters.focusValuePerPoint,
     filters.lowerQualityFallbackPercent,
     filters.materialTransportCostPerBatch,
+    filters.saleMode,
     filters.salesTaxPercent,
+    filters.setupFeePercent,
     filters.timeCostPerBatch,
+    filters.transportCostPerUnit,
     initialStore,
     prepared,
     repository,

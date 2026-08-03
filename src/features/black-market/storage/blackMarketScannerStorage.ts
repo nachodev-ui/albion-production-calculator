@@ -3,6 +3,7 @@ import type {
   BlackMarketCategory,
   BlackMarketOpportunityFilters,
   BlackMarketOpportunitySort,
+  BlackMarketSaleMode,
   BlackMarketStrategyFilter,
   BlackMarketStrategySort,
 } from "../types";
@@ -29,7 +30,10 @@ export const DEFAULT_BLACK_MARKET_SCANNER_FILTERS: BlackMarketOpportunityFilters
     minimumReturnOnCostPercent: 5,
     maximumCityAgeMinutes: 30,
     maximumBlackMarketAgeMinutes: 20,
+    saleMode: "direct",
+    isPremium: true,
     salesTaxPercent: 4,
+    setupFeePercent: 2.5,
     transportCostPerUnit: 0,
     focusValuePerPoint: 0,
     lowerQualityFallbackPercent: 0,
@@ -70,6 +74,10 @@ function isServer(value: unknown): value is AlbionServer {
 
 function isSort(value: unknown): value is BlackMarketOpportunitySort {
   return value === "profit" || value === "roi" || value === "freshness";
+}
+
+function isSaleMode(value: unknown): value is BlackMarketSaleMode {
+  return value === "direct" || value === "sell-order";
 }
 
 function isStrategyFilter(value: unknown): value is BlackMarketStrategyFilter {
@@ -144,12 +152,13 @@ export function parseBlackMarketScannerFilters(
 ): BlackMarketOpportunityFilters {
   if (
     !isRecord(value) ||
-    (value["version"] !== 1 && value["version"] !== 2) ||
+    ![1, 2, 3].includes(Number(value["version"])) ||
     !isRecord(value["filters"])
   ) {
     return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
   }
   const raw = value["filters"];
+  const salesTaxPercent = boundedNumber(raw["salesTaxPercent"], 4, 0, 99.99);
   return {
     server: isServer(raw["server"])
       ? raw["server"]
@@ -159,90 +168,29 @@ export function parseBlackMarketScannerFilters(
       MARKET_KEYS,
       DEFAULT_BLACK_MARKET_SCANNER_FILTERS.purchaseMarketKeys,
     ),
-    tiers: numberArray(
-      raw["tiers"],
-      new Set([4, 5, 6, 7, 8]),
-      DEFAULT_BLACK_MARKET_SCANNER_FILTERS.tiers,
-    ),
-    enchantments: numberArray(
-      raw["enchantments"],
-      new Set([0, 1, 2, 3, 4]),
-      DEFAULT_BLACK_MARKET_SCANNER_FILTERS.enchantments,
-    ),
-    qualities: numberArray(
-      raw["qualities"],
-      new Set([1, 2, 3, 4, 5]),
-      DEFAULT_BLACK_MARKET_SCANNER_FILTERS.qualities,
-    ),
-    categories: stringArray(
-      raw["categories"],
-      CATEGORIES,
-      DEFAULT_BLACK_MARKET_SCANNER_FILTERS.categories,
-    ),
-    minimumProfit: Math.floor(
-      boundedNumber(raw["minimumProfit"], 10_000, 0, 1_000_000_000_000),
-    ),
-    minimumReturnOnCostPercent: boundedNumber(
-      raw["minimumReturnOnCostPercent"],
-      5,
-      0,
-      100_000,
-    ),
-    maximumCityAgeMinutes: Math.floor(
-      boundedNumber(raw["maximumCityAgeMinutes"], 30, 1, 10_080),
-    ),
-    maximumBlackMarketAgeMinutes: Math.floor(
-      boundedNumber(raw["maximumBlackMarketAgeMinutes"], 20, 1, 10_080),
-    ),
-    salesTaxPercent: boundedNumber(raw["salesTaxPercent"], 4, 0, 99.99),
-    transportCostPerUnit: Math.floor(
-      boundedNumber(raw["transportCostPerUnit"], 0, 0, 1_000_000_000_000),
-    ),
-    focusValuePerPoint: boundedNumber(
-      raw["focusValuePerPoint"],
-      0,
-      0,
-      1_000_000,
-    ),
-    lowerQualityFallbackPercent: boundedNumber(
-      raw["lowerQualityFallbackPercent"],
-      0,
-      0,
-      100,
-    ),
-    materialTransportCostPerBatch: Math.floor(
-      boundedNumber(
-        raw["materialTransportCostPerBatch"],
-        0,
-        0,
-        1_000_000_000_000,
-      ),
-    ),
-    finishedTransportCostPerUnit: Math.floor(
-      boundedNumber(
-        raw["finishedTransportCostPerUnit"],
-        0,
-        0,
-        1_000_000_000_000,
-      ),
-    ),
-    escortCostPerBatch: Math.floor(
-      boundedNumber(
-        raw["escortCostPerBatch"],
-        0,
-        0,
-        1_000_000_000_000,
-      ),
-    ),
-    deathProbabilityPercent: boundedNumber(
-      raw["deathProbabilityPercent"],
-      0,
-      0,
-      100,
-    ),
-    timeCostPerBatch: Math.floor(
-      boundedNumber(raw["timeCostPerBatch"], 0, 0, 1_000_000_000_000),
-    ),
+    tiers: numberArray(raw["tiers"], new Set([4, 5, 6, 7, 8]), DEFAULT_BLACK_MARKET_SCANNER_FILTERS.tiers),
+    enchantments: numberArray(raw["enchantments"], new Set([0, 1, 2, 3, 4]), DEFAULT_BLACK_MARKET_SCANNER_FILTERS.enchantments),
+    qualities: numberArray(raw["qualities"], new Set([1, 2, 3, 4, 5]), DEFAULT_BLACK_MARKET_SCANNER_FILTERS.qualities),
+    categories: stringArray(raw["categories"], CATEGORIES, DEFAULT_BLACK_MARKET_SCANNER_FILTERS.categories),
+    minimumProfit: Math.floor(boundedNumber(raw["minimumProfit"], 10_000, 0, 1_000_000_000_000)),
+    minimumReturnOnCostPercent: boundedNumber(raw["minimumReturnOnCostPercent"], 5, 0, 100_000),
+    maximumCityAgeMinutes: Math.floor(boundedNumber(raw["maximumCityAgeMinutes"], 30, 1, 10_080)),
+    maximumBlackMarketAgeMinutes: Math.floor(boundedNumber(raw["maximumBlackMarketAgeMinutes"], 20, 1, 10_080)),
+    saleMode: isSaleMode(raw["saleMode"]) ? raw["saleMode"] : "direct",
+    isPremium:
+      typeof raw["isPremium"] === "boolean"
+        ? raw["isPremium"]
+        : salesTaxPercent <= 4,
+    salesTaxPercent,
+    setupFeePercent: boundedNumber(raw["setupFeePercent"], 2.5, 0, 99.99),
+    transportCostPerUnit: Math.floor(boundedNumber(raw["transportCostPerUnit"], 0, 0, 1_000_000_000_000)),
+    focusValuePerPoint: boundedNumber(raw["focusValuePerPoint"], 0, 0, 1_000_000),
+    lowerQualityFallbackPercent: boundedNumber(raw["lowerQualityFallbackPercent"], 0, 0, 100),
+    materialTransportCostPerBatch: Math.floor(boundedNumber(raw["materialTransportCostPerBatch"], 0, 0, 1_000_000_000_000)),
+    finishedTransportCostPerUnit: Math.floor(boundedNumber(raw["finishedTransportCostPerUnit"], 0, 0, 1_000_000_000_000)),
+    escortCostPerBatch: Math.floor(boundedNumber(raw["escortCostPerBatch"], 0, 0, 1_000_000_000_000)),
+    deathProbabilityPercent: boundedNumber(raw["deathProbabilityPercent"], 0, 0, 100),
+    timeCostPerBatch: Math.floor(boundedNumber(raw["timeCostPerBatch"], 0, 0, 1_000_000_000_000)),
     strategyFilter: isStrategyFilter(raw["strategyFilter"])
       ? raw["strategyFilter"]
       : DEFAULT_BLACK_MARKET_SCANNER_FILTERS.strategyFilter,
@@ -257,8 +205,7 @@ export function parseBlackMarketScannerFilters(
 }
 
 export function loadBlackMarketScannerFilters(): BlackMarketOpportunityFilters {
-  if (typeof window === "undefined")
-    return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
+  if (typeof window === "undefined") return DEFAULT_BLACK_MARKET_SCANNER_FILTERS;
   try {
     const value = window.localStorage.getItem(BLACK_MARKET_SCANNER_STORAGE_KEY);
     return value
@@ -276,7 +223,7 @@ export function saveBlackMarketScannerFilters(
   try {
     window.localStorage.setItem(
       BLACK_MARKET_SCANNER_STORAGE_KEY,
-      JSON.stringify({ version: 2, filters }),
+      JSON.stringify({ version: 3, filters }),
     );
   } catch {
     // Keep scanner available if browser storage is unavailable.

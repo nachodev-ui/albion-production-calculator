@@ -20,6 +20,7 @@ import { BlackMarketBatchPlannerLearningCard } from "./BlackMarketBatchPlannerLe
 import { BlackMarketBatchPlannerPage } from "./BlackMarketBatchPlannerPage";
 import { BlackMarketOpportunityDetailDialog } from "./BlackMarketOpportunityDetailDialog";
 import { BlackMarketOpportunityResults } from "./BlackMarketOpportunityResults";
+import { BlackMarketSaleSettings } from "./BlackMarketSaleSettings";
 import { BlackMarketScannerControls } from "./BlackMarketScannerControls";
 import { BlackMarketStrategyAssumptions } from "./BlackMarketStrategyAssumptions";
 
@@ -87,6 +88,9 @@ function Scanner({
         throw new Error("No fue posible obtener una sesión autenticada.");
       }
 
+      const effectiveFeePercent =
+        filters.salesTaxPercent +
+        (filters.saleMode === "sell-order" ? filters.setupFeePercent : 0);
       const result = await scanBlackMarketOpportunities(
         {
           server: filters.server,
@@ -95,14 +99,21 @@ function Scanner({
           enchantments: filters.enchantments,
           qualities: filters.qualities,
           categories: filters.categories,
-          minimumProfit: filters.minimumProfit,
-          minimumReturnOnCostPercent: filters.minimumReturnOnCostPercent,
+          // La API ordena por venta directa. Para orden de venta pedimos una
+          // página amplia y aplicamos los umbrales netos de forma local con el
+          // precio sell_price_min que ya entrega el contrato.
+          minimumProfit:
+            filters.saleMode === "direct" ? filters.minimumProfit : 0,
+          minimumReturnOnCostPercent:
+            filters.saleMode === "direct"
+              ? filters.minimumReturnOnCostPercent
+              : 0,
           maximumCityAgeMinutes: filters.maximumCityAgeMinutes,
           maximumBlackMarketAgeMinutes: filters.maximumBlackMarketAgeMinutes,
           transportCostPerUnit: filters.transportCostPerUnit,
           sort: filters.sort,
           limit: Math.min(100, filters.limit),
-          salesTaxRate: filters.salesTaxPercent / 100,
+          salesTaxRate: Math.min(0.9999, effectiveFeePercent / 100),
           offset: nextOffset,
         },
         token,
@@ -155,6 +166,7 @@ function Scanner({
           className="mt-6 space-y-5"
           onSubmit={(event) => void scan(0, event)}
         >
+          <BlackMarketSaleSettings filters={filters} onChange={updateFilters} />
           <BlackMarketScannerControls
             filters={filters}
             onChange={updateFilters}
