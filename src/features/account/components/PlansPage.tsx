@@ -1,5 +1,6 @@
 import type { AppRoute } from "../../../app/types";
 import { useAccountSession } from "../hooks/useAccountSession";
+import { resolveProPlanActionPresentation } from "../planActionPresentation";
 import {
   FREE_PLAN_CAPABILITIES,
   PRO_PLAN_CAPABILITIES,
@@ -156,12 +157,18 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
   const hasManagedSubscription =
     access?.subscription.status !== undefined &&
     access.subscription.status !== "none";
-  const billingBusy = session.billingStatus !== "idle";
   const accessPending =
     session.isLoading ||
     (session.isAuthenticated && access === null && accessStatus !== "error");
   const accessFailed =
     session.isAuthenticated && access === null && accessStatus === "error";
+  const proAction = resolveProPlanActionPresentation({
+    isAuthenticated: session.isAuthenticated,
+    billingEnabled: session.billingEnabled,
+    billingStatus: session.billingStatus,
+    isPro,
+    hasManagedSubscription,
+  });
 
   function openAccountOrLogin() {
     if (session.isAuthenticated) {
@@ -189,16 +196,6 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
       return;
     }
     void session.startCheckout();
-  }
-
-  function proActionLabel(): string {
-    if (!session.billingEnabled) return "Checkout en preparación";
-    if (session.billingStatus === "checkout") return "Creando checkout...";
-    if (session.billingStatus === "portal") return "Abriendo portal...";
-    if (!session.isAuthenticated) return "Iniciar sesión para contratar";
-    if (isPro && hasManagedSubscription) return "Administrar suscripción";
-    if (isPro) return "Ver mi cuenta";
-    return "Contratar Pro · USD 4,99";
   }
 
   return (
@@ -252,8 +249,8 @@ export function PlansPage({ onNavigate }: PlansPageProps) {
             features={PRO_PLAN_CAPABILITIES}
             active={isPro}
             highlighted
-            actionLabel={proActionLabel()}
-            disabled={!session.billingEnabled || billingBusy}
+            actionLabel={proAction.label}
+            disabled={proAction.disabled}
             onAction={handleProAction}
           />
         </div>
