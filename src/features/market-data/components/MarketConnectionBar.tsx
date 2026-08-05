@@ -253,7 +253,7 @@ export function MarketConnectionBar({
   const warnings = Array.from(new Set([...catalogWarnings, ...refreshWarnings]))
   const sourceStatuses = useMemo(
     () => getMarketSourceStatuses(sourceStatusNow),
-    [sourceStatusNow, status, catalogStatus],
+    [sourceStatusNow],
   )
   const browserCacheBadge = getBrowserCacheBadge(sourceSummary, hasCachedPrice)
 

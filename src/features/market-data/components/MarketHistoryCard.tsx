@@ -246,7 +246,7 @@ export function MarketHistoryCard({
   )
   const sourceStatuses = useMemo(
     () => getMarketSourceStatuses(sourceStatusNow),
-    [sourceStatusNow, status],
+    [sourceStatusNow],
   )
   const statusLabel = getStatusLabel(
     status,
