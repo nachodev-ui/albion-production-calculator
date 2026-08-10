@@ -34,6 +34,12 @@ const date = (value?: string | null) => {
       }).format(parsed)
 }
 
+const activitySource = (value?: 'gameinfo' | 'murderledger' | null) => {
+  if (value === 'gameinfo') return 'ingesta Albion'
+  if (value === 'murderledger') return 'reconciliación secundaria'
+  return 'base local'
+}
+
 interface LinkedPlayerProfileProps {
   readonly data: AlbionProfileResponse
   readonly busy: boolean
@@ -235,6 +241,7 @@ export function LinkedPlayerProfile({
   const fights = data.summary.recentFightCount
   const victoryRate = fights > 0 ? (data.summary.recentKills / fights) * 100 : 0
   const fameBalance = data.summary.killFame - data.summary.deathFame
+  const identityRefreshedAt = data.profile.identityRefreshedAt ?? data.profile.lastRefreshedAt
 
   const metrics: readonly MetricCardProps[] = [
     {
@@ -261,14 +268,14 @@ export function LinkedPlayerProfile({
     {
       label: 'Combates analizados',
       value: number(fights),
-      detail: 'Eventos almacenados en el perfil',
+      detail: 'Eventos almacenados en nuestra base PvP',
       icon: 'fights',
       tone: 'neutral',
     },
     {
       label: 'Fama obtenida',
       value: compactNumber(data.summary.killFame),
-      detail: `${number(data.summary.killFame)} de fama`,
+      detail: `${number(data.summary.killFame)} de fama en los combates mostrados`,
       icon: 'fameUp',
       tone: 'positive',
     },
@@ -333,9 +340,13 @@ export function LinkedPlayerProfile({
                 {data.profile.guildName || 'Sin gremio'}
                 {data.profile.allianceName ? ` · ${data.profile.allianceName}` : ''}
               </p>
-              <p className="mt-1 text-xs text-text-faint">
-                Actualizado: {date(data.profile.lastRefreshedAt)}
-              </p>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-faint">
+                <span>Identidad: {date(identityRefreshedAt)}</span>
+                <span>
+                  Actividad PvP: {date(data.profile.activityRefreshedAt)} ·{' '}
+                  {activitySource(data.profile.activitySource)}
+                </span>
+              </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="rounded-lg border border-border bg-bg/30 px-3 py-2 text-[10px] uppercase tracking-wider text-text-faint">
                   {number(fights)} combates recientes
@@ -358,14 +369,22 @@ export function LinkedPlayerProfile({
             onClick={onRefresh}
             className="relative shrink-0 rounded-xl bg-accent px-5 py-3 text-xs font-semibold text-bg shadow-[0_12px_30px_rgba(214,170,42,0.18)] transition hover:brightness-110 disabled:opacity-50"
           >
-            {busy ? 'Actualizando…' : 'Actualizar estadísticas'}
+            {busy ? 'Recargando…' : 'Recargar datos locales'}
           </button>
         </div>
       </section>
 
       {data.profile.lastRefreshStatus === 'error' && (
         <p className="rounded-xl border border-warning/35 bg-warning-muted px-4 py-3 text-xs text-warning">
-          El proveedor falló en el último intento. Se muestran los últimos datos guardados.
+          Albion no pudo refrescar la identidad del personaje en el último intento. La actividad PvP
+          continúa disponible desde nuestra base de datos y se actualiza de forma independiente.
+        </p>
+      )}
+
+      {!data.profile.activityRefreshedAt && (
+        <p className="rounded-xl border border-warning/35 bg-warning-muted px-4 py-3 text-xs text-warning">
+          El worker PvP aún no ha completado su primera sincronización para esta región. Los eventos
+          existentes seguirán apareciendo mientras termina la ingesta.
         </p>
       )}
 
@@ -395,7 +414,7 @@ export function LinkedPlayerProfile({
               <EquipmentStrip equipment={featuredBuild.equipment} />
             ) : (
               <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-text-faint">
-                Actualiza el perfil para guardar el equipamiento completo de los combates.
+                Aún no hay equipamiento completo en los combates almacenados.
               </p>
             )}
           </div>
