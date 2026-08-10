@@ -28,6 +28,9 @@ export interface AlbionPlayerProfile {
   readonly fameRatio: number
   readonly linkedAt: string
   readonly lastRefreshedAt?: string | null
+  readonly identityRefreshedAt?: string | null
+  readonly activityRefreshedAt?: string | null
+  readonly activitySource?: 'gameinfo' | 'murderledger' | null
   readonly lastRefreshAttemptAt?: string | null
   readonly lastRefreshStatus: 'pending' | 'ok' | 'error'
   readonly lastRefreshError?: string | null
